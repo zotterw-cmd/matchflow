@@ -2,35 +2,103 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>⚽ MatchFlow v1.2 – Dashboard</title>
+    <title>⚽ MatchFlow v1.3 – Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f5f6fa; }
-        .card { border-radius: 12px; }
-        .navbar-brand { font-weight: bold; }
-        .logo-small { font-size: 0.8rem; color: #ccc; }
-        .menu-btn { margin-right: 6px; }
+        body { background-color:#f5f6fa; }
+        .card { border-radius:12px; }
+        .navbar-brand { font-weight:bold; }
+        .logo-small { font-size:.8rem; color:#ccc; }
+        .menu-btn { margin-right:6px; }
         .dataTables_wrapper .dataTables_filter input { border-radius:6px; border:1px solid #ced4da; padding:4px 8px; }
-        .nav-active { background-color:rgba(255,255,255,0.15)!important; border-color:rgba(255,255,255,0.6)!important; }
+        .nav-active { background-color:rgba(255,255,255,.15)!important; border-color:rgba(255,255,255,.6)!important; }
         .role-card { border-left:5px solid; border-radius:12px; }
-        .role-superadmin { border-color:#dc3545; } .role-trainer { border-color:#0d6efd; }
-        .role-eltern { border-color:#198754; }     .role-spieler { border-color:#fd7e14; }
-        .perm-check { color:#198754; font-size:1.1rem; } .perm-cross { color:#dc3545; font-size:1.1rem; } .perm-eye { color:#0d6efd; font-size:1.1rem; }
-        .overlap-box { background:#fff8e1; border:2px dashed #ffc107; border-radius:12px; }
-        .attr-badge { font-size:.75rem; padding:3px 8px; border-radius:20px; }
-        .fixed-icon { color:#adb5bd; font-size:.8rem; }
-        .csv-drop { border:2px dashed #ced4da; border-radius:12px; padding:30px; text-align:center; background:#fff; cursor:pointer; transition:.2s; }
-        .csv-drop:hover { border-color:#0d6efd; background:#f0f5ff; }
-        .skill-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
-        .skill-row label { min-width:130px; font-size:.9rem; }
-        .skill-row input[type=range] { flex:1; }
-        .skill-row .val-badge { min-width:36px; text-align:center; font-weight:bold; }
-        .attr-card { border-left:4px solid #0d6efd; border-radius:10px; }
-        .source-fixed { background:#f8f9fa; }
+        .role-superadmin{border-color:#dc3545} .role-trainer{border-color:#0d6efd}
+        .role-eltern{border-color:#198754}     .role-spieler{border-color:#fd7e14}
+        .perm-check{color:#198754;font-size:1.1rem} .perm-cross{color:#dc3545;font-size:1.1rem} .perm-eye{color:#0d6efd;font-size:1.1rem}
+        .fixed-icon{color:#adb5bd;font-size:.8rem}
+        .skill-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+        .skill-row label{min-width:130px;font-size:.9rem}
+        .skill-row input[type=range]{flex:1}
+        .skill-row .val-badge{min-width:36px;text-align:center;font-weight:bold}
+
+        /* ── MATCH ATTAX KARTE ───────────────────────────── */
+        .ma-card {
+            width:220px; min-height:340px; border-radius:14px;
+            background:linear-gradient(160deg,#1a1a1a 0%,#2c2c2c 40%,#8b0000 100%);
+            box-shadow:0 8px 24px rgba(0,0,0,.45);
+            display:flex; flex-direction:column; overflow:hidden;
+            position:relative; font-family:'Segoe UI',sans-serif; color:#fff;
+            border:3px solid #c0392b;
+        }
+        .ma-card-header {
+            display:flex; align-items:stretch; min-height:140px; position:relative;
+            background:linear-gradient(135deg,#111 0%,#2d0000 100%);
+        }
+        .ma-name-col {
+            writing-mode:vertical-rl; text-orientation:mixed; transform:rotate(180deg);
+            padding:8px 4px; font-size:.75rem; font-weight:900; letter-spacing:2px;
+            color:#c0392b; text-transform:uppercase; background:rgba(0,0,0,.4);
+            min-width:28px; display:flex; align-items:center; justify-content:center;
+        }
+        .ma-photo-wrap {
+            flex:1; overflow:hidden; display:flex; align-items:center; justify-content:center;
+            background:#222;
+        }
+        .ma-photo-wrap img { width:100%; height:140px; object-fit:cover; object-position:top; }
+        .ma-photo-placeholder {
+            width:100%; height:140px; display:flex; align-items:center; justify-content:center;
+            background:linear-gradient(135deg,#333,#555); font-size:3rem; color:#888;
+        }
+        .ma-slv-badge {
+            position:absolute; top:6px; right:6px;
+            background:#c0392b; color:#fff; font-size:1.1rem; font-weight:900;
+            padding:4px 8px; border-radius:6px; border:2px solid #fff;
+            text-shadow:0 1px 2px rgba(0,0,0,.5);
+        }
+        .ma-pos-badge {
+            position:absolute; bottom:6px; right:6px;
+            background:#7f8c8d; color:#fff; font-size:.65rem; font-weight:700;
+            padding:2px 6px; border-radius:4px;
+        }
+        .ma-skills {
+            padding:6px 8px; background:rgba(0,0,0,.3); flex:1;
+        }
+        .ma-skill-row {
+            display:flex; align-items:center; gap:4px; margin-bottom:3px;
+        }
+        .ma-skill-label {
+            font-size:.6rem; font-weight:700; text-transform:uppercase;
+            letter-spacing:.5px; min-width:60px; color:#ccc;
+        }
+        .ma-skill-bar-wrap { flex:1; background:rgba(255,255,255,.12); border-radius:3px; height:7px; overflow:hidden; }
+        .ma-skill-bar { height:100%; border-radius:3px; transition:width .3s; }
+        .ma-skill-val { font-size:.7rem; font-weight:900; min-width:22px; text-align:right; }
+        .ma-footer {
+            display:flex; align-items:center; justify-content:space-between;
+            background:#c0392b; padding:6px 8px; border-top:2px solid #fff2;
+        }
+        .ma-footer-stat { text-align:center; }
+        .ma-footer-stat .label { font-size:.5rem; font-weight:700; letter-spacing:.5px; color:rgba(255,255,255,.7); text-transform:uppercase; }
+        .ma-footer-stat .value { font-size:1.1rem; font-weight:900; line-height:1.1; }
+        .ma-team-badge {
+            background:#111; border-radius:50%; width:36px; height:36px;
+            display:flex; align-items:center; justify-content:center;
+            font-size:.55rem; font-weight:800; text-align:center; border:2px solid #fff3;
+        }
+        .ma-bottom-strip {
+            background:#111; padding:3px 8px; text-align:center;
+            font-size:.5rem; color:#888; letter-spacing:.5px; text-transform:uppercase;
+        }
+        /* Karten-Seite grid */
+        .karten-grid { display:flex; flex-wrap:wrap; gap:20px; padding:10px 0; }
+        /* Foto-Vorschau */
+        .foto-vorschau { width:80px; height:80px; object-fit:cover; border-radius:8px; border:2px solid #dee2e6; }
+        .foto-placeholder { width:80px; height:80px; border-radius:8px; border:2px dashed #ced4da; display:flex; align-items:center; justify-content:center; color:#adb5bd; font-size:1.8rem; }
     </style>
 </head>
 <body>
@@ -52,12 +120,13 @@
 <!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow">
     <div class="container-fluid">
-        <a class="navbar-brand" href="#">⚽ MatchFlow <span class="logo-small">v1.2</span></a>
+        <a class="navbar-brand" href="#">⚽ MatchFlow <span class="logo-small">v1.3</span></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <div class="ms-auto d-flex flex-wrap gap-1 align-items-center">
                 <button id="navMain"         class="btn btn-outline-light menu-btn nav-active" onclick="showView('main')"><i class="bi bi-speedometer2"></i> Dashboard</button>
                 <button id="navSpieler"      class="btn btn-outline-light menu-btn" onclick="showView('spieler')"><i class="bi bi-trophy-fill"></i> Spieler</button>
+                <button id="navKarten"       class="btn btn-outline-light menu-btn" onclick="showView('karten')"><i class="bi bi-person-badge-fill"></i> Karten</button>
                 <button class="btn btn-outline-light menu-btn" onclick="showView('main')"><i class="bi bi-calendar-plus"></i> Neuer Spiel/Trainingstag</button>
                 <button class="btn btn-outline-light menu-btn" onclick="showView('main')"><i class="bi bi-plus-circle"></i> Neues Spiel</button>
                 <button class="btn btn-outline-light menu-btn" onclick="showView('main')"><i class="bi bi-list-ul"></i> Alle Spiele</button>
@@ -86,15 +155,10 @@
         <tr><td>ATUS Bärnbach vs Team Y</td><td>25.06.2026</td><td>5+1</td><td><span class="badge bg-warning text-dark">Geplant</span></td></tr>
         </tbody></table>
     </div>
-    <div class="card shadow-sm p-3 mt-4">
-        <h5>Export</h5><p>Spielerstatistiken als PDF exportieren</p>
-        <button class="btn btn-dark"><i class="bi bi-file-earmark-pdf"></i> PDF erstellen</button>
-    </div>
 </div>
 
 <!-- ===== SPIELER VIEW ===== -->
 <div id="viewSpieler" class="container-fluid p-4" style="display:none;">
-
     <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-2">
         <h4 class="mb-0"><i class="bi bi-trophy-fill text-warning me-2"></i>Spielerverwaltung</h4>
         <div class="d-flex gap-2">
@@ -104,7 +168,7 @@
                 <option value="U12">U12</option>
             </select>
             <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('csvInput').click()">
-                <i class="bi bi-upload"></i> CSV hochladen
+                <i class="bi bi-upload"></i> CSV
             </button>
             <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="handleCSV(event)">
             <button class="btn btn-dark btn-sm" onclick="openSpielerModal(null)">
@@ -114,20 +178,12 @@
     </div>
     <p class="text-muted mb-3">Spieler anlegen, bearbeiten und Statistiken einsehen</p>
 
-    <!-- CSV Hinweis -->
-    <div id="csvHinweis" class="alert alert-info alert-dismissible d-none mb-3">
-        <i class="bi bi-info-circle me-1"></i>
-        CSV-Format: <code>RNr,Position,Nachname,Vorname,GebDatum,Spiele,PaesseOk,PaesseNk,SchuessOk,SchuessNk,Assists,Tore,Fouls,MinGespielt,Auswechslungen,SkillLevel,SPL,Mannschaft</code>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-
-    <!-- Spieler Tabelle -->
     <div class="card shadow-sm p-3 mb-4">
         <div class="table-responsive">
             <table id="spielerTable" class="table table-striped align-middle nowrap w-100">
                 <thead class="table-dark">
                 <tr>
-                    <th>RNr</th><th>Pos</th><th>Nachname</th><th>Vorname</th><th>Geb.Datum</th>
+                    <th>Foto</th><th>RNr</th><th>Pos</th><th>Nachname</th><th>Vorname</th><th>Geb.Datum</th>
                     <th title="Spiele">Sp</th>
                     <th title="Pässe angekommen">P✓</th><th title="Pässe nicht angekommen">P✗</th>
                     <th title="Pässe-Genauigkeit">P%</th>
@@ -139,29 +195,27 @@
                     <th>Team</th><th></th>
                 </tr>
                 </thead>
-                <tbody id="spielerBody">
-                <!-- Demo-Daten werden per JS eingefügt -->
-                </tbody>
+                <tbody id="spielerBody"></tbody>
             </table>
         </div>
     </div>
 
-    <!-- ── Attribut-Verwaltung ─────────────────────────────────────────── -->
+    <!-- Attribut-Verwaltung -->
     <div class="card shadow-sm p-3 mb-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0"><i class="bi bi-sliders2 me-2 text-primary"></i>Attribut-Verwaltung</h5>
-            <button class="btn btn-dark btn-sm" onclick="openAttrModal()"><i class="bi bi-plus-circle"></i> Neue Kategorie</button>
+            <button class="btn btn-dark btn-sm" onclick="openAttrModal(null)"><i class="bi bi-plus-circle"></i> Neue Kategorie</button>
         </div>
-        <p class="text-muted small mb-3">Hauptattribute für die Spielerkarte. <i class="bi bi-lock-fill fixed-icon"></i> = Basiswert (nicht löschbar).</p>
+        <p class="text-muted small mb-3">Hauptattribute für die Spielerkarte. <i class="bi bi-lock-fill fixed-icon"></i> = Basiswert (nicht löschbar). Bearbeiten zum Quellen zuweisen.</p>
         <div class="table-responsive">
-            <table class="table align-middle" id="attributeTable">
+            <table class="table align-middle">
                 <thead class="table-light"><tr><th>Kürzel</th><th>Name</th><th>Zugewiesene Quellen</th><th>Typ</th><th></th></tr></thead>
                 <tbody id="attributeBody"></tbody>
             </table>
         </div>
     </div>
 
-    <!-- ── Quellen-Verwaltung ──────────────────────────────────────────── -->
+    <!-- Quellen-Verwaltung -->
     <div class="card shadow-sm p-3 mb-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0"><i class="bi bi-database me-2 text-success"></i>Quellen-Verwaltung</h5>
@@ -169,13 +223,27 @@
         </div>
         <p class="text-muted small mb-3">Datenpunkte die in die Attribut-Berechnung einfließen. <i class="bi bi-lock-fill fixed-icon"></i> = Basiswert (nicht löschbar, Name anpassbar).</p>
         <div class="table-responsive">
-            <table class="table align-middle" id="quellenTable">
+            <table class="table align-middle">
                 <thead class="table-light"><tr><th>Name</th><th>Zugeordnetes Attribut</th><th>Typ</th><th></th></tr></thead>
                 <tbody id="quellenBody"></tbody>
             </table>
         </div>
     </div>
+</div>
 
+<!-- ===== KARTEN VIEW ===== -->
+<div id="viewKarten" class="container-fluid p-4" style="display:none;">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h4 class="mb-0"><i class="bi bi-person-badge-fill text-danger me-2"></i>Spielerkarten</h4>
+        <div class="d-flex gap-2">
+            <select id="kartenFilterTeam" class="form-select form-select-sm" style="width:auto" onchange="renderAlleKarten()">
+                <option value="">Alle Mannschaften</option>
+                <option value="U10">U10</option>
+                <option value="U12">U12</option>
+            </select>
+        </div>
+    </div>
+    <div id="kartenGrid" class="karten-grid"></div>
 </div>
 
 <!-- ===== MANNSCHAFTEN VIEW ===== -->
@@ -252,15 +320,14 @@
                 </tbody>
             </table>
         </div>
-        <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Trainer-Modus ist unabhängig von der Rolle.</small>
     </div>
 </div>
 
 </div><!-- Ende Dashboard -->
 
-<!-- ══════════════════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════════════════════
      MODALS
-══════════════════════════════════════════════════════════════════ -->
+══════════════════════════════════════════════════════════════ -->
 
 <!-- MODAL: Spieler anlegen / bearbeiten -->
 <div class="modal fade" id="modalSpieler" tabindex="-1">
@@ -272,21 +339,38 @@
             </div>
             <div class="modal-body">
                 <div class="row g-3">
-                    <!-- Stammdaten -->
+                    <!-- Stammdaten + Foto -->
                     <div class="col-md-6">
                         <div class="card p-3 h-100">
                             <h6 class="fw-bold mb-3"><i class="bi bi-person-lines-fill text-primary me-1"></i>Stammdaten</h6>
+                            <!-- Foto-Upload -->
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div id="fotoPreviewWrap">
+                                    <div class="foto-placeholder" id="fotoPlaceholder"><i class="bi bi-person-bounding-box"></i></div>
+                                    <img id="fotoPreview" class="foto-vorschau d-none" src="" alt="Foto">
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm d-block mb-1" onclick="document.getElementById('spFotoInput').click()">
+                                        <i class="bi bi-camera-fill"></i> Foto hochladen
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm d-block" id="fotoRemoveBtn" style="display:none!important" onclick="removeFoto()">
+                                        <i class="bi bi-x-circle"></i> Entfernen
+                                    </button>
+                                    <input type="file" id="spFotoInput" accept="image/*" style="display:none" onchange="handleFotoUpload(event)">
+                                    <small class="text-muted d-block mt-1" style="font-size:.7rem">JPG, PNG, max. 2 MB</small>
+                                </div>
+                            </div>
                             <div class="row g-2">
                                 <div class="col-4"><label class="form-label">RNr</label><input type="number" id="spRNr" class="form-control" placeholder="7"></div>
                                 <div class="col-4"><label class="form-label">Position</label>
                                     <select id="spPosition" class="form-select">
                                         <option>GK</option><option>IV</option><option>LV</option><option>RV</option>
                                         <option>DM</option><option>ZM</option><option>OM</option>
-                                        <option>LA</option><option>RA</option><option>MF</option><option>ST</option>
+                                        <option>LA</option><option>RA</option><option selected>MF</option><option>ST</option>
                                     </select>
                                 </div>
                                 <div class="col-4"><label class="form-label">Mannschaft</label>
-                                    <select id="spTeam" class="form-select">
+                                    <select id="spTeam" class="form-select" onchange="renderSkillWerte(null)">
                                         <option value="U10">U10</option><option value="U12">U12</option>
                                     </select>
                                 </div>
@@ -332,9 +416,9 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Skill-Werte -->
-                    <div class="col-12">
-                        <div class="card p-3">
+                    <!-- Skill-Werte + Karten-Vorschau -->
+                    <div class="col-lg-7">
+                        <div class="card p-3 h-100">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="fw-bold mb-0"><i class="bi bi-sliders2 text-primary me-1"></i>Skill-Werte</h6>
                                 <button type="button" class="btn btn-outline-dark btn-sm" onclick="openNeueWertigkeit()">
@@ -342,7 +426,18 @@
                                 </button>
                             </div>
                             <div id="skillWerteContainer"></div>
-
+                        </div>
+                    </div>
+                    <!-- Karten-Vorschau -->
+                    <div class="col-lg-5">
+                        <div class="card p-3 h-100 text-center">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-person-badge-fill text-danger me-1"></i>Karten-Vorschau</h6>
+                            <div class="d-flex justify-content-center">
+                                <div id="kartenVorschau"></div>
+                            </div>
+                            <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="aktualisierteKartenVorschau()">
+                                <i class="bi bi-arrow-clockwise"></i> Vorschau aktualisieren
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -383,12 +478,12 @@
     </div>
 </div>
 
-<!-- MODAL: Neue Attribut-Kategorie -->
+<!-- MODAL: Attribut-Kategorie anlegen / bearbeiten -->
 <div class="modal fade" id="modalAttr" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title" id="modalAttrTitle"><i class="bi bi-sliders2 me-2"></i>Neue Kategorie</h5>
+                <h5 class="modal-title" id="modalAttrTitle"><i class="bi bi-sliders2 me-2"></i>Kategorie</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -403,7 +498,7 @@
                     </div>
                     <div class="col-12">
                         <label class="form-label fw-bold">Quellen zuweisen</label>
-                        <div id="atQuellenList" class="border rounded p-2" style="max-height:160px;overflow-y:auto;"></div>
+                        <div id="atQuellenList" class="border rounded p-2" style="max-height:200px;overflow-y:auto;"></div>
                     </div>
                 </div>
                 <div id="atError" class="alert alert-danger d-none mt-3"></div>
@@ -421,7 +516,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title" id="modalQuelleTitle"><i class="bi bi-database me-2"></i>Neue Quelle</h5>
+                <h5 class="modal-title"><i class="bi bi-database me-2"></i>Neue Quelle</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -474,7 +569,7 @@
     </div></div>
 </div>
 
-<!-- MODAL: Benutzer anlegen -->
+<!-- MODAL: Benutzer -->
 <div class="modal fade" id="modalBenutzer" tabindex="-1">
     <div class="modal-dialog modal-lg"><div class="modal-content">
         <div class="modal-header bg-dark text-white">
@@ -505,7 +600,6 @@
                         <input class="form-check-input" type="checkbox" id="buTrainerModus">
                         <label class="form-check-label" for="buTrainerModus">Trainer-Modus aktiv</label>
                     </div>
-                    <div class="form-text">Unabhängig von der Rolle.</div>
                 </div>
             </div>
             <div class="mt-3">
@@ -521,9 +615,9 @@
     </div></div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════════════════════
      SCRIPTS
-══════════════════════════════════════════════════════════════════ -->
+══════════════════════════════════════════════════════════════ -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -532,87 +626,179 @@
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
 
 <script>
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 // DATEN-MODELL
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
+const FIXED_QUELLEN_IDS = ['q_paok','q_pank','q_scok','q_scnk','q_tore','q_assi','q_foul','q_ming','q_ausw','q_trpz','q_spli'];
 
-// Feste Quellen (Basiswerte) — Name kann geändert, nicht gelöscht
-const FIXED_QUELLEN = [
-    { id:'q_paok',  name:'Pässe angekommen',      attr:'PAS' },
-    { id:'q_pank',  name:'Pässe nicht angekommen', attr:'PAS' },
-    { id:'q_scok',  name:'Schüsse aufs Tor',       attr:'SCH' },
-    { id:'q_scnk',  name:'Schüsse nicht aufs Tor', attr:'SCH' },
-    { id:'q_tore',  name:'Tore',                   attr:'SCH' },
-    { id:'q_assi',  name:'Assists',                attr:'PAS' },
-    { id:'q_foul',  name:'Fouls',                  attr:'AGG' },
-    { id:'q_ming',  name:'Gespielte Minuten',      attr:'FIT' },
-    { id:'q_ausw',  name:'Auswechslungen',         attr:'FIT' },
-    { id:'q_trpz',  name:'Trainings %',            attr:'FIT' },
-    { id:'q_spli',  name:'Spielintelligenz',       attr:'SPL' },
+let quellen = [
+    { id:'q_paok', name:'Pässe angekommen',       attr:'PAS' },
+    { id:'q_pank', name:'Pässe nicht angekommen',  attr:'PAS' },
+    { id:'q_scok', name:'Schüsse aufs Tor',        attr:'SCH' },
+    { id:'q_scnk', name:'Schüsse nicht aufs Tor',  attr:'SCH' },
+    { id:'q_tore', name:'Tore',                    attr:'SCH' },
+    { id:'q_assi', name:'Assists',                 attr:'PAS' },
+    { id:'q_foul', name:'Fouls',                   attr:'AGG' },
+    { id:'q_ming', name:'Gespielte Minuten',       attr:'FIT' },
+    { id:'q_ausw', name:'Auswechslungen',          attr:'FIT' },
+    { id:'q_trpz', name:'Trainings %',             attr:'FIT' },
+    { id:'q_spli', name:'Spielintelligenz',        attr:'SPL' },
 ];
 
-// Feste Hauptattribute
-const FIXED_ATTR_IDS = ['SCH','PAS','DRI','SPD','AGG','FIT','SPL','KON'];
 let attribute = [
-    { id:'SCH', name:'Schießen',        quellen:['q_scok','q_scnk','q_tore'],          fixed:true },
-    { id:'PAS', name:'Passen',          quellen:['q_paok','q_pank','q_assi'],          fixed:true },
-    { id:'DRI', name:'Dribbling',       quellen:[],                                    fixed:true },
-    { id:'SPD', name:'Tempo',           quellen:[],                                    fixed:true },
-    { id:'AGG', name:'Aggressivität',   quellen:['q_foul'],                            fixed:true },
-    { id:'FIT', name:'Fitness',         quellen:['q_ming','q_ausw','q_trpz'],          fixed:true },
-    { id:'SPL', name:'Spielintelligenz',quellen:['q_spli'],                            fixed:true },
-    { id:'KON', name:'Konzentration',   quellen:[],                                    fixed:true },
+    { id:'SCH', name:'Schießen',         quellen:['q_scok','q_scnk','q_tore'],  fixed:true },
+    { id:'PAS', name:'Passen',           quellen:['q_paok','q_pank','q_assi'],  fixed:true },
+    { id:'DRI', name:'Dribbling',        quellen:[],                            fixed:true },
+    { id:'SPD', name:'Tempo',            quellen:[],                            fixed:true },
+    { id:'AGG', name:'Aggressivität',    quellen:['q_foul'],                    fixed:true },
+    { id:'FIT', name:'Fitness',          quellen:['q_ming','q_ausw','q_trpz'],  fixed:true },
+    { id:'SPL', name:'Spielintelligenz', quellen:['q_spli'],                    fixed:true },
+    { id:'KON', name:'Konzentration',    quellen:[],                            fixed:true },
 ];
 
-let quellen = JSON.parse(JSON.stringify(FIXED_QUELLEN)); // deep copy
-let customQuellen = []; // custom quellen
-
-// Per-team skill categories (Wertigkeiten)
 let teamWertigkeiten = {
-    'U10': ['Passen', 'Schießen', 'Zweikampf', 'Laufen'],
-    'U12': ['Passen', 'Schießen', 'Zweikampf', 'Laufen'],
+    'U10': ['Passen','Schießen','Zweikampf','Laufen'],
+    'U12': ['Passen','Schießen','Zweikampf','Laufen'],
 };
 
-// Spieler-Daten
-let spielerData = [
-    { id:'p1', rnr:7,  pos:'MF', nachname:'Schmid', vorname:'Ben',   geb:'2014-07-06', spiele:5, paOk:18, paNk:4, scOk:3, scNk:2, assists:3, tore:4, fouls:2, min:380, ausw:1, slv:75, spl:65, team:'U10', skills:{ Passen:72, Schießen:68, Zweikampf:55, Laufen:78 } },
-    { id:'p2', rnr:10, pos:'ST', nachname:'Riedl',  vorname:'Lukas', geb:'2014-09-24', spiele:5, paOk:14, paNk:4, scOk:8, scNk:3, assists:5, tore:6, fouls:1, min:420, ausw:0, slv:82, spl:70, team:'U10', skills:{ Passen:65, Schießen:85, Zweikampf:60, Laufen:80 } },
-    { id:'p3', rnr:5,  pos:'IV', nachname:'Pagger', vorname:'Theo',  geb:'2014-07-26', spiele:4, paOk:12, paNk:3, scOk:1, scNk:1, assists:2, tore:1, fouls:3, min:310, ausw:2, slv:68, spl:60, team:'U10', skills:{ Passen:60, Schießen:50, Zweikampf:72, Laufen:65 } },
-    { id:'p4', rnr:3,  pos:'GK', nachname:'Hofer',  vorname:'Nico',  geb:'2015-03-12', spiele:5, paOk:6,  paNk:2, scOk:0, scNk:0, assists:1, tore:0, fouls:0, min:450, ausw:0, slv:71, spl:72, team:'U10', skills:{ Passen:55, Schießen:42, Zweikampf:68, Laufen:62 } },
-    { id:'p5', rnr:9,  pos:'ST', nachname:'Maier',  vorname:'Jonas', geb:'2014-05-03', spiele:3, paOk:9,  paNk:2, scOk:5, scNk:3, assists:4, tore:3, fouls:4, min:250, ausw:2, slv:79, spl:55, team:'U10', skills:{ Passen:68, Schießen:78, Zweikampf:70, Laufen:75 } },
-];
+// Skill-Bar-Farben für die Karte (zyklisch)
+const SKILL_COLORS = ['#c0392b','#922b21','#7f8c8d','#616a6b','#a93226','#6e2f1a','#884ea0','#1a5276'];
 
+let spielerData = [
+    { id:'p1', rnr:7,  pos:'MF', nachname:'Schmid', vorname:'Ben',   geb:'2014-07-06', foto:'', spiele:5, paOk:18, paNk:4, scOk:3, scNk:2, assists:3, tore:4, fouls:2, min:380, ausw:1, slv:75, spl:65, team:'U10', skills:{ Passen:72, Schießen:68, Zweikampf:55, Laufen:78 } },
+    { id:'p2', rnr:10, pos:'ST', nachname:'Riedl',  vorname:'Lukas', geb:'2014-09-24', foto:'', spiele:5, paOk:14, paNk:4, scOk:8, scNk:3, assists:5, tore:6, fouls:1, min:420, ausw:0, slv:82, spl:70, team:'U10', skills:{ Passen:65, Schießen:85, Zweikampf:60, Laufen:80 } },
+    { id:'p3', rnr:5,  pos:'IV', nachname:'Pagger', vorname:'Theo',  geb:'2014-07-26', foto:'', spiele:4, paOk:12, paNk:3, scOk:1, scNk:1, assists:2, tore:1, fouls:3, min:310, ausw:2, slv:68, spl:60, team:'U10', skills:{ Passen:60, Schießen:50, Zweikampf:72, Laufen:65 } },
+    { id:'p4', rnr:3,  pos:'GK', nachname:'Hofer',  vorname:'Nico',  geb:'2015-03-12', foto:'', spiele:5, paOk:6,  paNk:2, scOk:0, scNk:0, assists:1, tore:0, fouls:0, min:450, ausw:0, slv:71, spl:72, team:'U10', skills:{ Passen:55, Schießen:42, Zweikampf:68, Laufen:62 } },
+    { id:'p5', rnr:9,  pos:'ST', nachname:'Maier',  vorname:'Jonas', geb:'2014-05-03', foto:'', spiele:3, paOk:9,  paNk:2, scOk:5, scNk:3, assists:4, tore:3, fouls:4, min:250, ausw:2, slv:79, spl:55, team:'U10', skills:{ Passen:68, Schießen:78, Zweikampf:70, Laufen:75 } },
+];
 let spielerCounter = spielerData.length;
 let editingSpielerID = null;
 let editingAttrID    = null;
-let editingQuelleID  = null;
+let pendingFotoBase64 = null;
 
-// Trainer-Modus
 const trainerModusSet = new Set(['Muster Maria','Huber Karl']);
 
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 // NAVIGATION
-// ══════════════════════════════════════════════════════════════════
-const views  = ['main','spieler','mannschaften','users'];
-const navMap = { main:'navMain', spieler:'navSpieler', mannschaften:'navMannschaften', users:'navUsers' };
+// ══════════════════════════════════════════════════════════════
+const views  = ['main','spieler','karten','mannschaften','users'];
+const navMap = { main:'navMain', spieler:'navSpieler', karten:'navKarten', mannschaften:'navMannschaften', users:'navUsers' };
 let dtSpieler = null;
 
 window.showView = function(view) {
     views.forEach(v => {
-        document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1)).style.display = v === view ? 'block' : 'none';
+        const el = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1));
+        if (el) el.style.display = v === view ? 'block' : 'none';
     });
-    Object.entries(navMap).forEach(([v, id]) => document.getElementById(id)?.classList.toggle('nav-active', v === view));
-
-    if (view === 'spieler') {
-        renderSpielerTable();
-        renderAttributeTable();
-        renderQuellenTable();
-    }
+    Object.entries(navMap).forEach(([v,id]) => document.getElementById(id)?.classList.toggle('nav-active', v === view));
+    if (view === 'spieler') { renderSpielerTable(); renderAttributeTable(); renderQuellenTable(); }
+    if (view === 'karten')  { renderAlleKarten(); }
 };
 
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
+// SKILL-KARTE RENDERER
+// ══════════════════════════════════════════════════════════════
+function buildKarteHTML(s) {
+    const skills = s.skills || {};
+    const keys   = Object.keys(skills);
+    const fotoHTML = s.foto
+        ? `<img src="${s.foto}" style="width:100%;height:140px;object-fit:cover;object-position:top;">`
+        : `<div style="width:100%;height:140px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#333,#555);font-size:3rem;color:#888;"><i class="bi bi-person-bounding-box"></i></div>`;
+
+    const skillRows = keys.map((k, i) => {
+        const val  = skills[k];
+        const pct  = Math.round(Math.max(0, Math.min(100, (val - 40) / 60 * 100)));
+        const col  = SKILL_COLORS[i % SKILL_COLORS.length];
+        return `<div class="ma-skill-row">
+            <span class="ma-skill-label">${k}</span>
+            <div class="ma-skill-bar-wrap"><div class="ma-skill-bar" style="width:${pct}%;background:${col};"></div></div>
+            <span class="ma-skill-val">${val}</span>
+        </div>`;
+    }).join('');
+
+    const tore   = s.tore   || 0;
+    const assists = s.assists || 0;
+    const spiele  = s.spiele  || 0;
+
+    return `<div class="ma-card">
+        <div class="ma-card-header">
+            <div class="ma-name-col">${s.nachname.toUpperCase()}</div>
+            <div class="ma-photo-wrap">${fotoHTML}</div>
+            <div class="ma-slv-badge">${s.slv}</div>
+            <div class="ma-pos-badge">${s.pos}</div>
+        </div>
+        <div style="padding:4px 8px 2px;background:rgba(0,0,0,.5);">
+            <span style="font-size:.65rem;font-weight:700;color:#c0392b;letter-spacing:1px;text-transform:uppercase;">${s.vorname} ${s.nachname}</span>
+        </div>
+        <div class="ma-skills">${skillRows || '<span style="color:#888;font-size:.7rem;">Keine Skills</span>'}</div>
+        <div class="ma-footer">
+            <div class="ma-footer-stat"><div class="label">Tore</div><div class="value">${tore}</div></div>
+            <div class="ma-team-badge">${s.team}</div>
+            <div class="ma-footer-stat"><div class="label">Spiele</div><div class="value">${spiele}</div></div>
+        </div>
+        <div class="ma-bottom-strip">ATUS Bärnbach &nbsp;·&nbsp; ${s.team} &nbsp;·&nbsp; 2025</div>
+    </div>`;
+}
+
+window.renderAlleKarten = function() {
+    const filter = document.getElementById('kartenFilterTeam')?.value || '';
+    const data   = filter ? spielerData.filter(s => s.team === filter) : spielerData;
+    document.getElementById('kartenGrid').innerHTML = data.length === 0
+        ? '<p class="text-muted">Keine Spieler gefunden.</p>'
+        : data.map(s => buildKarteHTML(s)).join('');
+};
+
+window.aktualisierteKartenVorschau = function() {
+    const skills = {};
+    document.querySelectorAll('#skillWerteContainer input[type=range]').forEach(inp => {
+        skills[inp.dataset.skill] = parseInt(inp.value);
+    });
+    const preview = {
+        nachname: document.getElementById('spNachname').value || 'Nachname',
+        vorname:  document.getElementById('spVorname').value  || 'Vorname',
+        pos:      document.getElementById('spPosition').value || 'MF',
+        team:     document.getElementById('spTeam').value     || 'U10',
+        slv:      parseInt(document.getElementById('spSkillLevel').value) || 60,
+        tore:     parseInt(document.getElementById('spTore').value)       || 0,
+        assists:  parseInt(document.getElementById('spAssists').value)    || 0,
+        spiele:   parseInt(document.getElementById('spSpiele').value)     || 0,
+        foto:     pendingFotoBase64 || (editingSpielerID ? (spielerData.find(s=>s.id===editingSpielerID)?.foto||'') : ''),
+        skills,
+    };
+    document.getElementById('kartenVorschau').innerHTML = buildKarteHTML(preview);
+};
+
+// ══════════════════════════════════════════════════════════════
+// FOTO UPLOAD
+// ══════════════════════════════════════════════════════════════
+window.handleFotoUpload = function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { alert('Bild zu groß (max. 2 MB).'); return; }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        pendingFotoBase64 = e.target.result;
+        document.getElementById('fotoPreview').src = pendingFotoBase64;
+        document.getElementById('fotoPreview').classList.remove('d-none');
+        document.getElementById('fotoPlaceholder').classList.add('d-none');
+        document.getElementById('fotoRemoveBtn').style.display = '';
+        aktualisierteKartenVorschau();
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+};
+
+window.removeFoto = function() {
+    pendingFotoBase64 = null;
+    document.getElementById('fotoPreview').classList.add('d-none');
+    document.getElementById('fotoPreview').src = '';
+    document.getElementById('fotoPlaceholder').classList.remove('d-none');
+    document.getElementById('fotoRemoveBtn').style.display = 'none';
+};
+
+// ══════════════════════════════════════════════════════════════
 // SPIELER TABELLE
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 function pct(ok, nk) {
     const t = ok + nk;
     return t === 0 ? '—' : Math.round(ok / t * 100) + '%';
@@ -621,16 +807,18 @@ function pct(ok, nk) {
 function renderSpielerTable() {
     const filter = document.getElementById('filterMannschaft').value;
     const data   = filter ? spielerData.filter(s => s.team === filter) : spielerData;
-
-    const tbody = document.getElementById('spielerBody');
-    tbody.innerHTML = data.map(s => `
-        <tr>
+    document.getElementById('spielerBody').innerHTML = data.map(s => {
+        const fotoCell = s.foto
+            ? `<img src="${s.foto}" style="width:36px;height:36px;object-fit:cover;border-radius:50%;border:2px solid #c0392b;">`
+            : `<div style="width:36px;height:36px;border-radius:50%;border:2px dashed #ced4da;display:flex;align-items:center;justify-content:center;color:#adb5bd;font-size:.9rem;"><i class="bi bi-person"></i></div>`;
+        return `<tr>
+            <td>${fotoCell}</td>
             <td>${s.rnr}</td><td><span class="badge bg-secondary">${s.pos}</span></td>
             <td><strong>${s.nachname}</strong></td><td>${s.vorname}</td>
             <td>${s.geb ? new Date(s.geb).toLocaleDateString('de-AT') : '—'}</td>
             <td>${s.spiele}</td>
-            <td>${s.paOk}</td><td>${s.paNk}</td><td>${pct(s.paOk, s.paNk)}</td>
-            <td>${s.scOk}</td><td>${s.scNk}</td><td>${pct(s.scOk, s.scNk)}</td>
+            <td>${s.paOk}</td><td>${s.paNk}</td><td>${pct(s.paOk,s.paNk)}</td>
+            <td>${s.scOk}</td><td>${s.scNk}</td><td>${pct(s.scOk,s.scNk)}</td>
             <td>${s.assists}</td><td>${s.tore}</td><td>${s.fouls}</td>
             <td>${s.min}</td><td>${s.ausw}</td>
             <td><span class="badge bg-primary">${s.slv}</span></td>
@@ -640,80 +828,92 @@ function renderSpielerTable() {
                 <button class="btn btn-outline-secondary btn-sm" onclick="openSpielerModal('${s.id}')"><i class="bi bi-pencil"></i></button>
                 <button class="btn btn-outline-danger btn-sm ms-1" onclick="spielerLoeschen('${s.id}')"><i class="bi bi-trash"></i></button>
             </td>
-        </tr>`).join('');
-
+        </tr>`;
+    }).join('');
     if (dtSpieler) { dtSpieler.destroy(); dtSpieler = null; }
     dtSpieler = $('#spielerTable').DataTable({
         responsive: true,
         language: { url:'https://cdn.datatables.net/plug-ins/1.13.6/i18n/de-DE.json' },
-        columnDefs: [{ orderable: false, targets: -1 }]
+        columnDefs:[{ orderable:false, targets:-1 }]
     });
 }
 
 window.filterSpieler = function() { renderSpielerTable(); };
-
 window.spielerLoeschen = function(id) {
-    if (!confirm('Spieler wirklich ausblenden?')) return;
+    if (!confirm('Spieler wirklich löschen?')) return;
     spielerData = spielerData.filter(s => s.id !== id);
     renderSpielerTable();
 };
 
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 // SPIELER MODAL
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 window.openSpielerModal = function(id) {
     editingSpielerID = id;
-    const isEdit = id !== null;
+    pendingFotoBase64 = null;
+    const s = id ? spielerData.find(x => x.id === id) : null;
     document.getElementById('modalSpielerTitle').innerHTML =
-        `<i class="bi bi-person-badge-fill me-2"></i>${isEdit ? 'Spieler bearbeiten' : 'Neuer Spieler'}`;
+        `<i class="bi bi-person-badge-fill me-2"></i>${s ? 'Spieler bearbeiten' : 'Neuer Spieler'}`;
 
-    const s = isEdit ? spielerData.find(x => x.id === id) : null;
-    document.getElementById('spRNr').value       = s?.rnr      || '';
-    document.getElementById('spNachname').value  = s?.nachname || '';
-    document.getElementById('spVorname').value   = s?.vorname  || '';
-    document.getElementById('spGebDatum').value  = s?.geb      || '';
-    document.getElementById('spPosition').value  = s?.pos      || 'MF';
-    document.getElementById('spTeam').value      = s?.team     || 'U10';
-    document.getElementById('spSkillLevel').value= s?.slv      || 60;
-    document.getElementById('spSpiele').value    = s?.spiele   || 0;
-    document.getElementById('spPaesseOk').value  = s?.paOk     || 0;
-    document.getElementById('spPaesseNk').value  = s?.paNk     || 0;
-    document.getElementById('spSchuessOk').value = s?.scOk     || 0;
-    document.getElementById('spSchuessNk').value = s?.scNk     || 0;
-    document.getElementById('spAssists').value   = s?.assists  || 0;
-    document.getElementById('spTore').value      = s?.tore     || 0;
-    document.getElementById('spFouls').value     = s?.fouls    || 0;
-    document.getElementById('spMin').value       = s?.min      || 0;
-    document.getElementById('spAusw').value      = s?.ausw     || 0;
-    document.getElementById('spSPL').value       = s?.spl      || 60;
-    document.getElementById('spSPLval').textContent = s?.spl   || 60;
+    // Foto
+    document.getElementById('fotoPreview').classList.add('d-none');
+    document.getElementById('fotoPreview').src = '';
+    document.getElementById('fotoPlaceholder').classList.remove('d-none');
+    document.getElementById('fotoRemoveBtn').style.display = 'none';
+    if (s?.foto) {
+        document.getElementById('fotoPreview').src = s.foto;
+        document.getElementById('fotoPreview').classList.remove('d-none');
+        document.getElementById('fotoPlaceholder').classList.add('d-none');
+        document.getElementById('fotoRemoveBtn').style.display = '';
+    }
+
+    document.getElementById('spRNr').value        = s?.rnr      || '';
+    document.getElementById('spNachname').value   = s?.nachname || '';
+    document.getElementById('spVorname').value    = s?.vorname  || '';
+    document.getElementById('spGebDatum').value   = s?.geb      || '';
+    document.getElementById('spPosition').value   = s?.pos      || 'MF';
+    document.getElementById('spTeam').value       = s?.team     || 'U10';
+    document.getElementById('spSkillLevel').value = s?.slv      || 60;
+    document.getElementById('spSpiele').value     = s?.spiele   || 0;
+    document.getElementById('spPaesseOk').value   = s?.paOk     || 0;
+    document.getElementById('spPaesseNk').value   = s?.paNk     || 0;
+    document.getElementById('spSchuessOk').value  = s?.scOk     || 0;
+    document.getElementById('spSchuessNk').value  = s?.scNk     || 0;
+    document.getElementById('spAssists').value    = s?.assists  || 0;
+    document.getElementById('spTore').value       = s?.tore     || 0;
+    document.getElementById('spFouls').value      = s?.fouls    || 0;
+    document.getElementById('spMin').value        = s?.min      || 0;
+    document.getElementById('spAusw').value       = s?.ausw     || 0;
+    document.getElementById('spSPL').value        = s?.spl      || 60;
+    document.getElementById('spSPLval').textContent = s?.spl    || 60;
     document.getElementById('spError').classList.add('d-none');
     calcPct('pa'); calcPct('sc');
-
     renderSkillWerte(s);
+    aktualisierteKartenVorschau();
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSpieler')).show();
 };
 
-function renderSkillWerte(s) {
-    const team = s?.team || document.getElementById('spTeam').value || 'U10';
+window.renderSkillWerte = function(s) {
+    const team = s?.team || document.getElementById('spTeam')?.value || 'U10';
     const wertigkeiten = teamWertigkeiten[team] || [];
     const container = document.getElementById('skillWerteContainer');
+    if (!container) return;
     if (wertigkeiten.length === 0) {
         container.innerHTML = '<small class="text-muted">Keine Wertigkeiten definiert.</small>';
         return;
     }
-    container.innerHTML = wertigkeiten.map(w => {
+    container.innerHTML = wertigkeiten.map((w, i) => {
         const val = s?.skills?.[w] ?? 50;
-        return `
-        <div class="skill-row">
+        const col = SKILL_COLORS[i % SKILL_COLORS.length];
+        return `<div class="skill-row">
             <label>${w}</label>
-            <input type="range" min="40" max="100" value="${val}"
-                oninput="this.nextElementSibling.textContent=this.value"
+            <input type="range" min="40" max="100" value="${val}" style="accent-color:${col}"
+                oninput="this.nextElementSibling.textContent=this.value;aktualisierteKartenVorschau()"
                 data-skill="${w}">
-            <span class="val-badge badge bg-secondary">${val}</span>
+            <span class="val-badge badge" style="background:${col}">${val}</span>
         </div>`;
     }).join('');
-}
+};
 
 window.calcPct = function(type) {
     if (type === 'pa') {
@@ -730,48 +930,33 @@ window.calcPct = function(type) {
 window.spielerSpeichern = function() {
     const nachname = document.getElementById('spNachname').value.trim();
     const vorname  = document.getElementById('spVorname').value.trim();
-    const errorDiv = document.getElementById('spError');
-    if (!nachname || !vorname) {
-        errorDiv.classList.remove('d-none');
-        errorDiv.textContent = 'Bitte Vor- und Nachname eingeben.';
-        return;
-    }
-    errorDiv.classList.add('d-none');
+    const err      = document.getElementById('spError');
+    if (!nachname || !vorname) { err.classList.remove('d-none'); err.textContent='Bitte Vor- und Nachname eingeben.'; return; }
+    err.classList.add('d-none');
 
-    // Skill-Werte lesen
     const skills = {};
     document.querySelectorAll('#skillWerteContainer input[type=range]').forEach(inp => {
         skills[inp.dataset.skill] = parseInt(inp.value);
     });
 
-    // Neue Wertigkeiten für alle U's übernehmen wenn SuperAdmin und angehakt
-    const fuerAlleUs = document.getElementById('fuerAlleUs').checked;
     const team = document.getElementById('spTeam').value;
-    const neueWertigkeiten = Object.keys(skills).filter(w =>
-        !(teamWertigkeiten[team] || []).includes(w)
-    );
+    const neueWertigkeiten = Object.keys(skills).filter(w => !(teamWertigkeiten[team]||[]).includes(w));
     if (neueWertigkeiten.length > 0) {
-        if (fuerAlleUs) {
-            Object.keys(teamWertigkeiten).forEach(t => {
-                neueWertigkeiten.forEach(w => { if (!teamWertigkeiten[t].includes(w)) teamWertigkeiten[t].push(w); });
-            });
-        } else {
-            if (!teamWertigkeiten[team]) teamWertigkeiten[team] = [];
-            neueWertigkeiten.forEach(w => { if (!teamWertigkeiten[team].includes(w)) teamWertigkeiten[team].push(w); });
-        }
-        // Fehlende Skills bei anderen Spielern im gleichen Team ergänzen
+        if (!teamWertigkeiten[team]) teamWertigkeiten[team] = [];
+        neueWertigkeiten.forEach(w => { if (!teamWertigkeiten[team].includes(w)) teamWertigkeiten[team].push(w); });
         spielerData.filter(sp => sp.team === team).forEach(sp => {
             neueWertigkeiten.forEach(w => { if (!(w in sp.skills)) sp.skills[w] = 50; });
         });
     }
 
+    const existingFoto = editingSpielerID ? (spielerData.find(s=>s.id===editingSpielerID)?.foto||'') : '';
     const obj = {
-        id: editingSpielerID || ('p' + (++spielerCounter)),
+        id:       editingSpielerID || ('p'+(++spielerCounter)),
         rnr:      parseInt(document.getElementById('spRNr').value)||0,
         pos:      document.getElementById('spPosition').value,
         nachname, vorname,
         geb:      document.getElementById('spGebDatum').value,
-        team:     document.getElementById('spTeam').value,
+        team,
         slv:      parseInt(document.getElementById('spSkillLevel').value)||60,
         spl:      parseInt(document.getElementById('spSPL').value)||60,
         spiele:   parseInt(document.getElementById('spSpiele').value)||0,
@@ -784,6 +969,7 @@ window.spielerSpeichern = function() {
         fouls:    parseInt(document.getElementById('spFouls').value)||0,
         min:      parseInt(document.getElementById('spMin').value)||0,
         ausw:     parseInt(document.getElementById('spAusw').value)||0,
+        foto:     pendingFotoBase64 !== null ? pendingFotoBase64 : existingFoto,
         skills,
     };
 
@@ -793,20 +979,18 @@ window.spielerSpeichern = function() {
     } else {
         spielerData.push(obj);
     }
-
     renderSpielerTable();
     bootstrap.Modal.getInstance(document.getElementById('modalSpieler')).hide();
 };
 
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 // NEUE WERTIGKEIT
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 window.openNeueWertigkeit = function() {
     document.getElementById('nwName').value = '';
     document.getElementById('nwError').classList.add('d-none');
-    // Attribut-Dropdown befüllen
-    const sel = document.getElementById('nwAttribut');
-    sel.innerHTML = attribute.map(a => `<option value="${a.id}">${a.name} (${a.id})</option>`).join('');
+    document.getElementById('nwAttribut').innerHTML = attribute.map(a =>
+        `<option value="${a.id}">${a.name} (${a.id})</option>`).join('');
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalNeueWertigkeit')).show();
 };
 
@@ -814,67 +998,62 @@ window.wertigkeitSpeichern = function() {
     const name = document.getElementById('nwName').value.trim();
     const err  = document.getElementById('nwError');
     if (!name) { err.classList.remove('d-none'); err.textContent='Bitte einen Namen eingeben.'; return; }
-
     const team = document.getElementById('spTeam').value || 'U10';
     if (!teamWertigkeiten[team]) teamWertigkeiten[team] = [];
-
-    if (teamWertigkeiten[team].includes(name)) {
-        err.classList.remove('d-none'); err.textContent='Diese Wertigkeit existiert bereits.'; return;
-    }
-
-    // Zu allen Spielern im Team hinzufügen
+    if (teamWertigkeiten[team].includes(name)) { err.classList.remove('d-none'); err.textContent='Diese Wertigkeit existiert bereits.'; return; }
     teamWertigkeiten[team].push(name);
     spielerData.filter(s => s.team === team).forEach(s => { if (!(name in s.skills)) s.skills[name] = 50; });
-
-    // Falls "für alle U's" aktiv
-    if (!document.getElementById('fuerAlleUs').disabled && document.getElementById('fuerAlleUs').checked) {
-        Object.keys(teamWertigkeiten).forEach(t => {
-            if (t !== team) {
-                if (!teamWertigkeiten[t].includes(name)) teamWertigkeiten[t].push(name);
-                spielerData.filter(s => s.team === t).forEach(s => { if (!(name in s.skills)) s.skills[name] = 50; });
-            }
-        });
-    }
-
-    // Skill-Liste im Spieler-Modal neu rendern
     const s = editingSpielerID ? spielerData.find(x => x.id === editingSpielerID) : null;
     renderSkillWerte(s);
-
     bootstrap.Modal.getInstance(document.getElementById('modalNeueWertigkeit')).hide();
 };
 
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 // ATTRIBUT-TABELLE
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 function renderAttributeTable() {
     const tbody = document.getElementById('attributeBody');
     tbody.innerHTML = attribute.map(a => {
         const quellenBadges = a.quellen.map(qid => {
             const q = quellen.find(x => x.id === qid);
-            return q ? `<span class="badge bg-light text-dark border me-1">${q.name}</span>` : '';
+            return q ? `<span class="badge bg-light text-dark border me-1" style="font-size:.72rem;">${q.name}</span>` : '';
         }).join('');
         const lockIcon = a.fixed ? '<i class="bi bi-lock-fill fixed-icon me-1"></i>' : '';
-        const delBtn   = a.fixed ? `<button class="btn btn-outline-secondary btn-sm" disabled title="Basiswert"><i class="bi bi-trash"></i></button>`
-                                 : `<button class="btn btn-outline-danger btn-sm" onclick="attributLoeschen('${a.id}')"><i class="bi bi-trash"></i></button>`;
+        const delBtn   = a.fixed
+            ? `<button class="btn btn-outline-secondary btn-sm" disabled title="Basiswert"><i class="bi bi-trash"></i></button>`
+            : `<button class="btn btn-outline-danger btn-sm" onclick="attributLoeschen('${a.id}')"><i class="bi bi-trash"></i></button>`;
         return `<tr>
             <td><strong>${a.id}</strong></td>
             <td>${lockIcon}${a.name}</td>
             <td>${quellenBadges || '<span class="text-muted small">—</span>'}</td>
             <td>${a.fixed ? '<span class="badge bg-secondary">Basis</span>' : '<span class="badge bg-info text-dark">Custom</span>'}</td>
-            <td>${delBtn}</td>
+            <td>
+                <button class="btn btn-outline-secondary btn-sm me-1" onclick="openAttrModal('${a.id}')"><i class="bi bi-pencil"></i></button>
+                ${delBtn}
+            </td>
         </tr>`;
     }).join('');
 }
 
 window.openAttrModal = function(id) {
     editingAttrID = id || null;
+    const existing = id ? attribute.find(a => a.id === id) : null;
+    document.getElementById('modalAttrTitle').innerHTML =
+        `<i class="bi bi-sliders2 me-2"></i>${existing ? 'Kategorie bearbeiten' : 'Neue Kategorie'}`;
     document.getElementById('atError').classList.add('d-none');
-    document.getElementById('atKuerzel').value = '';
-    document.getElementById('atName').value = '';
-    // Quellen-Checkboxen
+
+    // Kürzel + Name
+    const kuerzelInput = document.getElementById('atKuerzel');
+    kuerzelInput.value    = existing?.id   || '';
+    kuerzelInput.disabled = !!existing;     // Kürzel bei Bearbeitung nicht änderbar
+    document.getElementById('atName').value = existing?.name || '';
+
+    // Quellen-Checkboxen mit aktuellem Stand
+    const currentQuellen = existing?.quellen || [];
     document.getElementById('atQuellenList').innerHTML = quellen.map(q =>
         `<div class="form-check">
-            <input class="form-check-input" type="checkbox" id="atq-${q.id}" value="${q.id}">
+            <input class="form-check-input" type="checkbox" id="atq-${q.id}" value="${q.id}"
+                ${currentQuellen.includes(q.id) ? 'checked' : ''}>
             <label class="form-check-label" for="atq-${q.id}">${q.name}</label>
         </div>`
     ).join('');
@@ -886,37 +1065,49 @@ window.attributSpeichern = function() {
     const name    = document.getElementById('atName').value.trim();
     const err     = document.getElementById('atError');
     if (!kuerzel || !name) { err.classList.remove('d-none'); err.textContent='Kürzel und Name erforderlich.'; return; }
-    if (attribute.find(a => a.id === kuerzel)) { err.classList.remove('d-none'); err.textContent='Dieses Kürzel existiert bereits.'; return; }
 
     const selectedQuellen = [...document.querySelectorAll('#atQuellenList input:checked')].map(cb => cb.value);
-    attribute.push({ id:kuerzel, name, quellen:selectedQuellen, fixed:false });
+
+    if (editingAttrID) {
+        // Bearbeitung bestehender Kategorie
+        const existing = attribute.find(a => a.id === editingAttrID);
+        if (existing) { existing.name = name; existing.quellen = selectedQuellen; }
+    } else {
+        // Neue Kategorie
+        if (attribute.find(a => a.id === kuerzel)) { err.classList.remove('d-none'); err.textContent='Dieses Kürzel existiert bereits.'; return; }
+        attribute.push({ id:kuerzel, name, quellen:selectedQuellen, fixed:false });
+    }
     renderAttributeTable();
-    // Quellen-Dropdown in anderen Modals aktualisieren
+    renderQuellenTable();
     bootstrap.Modal.getInstance(document.getElementById('modalAttr')).hide();
 };
 
 window.attributLoeschen = function(id) {
+    if (!confirm('Kategorie löschen?')) return;
     attribute = attribute.filter(a => a.id !== id);
     renderAttributeTable();
 };
 
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 // QUELLEN-TABELLE
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 function renderQuellenTable() {
     const tbody = document.getElementById('quellenBody');
     tbody.innerHTML = quellen.map(q => {
-        const attr = attribute.find(a => a.id === q.attr);
-        const isFixed = FIXED_QUELLEN.some(f => f.id === q.id);
+        const attr    = attribute.find(a => a.id === q.attr);
+        const isFixed = FIXED_QUELLEN_IDS.includes(q.id);
         const lockIcon = isFixed ? '<i class="bi bi-lock-fill fixed-icon me-1"></i>' : '';
         const delBtn   = isFixed
-            ? `<button class="btn btn-outline-secondary btn-sm me-1" onclick="renameQuelle('${q.id}')"><i class="bi bi-pencil"></i></button><button class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-trash"></i></button>`
-            : `<button class="btn btn-outline-secondary btn-sm me-1" onclick="renameQuelle('${q.id}')"><i class="bi bi-pencil"></i></button><button class="btn btn-outline-danger btn-sm" onclick="quelleLoeschen('${q.id}')"><i class="bi bi-trash"></i></button>`;
-        return `<tr id="qrow-${q.id}">
+            ? `<button class="btn btn-outline-secondary btn-sm" disabled title="Basiswert"><i class="bi bi-trash"></i></button>`
+            : `<button class="btn btn-outline-danger btn-sm" onclick="quelleLoeschen('${q.id}')"><i class="bi bi-trash"></i></button>`;
+        return `<tr>
             <td>${lockIcon}<span id="qname-${q.id}">${q.name}</span></td>
-            <td>${attr ? `<span class="badge bg-primary">${attr.id}</span> ${attr.name}` : '<span class="text-muted">—</span>'}</td>
+            <td>${attr ? `<span class="badge bg-primary me-1">${attr.id}</span>${attr.name}` : '<span class="text-muted">—</span>'}</td>
             <td>${isFixed ? '<span class="badge bg-secondary">Basis</span>' : '<span class="badge bg-info text-dark">Custom</span>'}</td>
-            <td>${delBtn}</td>
+            <td>
+                <button class="btn btn-outline-secondary btn-sm me-1" onclick="renameQuelle('${q.id}')"><i class="bi bi-pencil"></i></button>
+                ${delBtn}
+            </td>
         </tr>`;
     }).join('');
 }
@@ -924,39 +1115,28 @@ function renderQuellenTable() {
 window.renameQuelle = function(id) {
     const q = quellen.find(x => x.id === id);
     if (!q) return;
-    const newName = prompt('Neuer Name für Quelle:', q.name);
-    if (newName && newName.trim()) {
-        q.name = newName.trim();
-        renderQuellenTable();
-    }
+    const newName = prompt('Neuer Name:', q.name);
+    if (newName && newName.trim()) { q.name = newName.trim(); renderQuellenTable(); renderAttributeTable(); }
 };
 
 window.quelleLoeschen = function(id) {
     if (!confirm('Quelle löschen?')) return;
     quellen = quellen.filter(q => q.id !== id);
-    // Aus Attributen entfernen
     attribute.forEach(a => { a.quellen = a.quellen.filter(qid => qid !== id); });
-    renderQuellenTable();
-    renderAttributeTable();
+    renderQuellenTable(); renderAttributeTable();
 };
 
 window.openQuelleModal = function() {
     document.getElementById('quName').value = '';
     document.getElementById('quError').classList.add('d-none');
-    const sel = document.getElementById('quAttribut');
-    sel.innerHTML = '<option value="">— Kein Attribut —</option>' +
+    document.getElementById('quAttribut').innerHTML = '<option value="">— Kein Attribut —</option>' +
         attribute.map(a => `<option value="${a.id}">${a.name} (${a.id})</option>`).join('');
-    const isSuperAdmin = true; // TODO: aus Firebase-User lesen
-    const cb    = document.getElementById('quFuerAlleUs');
+    const isSuperAdmin = true;
+    const cb = document.getElementById('quFuerAlleUs');
+    cb.disabled = !isSuperAdmin; cb.checked = false;
     const label = document.getElementById('quFuerAlleUsLabel');
     const badge = document.getElementById('quFuerAlleUsBadge');
-    cb.disabled = !isSuperAdmin;
-    cb.checked  = false;
-    if (isSuperAdmin) {
-        label.style.color = '';
-        badge.className   = 'badge bg-danger ms-1';
-        badge.textContent = 'SuperAdmin';
-    }
+    if (isSuperAdmin) { label.style.color=''; badge.className='badge bg-danger ms-1'; badge.textContent='SuperAdmin'; }
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalQuelle')).show();
 };
 
@@ -967,64 +1147,48 @@ window.quelleSpeichern = function() {
     const err        = document.getElementById('quError');
     if (!name) { err.classList.remove('d-none'); err.textContent='Bitte einen Namen eingeben.'; return; }
     const id = 'q_' + Date.now();
-    quellen.push({ id, name, attr, alleUs: fuerAlleUs });
-    if (attr) {
-        const a = attribute.find(x => x.id === attr);
-        if (a) a.quellen.push(id);
-    }
-    // Wenn "Für alle U's": Wertigkeit in allen Teams als Skill-Feld anlegen
+    quellen.push({ id, name, attr });
+    if (attr) { const a = attribute.find(x => x.id === attr); if (a) a.quellen.push(id); }
     if (fuerAlleUs) {
         Object.keys(teamWertigkeiten).forEach(t => {
             if (!teamWertigkeiten[t].includes(name)) teamWertigkeiten[t].push(name);
             spielerData.filter(s => s.team === t).forEach(s => { if (!(name in s.skills)) s.skills[name] = 50; });
         });
     }
-    renderQuellenTable();
-    renderAttributeTable();
+    renderQuellenTable(); renderAttributeTable();
     bootstrap.Modal.getInstance(document.getElementById('modalQuelle')).hide();
 };
 
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 // CSV UPLOAD
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 window.handleCSV = function(event) {
     const file = event.target.files[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = function(e) {
-        const lines = e.target.result.split('\n').filter(l => l.trim());
+        const lines   = e.target.result.split('\n').filter(l => l.trim());
         const headers = lines[0].split(',').map(h => h.trim());
         let added = 0;
         for (let i = 1; i < lines.length; i++) {
             const vals = lines[i].split(',').map(v => v.trim());
             if (vals.length < 2) continue;
             const row = {};
-            headers.forEach((h, idx) => row[h] = vals[idx] || '');
+            headers.forEach((h, idx) => row[h] = vals[idx]||'');
             spielerData.push({
-                id: 'p' + (++spielerCounter),
-                rnr:      parseInt(row.RNr)||0,
-                pos:      row.Position||'MF',
-                nachname: row.Nachname||'',
-                vorname:  row.Vorname||'',
-                geb:      row.GebDatum||'',
-                spiele:   parseInt(row.Spiele)||0,
-                paOk:     parseInt(row.PaesseOk)||0,
-                paNk:     parseInt(row.PaesseNk)||0,
-                scOk:     parseInt(row.SchuessOk)||0,
-                scNk:     parseInt(row.SchuessNk)||0,
-                assists:  parseInt(row.Assists)||0,
-                tore:     parseInt(row.Tore)||0,
-                fouls:    parseInt(row.Fouls)||0,
-                min:      parseInt(row.MinGespielt)||0,
-                ausw:     parseInt(row.Auswechslungen)||0,
-                slv:      parseInt(row.SkillLevel)||60,
-                spl:      parseInt(row.SPL)||60,
-                team:     row.Mannschaft||'U10',
-                skills:   {},
+                id:'p'+(++spielerCounter), rnr:parseInt(row.RNr)||0,
+                pos:row.Position||'MF', nachname:row.Nachname||'', vorname:row.Vorname||'',
+                geb:row.GebDatum||'', foto:'',
+                spiele:parseInt(row.Spiele)||0, paOk:parseInt(row.PaesseOk)||0,
+                paNk:parseInt(row.PaesseNk)||0, scOk:parseInt(row.SchuessOk)||0,
+                scNk:parseInt(row.SchuessNk)||0, assists:parseInt(row.Assists)||0,
+                tore:parseInt(row.Tore)||0, fouls:parseInt(row.Fouls)||0,
+                min:parseInt(row.MinGespielt)||0, ausw:parseInt(row.Auswechslungen)||0,
+                slv:parseInt(row.SkillLevel)||60, spl:parseInt(row.SPL)||60,
+                team:row.Mannschaft||'U10', skills:{},
             });
             added++;
         }
-        document.getElementById('csvHinweis').classList.remove('d-none');
         renderSpielerTable();
         alert(`${added} Spieler importiert.`);
     };
@@ -1032,34 +1196,32 @@ window.handleCSV = function(event) {
     event.target.value = '';
 };
 
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 // MANNSCHAFTEN
-// ══════════════════════════════════════════════════════════════════
-const trainerModusList = () => [...trainerModusSet].sort();
+// ══════════════════════════════════════════════════════════════
 const mannschaftVerwalter = { 'mrow-u10':['Muster Maria'], 'mrow-u12':['Huber Karl'] };
 let editingRowId = null, mRowCounter = 0;
 
 function renderVerwalter(rowId) {
     const names = mannschaftVerwalter[rowId]||[];
-    const el = document.getElementById('mverwalter-' + rowId);
+    const el = document.getElementById('mverwalter-'+rowId);
     if (!el) return;
     el.innerHTML = names.length === 0 ? '<span class="text-muted">—</span>'
-        : names.map(n => `<span class="me-2"><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>${n}</span>`).join('');
+        : names.map(n=>`<span class="me-2"><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>${n}</span>`).join('');
 }
 
 window.openMannschaftModal = function(rowId) {
     editingRowId = rowId;
-    const isEdit = rowId !== null;
     document.getElementById('modalMannschaftTitle').innerHTML =
-        `<i class="bi bi-diagram-3-fill me-2"></i>${isEdit ? 'Mannschaft bearbeiten' : 'Neue Mannschaft'}`;
+        `<i class="bi bi-diagram-3-fill me-2"></i>${rowId ? 'Mannschaft bearbeiten' : 'Neue Mannschaft'}`;
     document.getElementById('mfError').classList.add('d-none');
-    document.getElementById('mfName').value = isEdit ? (document.getElementById('mname-'+rowId)?.textContent||'') : '';
-    const current = isEdit ? (mannschaftVerwalter[rowId]||[]) : [];
-    const liste = trainerModusList();
+    document.getElementById('mfName').value = rowId ? (document.getElementById('mname-'+rowId)?.textContent||'') : '';
+    const current = rowId ? (mannschaftVerwalter[rowId]||[]) : [];
+    const liste = [...trainerModusSet].sort();
     document.getElementById('mfVerwalterList').innerHTML = liste.length === 0
         ? '<small class="text-muted">Kein Benutzer mit aktivem Trainer-Modus.</small>'
         : liste.map(n => {
-            const cbId = 'mfv-' + n.replace(/\s/g,'');
+            const cbId = 'mfv-'+n.replace(/\s/g,'');
             return `<div class="form-check"><input class="form-check-input" type="checkbox" id="${cbId}" value="${n}" ${current.includes(n)?'checked':''}><label class="form-check-label" for="${cbId}"><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>${n}</label></div>`;
         }).join('');
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalMannschaft')).show();
@@ -1070,15 +1232,15 @@ window.mannschaftSpeichern = function() {
     const err  = document.getElementById('mfError');
     if (!name) { err.classList.remove('d-none'); err.textContent='Bitte Bezeichnung eingeben.'; return; }
     err.classList.add('d-none');
-    const selected = [...document.querySelectorAll('#mfVerwalterList input:checked')].map(cb => cb.value);
+    const selected = [...document.querySelectorAll('#mfVerwalterList input:checked')].map(cb=>cb.value);
     if (editingRowId) {
         document.getElementById('mname-'+editingRowId).textContent = name;
         mannschaftVerwalter[editingRowId] = selected;
         renderVerwalter(editingRowId);
     } else {
-        const rowId = 'mrow-' + (++mRowCounter);
+        const rowId = 'mrow-'+(++mRowCounter);
         mannschaftVerwalter[rowId] = selected;
-        document.getElementById('mannschaftenBody').insertAdjacentHTML('beforeend', `
+        document.getElementById('mannschaftenBody').insertAdjacentHTML('beforeend',`
             <tr id="${rowId}">
                 <td><strong id="mname-${rowId}">${name}</strong></td>
                 <td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked onchange="toggleMannschaft('${rowId}',this)"></div></td>
@@ -1091,11 +1253,10 @@ window.mannschaftSpeichern = function() {
                 </td>
             </tr>`);
         renderVerwalter(rowId);
-        // Spieler-Modal Mannschaft-Dropdown + Filter aktualisieren
-        ['spTeam','filterMannschaft','buMannschaft'].forEach(sel => {
+        ['spTeam','filterMannschaft','kartenFilterTeam','buMannschaft'].forEach(sel => {
             const el = document.getElementById(sel);
-            if (el && ![...el.options].some(o => o.value === name))
-                el.insertAdjacentHTML('beforeend', `<option value="${name}">${name}</option>`);
+            if (el && ![...el.options].some(o=>o.value===name))
+                el.insertAdjacentHTML('beforeend',`<option value="${name}">${name}</option>`);
         });
         if (!teamWertigkeiten[name]) teamWertigkeiten[name] = [...(teamWertigkeiten['U10']||[])];
         updateMannschaftStats();
@@ -1110,18 +1271,17 @@ window.toggleMannschaft = function(rowId, cb) {
     updateMannschaftStats();
 };
 window.softDelete = function(rowId) {
-    document.getElementById('mactions-'+rowId).innerHTML = `
+    document.getElementById('mactions-'+rowId).innerHTML=`
         <span class="text-muted small me-2">Ausblenden?</span>
         <button class="btn btn-warning btn-sm" onclick="softDeleteConfirm('${rowId}')"><i class="bi bi-check-lg" style="color:#fff"></i> Ja</button>
-        <button class="btn btn-outline-secondary btn-sm ms-1" onclick="restoreActions('${rowId}')"><i class="bi bi-x-lg"></i> Nein</button>`;
+        <button class="btn btn-outline-secondary btn-sm ms-1" onclick="restoreActions('${rowId}')"><i class="bi bi-x-lg"></i></button>`;
 };
 window.softDeleteConfirm = function(rowId) {
-    const row = document.getElementById(rowId);
-    row.style.opacity='0.45';
+    const row=document.getElementById(rowId); row.style.opacity='.45';
     row.querySelector('input[type=checkbox]').disabled=true;
     document.getElementById('mstatus-'+rowId).className='badge bg-dark';
     document.getElementById('mstatus-'+rowId).textContent='Ausgeblendet';
-    document.getElementById('mactions-'+rowId).innerHTML = `
+    document.getElementById('mactions-'+rowId).innerHTML=`
         <button class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-pencil"></i></button>
         <button class="btn btn-success btn-sm ms-1" onclick="restoreRow('${rowId}')"><i class="bi bi-arrow-counterclockwise"></i></button>
         <button class="btn btn-danger btn-sm ms-1" onclick="hardDelete('${rowId}')"><i class="bi bi-trash-fill"></i></button>`;
@@ -1135,16 +1295,16 @@ window.restoreRow = function(rowId) {
     restoreActions(rowId); updateMannschaftStats();
 };
 window.hardDelete = function(rowId) {
-    document.getElementById('mactions-'+rowId).innerHTML = `
+    document.getElementById('mactions-'+rowId).innerHTML=`
         <span class="text-danger small me-2 fw-bold">Unwiderruflich?</span>
         <button class="btn btn-danger btn-sm" onclick="hardDeleteConfirm('${rowId}')"><i class="bi bi-trash-fill"></i> Ja</button>
-        <button class="btn btn-outline-secondary btn-sm ms-1" onclick="restoreActions('${rowId}')"><i class="bi bi-x-lg"></i> Nein</button>`;
+        <button class="btn btn-outline-secondary btn-sm ms-1" onclick="restoreActions('${rowId}')"><i class="bi bi-x-lg"></i></button>`;
 };
 window.hardDeleteConfirm = function(rowId) {
     document.getElementById(rowId).remove(); delete mannschaftVerwalter[rowId]; updateMannschaftStats();
 };
 window.restoreActions = function(rowId) {
-    document.getElementById('mactions-'+rowId).innerHTML = `
+    document.getElementById('mactions-'+rowId).innerHTML=`
         <button class="btn btn-outline-secondary btn-sm" onclick="openMannschaftModal('${rowId}')"><i class="bi bi-pencil"></i></button>
         <button class="btn btn-warning btn-sm ms-1" onclick="softDelete('${rowId}')"><i class="bi bi-trash" style="color:#fff"></i></button>
         <button class="btn btn-danger btn-sm ms-1" onclick="hardDelete('${rowId}')"><i class="bi bi-trash-fill"></i></button>`;
@@ -1156,9 +1316,9 @@ function updateMannschaftStats() {
     document.getElementById('statTeamsInaktiv').textContent=rows.filter(r=>r.querySelector('.badge')?.textContent==='Inaktiv').length;
 }
 
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 // BENUTZER
-// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 window.trainerModusChanged = function(name, aktiv) {
     if (aktiv) trainerModusSet.add(name); else trainerModusSet.delete(name);
 };
@@ -1197,7 +1357,6 @@ window.benutzerSpeichern = function() {
 <!-- Firebase -->
 <script type="module">
   import { initializeApp }                                            from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore }                                             from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   const app  = initializeApp({ apiKey:"AIzaSyDk5nj3fwQSAu6SzSQ1RDJWACD5Rfb2m64", authDomain:"matchflow-997aa.firebaseapp.com", projectId:"matchflow-997aa", storageBucket:"matchflow-997aa.firebasestorage.app", messagingSenderId:"240206981355", appId:"1:240206981355:web:a19432550a530b767b76ae" });
   const auth = getAuth(app);
