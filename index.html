@@ -343,16 +343,6 @@
                             </div>
                             <div id="skillWerteContainer"></div>
 
-                            <!-- SuperAdmin: für alle U's -->
-                            <div class="mt-3 pt-2 border-top">
-                                <div class="form-check" id="alleUsCheckBlock">
-                                    <input class="form-check-input" type="checkbox" id="fuerAlleUs" disabled>
-                                    <label class="form-check-label text-muted" for="fuerAlleUs" id="fuerAlleUsLabel">
-                                        Neue Wertigkeit für <strong>ALLE U's</strong> übernehmen
-                                        <span class="badge bg-secondary ms-1" id="fuerAlleUsBadge">nur SuperAdmin</span>
-                                    </label>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -442,6 +432,15 @@
                 <div class="mb-3">
                     <label class="form-label fw-bold">Attribut zuordnen</label>
                     <select id="quAttribut" class="form-select"></select>
+                </div>
+                <div class="mt-3 pt-2 border-top">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="quFuerAlleUs" disabled>
+                        <label class="form-check-label" for="quFuerAlleUs" id="quFuerAlleUsLabel" style="color:#adb5bd">
+                            Quelle für <strong>ALLE U's</strong> ausspielen
+                            <span class="badge bg-secondary ms-1" id="quFuerAlleUsBadge">nur SuperAdmin</span>
+                        </label>
+                    </div>
                 </div>
                 <div id="quError" class="alert alert-danger d-none"></div>
             </div>
@@ -608,14 +607,6 @@ window.showView = function(view) {
         renderSpielerTable();
         renderAttributeTable();
         renderQuellenTable();
-        // SuperAdmin: aktiviere "für alle U's" checkbox
-        const isSuperAdmin = true; // TODO: aus Firebase-User lesen
-        document.getElementById('fuerAlleUs').disabled = !isSuperAdmin;
-        if (isSuperAdmin) {
-            document.getElementById('fuerAlleUsBadge').className = 'badge bg-danger ms-1';
-            document.getElementById('fuerAlleUsBadge').textContent = 'SuperAdmin';
-            document.getElementById('fuerAlleUsLabel').classList.remove('text-muted');
-        }
     }
 };
 
@@ -955,19 +946,38 @@ window.openQuelleModal = function() {
     const sel = document.getElementById('quAttribut');
     sel.innerHTML = '<option value="">— Kein Attribut —</option>' +
         attribute.map(a => `<option value="${a.id}">${a.name} (${a.id})</option>`).join('');
+    const isSuperAdmin = true; // TODO: aus Firebase-User lesen
+    const cb    = document.getElementById('quFuerAlleUs');
+    const label = document.getElementById('quFuerAlleUsLabel');
+    const badge = document.getElementById('quFuerAlleUsBadge');
+    cb.disabled = !isSuperAdmin;
+    cb.checked  = false;
+    if (isSuperAdmin) {
+        label.style.color = '';
+        badge.className   = 'badge bg-danger ms-1';
+        badge.textContent = 'SuperAdmin';
+    }
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalQuelle')).show();
 };
 
 window.quelleSpeichern = function() {
-    const name = document.getElementById('quName').value.trim();
-    const attr = document.getElementById('quAttribut').value;
-    const err  = document.getElementById('quError');
+    const name       = document.getElementById('quName').value.trim();
+    const attr       = document.getElementById('quAttribut').value;
+    const fuerAlleUs = document.getElementById('quFuerAlleUs').checked;
+    const err        = document.getElementById('quError');
     if (!name) { err.classList.remove('d-none'); err.textContent='Bitte einen Namen eingeben.'; return; }
     const id = 'q_' + Date.now();
-    quellen.push({ id, name, attr });
+    quellen.push({ id, name, attr, alleUs: fuerAlleUs });
     if (attr) {
         const a = attribute.find(x => x.id === attr);
         if (a) a.quellen.push(id);
+    }
+    // Wenn "Für alle U's": Wertigkeit in allen Teams als Skill-Feld anlegen
+    if (fuerAlleUs) {
+        Object.keys(teamWertigkeiten).forEach(t => {
+            if (!teamWertigkeiten[t].includes(name)) teamWertigkeiten[t].push(name);
+            spielerData.filter(s => s.team === t).forEach(s => { if (!(name in s.skills)) s.skills[name] = 50; });
+        });
     }
     renderQuellenTable();
     renderAttributeTable();
