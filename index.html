@@ -1,618 +1,635 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <title>⚽ MatchFlow v1.3 – Dashboard</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
-    <style>
-        body { background-color:#f5f6fa; }
-        .card { border-radius:12px; }
-        .navbar-brand { font-weight:bold; }
-        .logo-small { font-size:.8rem; color:#ccc; }
-        .menu-btn { margin-right:6px; }
-        .dataTables_wrapper .dataTables_filter input { border-radius:6px; border:1px solid #ced4da; padding:4px 8px; }
-        .nav-active { background-color:rgba(255,255,255,.15)!important; border-color:rgba(255,255,255,.6)!important; }
-        .role-card { border-left:5px solid; border-radius:12px; }
-        .role-superadmin{border-color:#dc3545} .role-trainer{border-color:#0d6efd}
-        .role-eltern{border-color:#198754}     .role-spieler{border-color:#fd7e14}
-        .perm-check{color:#198754;font-size:1.1rem} .perm-cross{color:#dc3545;font-size:1.1rem} .perm-eye{color:#0d6efd;font-size:1.1rem}
-        .fixed-icon{color:#adb5bd;font-size:.8rem}
-        .skill-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-        .skill-row label{min-width:130px;font-size:.9rem}
-        .skill-row input[type=range]{flex:1}
-        .skill-row .val-badge{min-width:36px;text-align:center;font-weight:bold}
+<meta charset="UTF-8">
+<title>⚽ MatchFlow v1.4</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+<link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+<style>
+body{background:#f5f6fa}
+.card{border-radius:12px}
+.navbar-brand{font-weight:700}
+.logo-small{font-size:.8rem;color:#ccc}
+.menu-btn{margin-right:6px}
+.nav-active{background-color:rgba(255,255,255,.15)!important;border-color:rgba(255,255,255,.6)!important}
+.role-card{border-left:5px solid;border-radius:12px}
+.role-superadmin{border-color:#dc3545}.role-trainer{border-color:#0d6efd}.role-eltern{border-color:#198754}.role-spieler{border-color:#fd7e14}
+.perm-check{color:#198754;font-size:1.1rem}.perm-cross{color:#dc3545;font-size:1.1rem}.perm-eye{color:#0d6efd;font-size:1.1rem}
+.fixed-icon{color:#adb5bd;font-size:.8rem}
 
-        /* ── MATCH ATTAX KARTE ───────────────────────────── */
-        .ma-card {
-            width:220px; min-height:340px; border-radius:14px;
-            background:linear-gradient(160deg,#1a1a1a 0%,#2c2c2c 40%,#8b0000 100%);
-            box-shadow:0 8px 24px rgba(0,0,0,.45);
-            display:flex; flex-direction:column; overflow:hidden;
-            position:relative; font-family:'Segoe UI',sans-serif; color:#fff;
-            border:3px solid #c0392b;
-        }
-        .ma-card-header {
-            display:flex; align-items:stretch; min-height:140px; position:relative;
-            background:linear-gradient(135deg,#111 0%,#2d0000 100%);
-        }
-        .ma-name-col {
-            writing-mode:vertical-rl; text-orientation:mixed; transform:rotate(180deg);
-            padding:8px 4px; font-size:.75rem; font-weight:900; letter-spacing:2px;
-            color:#c0392b; text-transform:uppercase; background:rgba(0,0,0,.4);
-            min-width:28px; display:flex; align-items:center; justify-content:center;
-        }
-        .ma-photo-wrap {
-            flex:1; overflow:hidden; display:flex; align-items:center; justify-content:center;
-            background:#222;
-        }
-        .ma-photo-wrap img { width:100%; height:140px; object-fit:cover; object-position:top; }
-        .ma-photo-placeholder {
-            width:100%; height:140px; display:flex; align-items:center; justify-content:center;
-            background:linear-gradient(135deg,#333,#555); font-size:3rem; color:#888;
-        }
-        .ma-slv-badge {
-            position:absolute; top:6px; right:6px;
-            background:#c0392b; color:#fff; font-size:1.1rem; font-weight:900;
-            padding:4px 8px; border-radius:6px; border:2px solid #fff;
-            text-shadow:0 1px 2px rgba(0,0,0,.5);
-        }
-        .ma-pos-badge {
-            position:absolute; bottom:6px; right:6px;
-            background:#7f8c8d; color:#fff; font-size:.65rem; font-weight:700;
-            padding:2px 6px; border-radius:4px;
-        }
-        .ma-skills {
-            padding:6px 8px; background:rgba(0,0,0,.3); flex:1;
-        }
-        .ma-skill-row {
-            display:flex; align-items:center; gap:4px; margin-bottom:3px;
-        }
-        .ma-skill-label {
-            font-size:.6rem; font-weight:700; text-transform:uppercase;
-            letter-spacing:.5px; min-width:60px; color:#ccc;
-        }
-        .ma-skill-bar-wrap { flex:1; background:rgba(255,255,255,.12); border-radius:3px; height:7px; overflow:hidden; }
-        .ma-skill-bar { height:100%; border-radius:3px; transition:width .3s; }
-        .ma-skill-val { font-size:.7rem; font-weight:900; min-width:22px; text-align:right; }
-        .ma-footer {
-            display:flex; align-items:center; justify-content:space-between;
-            background:#c0392b; padding:6px 8px; border-top:2px solid #fff2;
-        }
-        .ma-footer-stat { text-align:center; }
-        .ma-footer-stat .label { font-size:.5rem; font-weight:700; letter-spacing:.5px; color:rgba(255,255,255,.7); text-transform:uppercase; }
-        .ma-footer-stat .value { font-size:1.1rem; font-weight:900; line-height:1.1; }
-        .ma-team-badge {
-            background:#111; border-radius:50%; width:36px; height:36px;
-            display:flex; align-items:center; justify-content:center;
-            font-size:.55rem; font-weight:800; text-align:center; border:2px solid #fff3;
-        }
-        .ma-bottom-strip {
-            background:#111; padding:3px 8px; text-align:center;
-            font-size:.5rem; color:#888; letter-spacing:.5px; text-transform:uppercase;
-        }
-        /* Karten-Seite grid */
-        .karten-grid { display:flex; flex-wrap:wrap; gap:20px; padding:10px 0; }
-        /* Foto-Vorschau */
-        .foto-vorschau { width:80px; height:80px; object-fit:cover; border-radius:8px; border:2px solid #dee2e6; }
-        .foto-placeholder { width:80px; height:80px; border-radius:8px; border:2px dashed #ced4da; display:flex; align-items:center; justify-content:center; color:#adb5bd; font-size:1.8rem; }
-    </style>
+/* TIME PICKER */
+.flatpickr-input{background:#fff!important}
+.time-input-group{position:relative}
+.time-input-group .bi{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#6c757d;z-index:5;pointer-events:none}
+.time-input-group input{padding-left:32px}
+
+/* TRAINING PAGE */
+.training-section-badge{font-size:.7rem;padding:3px 8px;border-radius:10px}
+.heim-auswarts-toggle .btn{border-radius:20px;font-size:.85rem}
+.matchup-display{font-size:1.1rem;font-weight:700;letter-spacing:.5px}
+.matchup-vs{color:#6c757d;font-size:.85rem;margin:0 8px}
+
+/* TAKTIKFELD */
+.taktikfeld-wrap{position:relative;width:100%;max-width:500px;margin:0 auto}
+#taktikfeld{
+  position:relative;width:100%;padding-top:62%;
+  background:#2d8a4e;border:3px solid #fff;border-radius:6px;overflow:hidden;cursor:crosshair;
+}
+.tk-field-svg{position:absolute;inset:0;width:100%;height:100%}
+.tk-item{
+  position:absolute;width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.65rem;font-weight:700;color:#fff;cursor:move;user-select:none;
+  border:2px solid rgba(255,255,255,.8);transform:translate(-50%,-50%);
+  transition:box-shadow .1s;z-index:10;
+}
+.tk-item:hover{box-shadow:0 0 0 3px rgba(255,255,255,.5)}
+.tk-item.selected{box-shadow:0 0 0 3px #fff}
+.tk-item.cone{background:#e67e22;border-radius:3px;width:22px;height:22px;clip-path:polygon(50% 0%,100% 100%,0% 100%);border:none}
+.tk-item.ball{background:#fff;border:2px solid #333;color:#333}
+.tk-item.goal{background:none;border:3px solid #fff;border-radius:2px;width:36px;height:16px;color:#fff;font-size:.5rem}
+.tk-toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.tk-toolbar .btn{font-size:.75rem;padding:4px 10px}
+.tk-toolbar .btn.active{border-color:#fff;background:rgba(255,255,255,.2)}
+
+/* SKILL KARTE */
+.ma-card{width:200px;min-height:310px;border-radius:12px;background:linear-gradient(160deg,#1a1a1a 0%,#2c2c2c 40%,#8b0000 100%);box-shadow:0 8px 24px rgba(0,0,0,.45);display:flex;flex-direction:column;overflow:hidden;font-family:'Segoe UI',sans-serif;color:#fff;border:3px solid #c0392b}
+.ma-card-header{display:flex;align-items:stretch;min-height:120px;position:relative;background:linear-gradient(135deg,#111 0%,#2d0000 100%)}
+.ma-name-col{writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);padding:6px 3px;font-size:.7rem;font-weight:900;letter-spacing:2px;color:#c0392b;text-transform:uppercase;background:rgba(0,0,0,.4);min-width:24px;display:flex;align-items:center;justify-content:center}
+.ma-photo-wrap{flex:1;overflow:hidden}
+.ma-photo-wrap img{width:100%;height:120px;object-fit:cover;object-position:top}
+.ma-photo-ph{width:100%;height:120px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#333,#555);font-size:2.5rem;color:#888}
+.ma-slv-badge{position:absolute;top:5px;right:5px;background:#c0392b;color:#fff;font-size:1rem;font-weight:900;padding:3px 7px;border-radius:5px;border:2px solid #fff}
+.ma-pos-badge{position:absolute;bottom:4px;right:5px;background:#7f8c8d;color:#fff;font-size:.6rem;font-weight:700;padding:2px 5px;border-radius:3px}
+.ma-skills{padding:5px 7px;background:rgba(0,0,0,.3);flex:1}
+.ma-skill-row{display:flex;align-items:center;gap:3px;margin-bottom:2px}
+.ma-skill-label{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;min-width:54px;color:#ccc}
+.ma-skill-bar-wrap{flex:1;background:rgba(255,255,255,.12);border-radius:3px;height:6px;overflow:hidden}
+.ma-skill-bar{height:100%;border-radius:3px}
+.ma-skill-val{font-size:.68rem;font-weight:900;min-width:20px;text-align:right}
+.ma-footer{display:flex;align-items:center;justify-content:space-between;background:#c0392b;padding:5px 7px;border-top:2px solid rgba(255,255,255,.2)}
+.ma-footer-stat{text-align:center}
+.ma-footer-stat .label{font-size:.48rem;font-weight:700;letter-spacing:.5px;color:rgba(255,255,255,.7);text-transform:uppercase}
+.ma-footer-stat .value{font-size:1rem;font-weight:900;line-height:1.1}
+.ma-team-badge{background:#111;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:.5rem;font-weight:800;text-align:center;border:2px solid rgba(255,255,255,.3)}
+.ma-bottom-strip{background:#111;padding:2px 7px;text-align:center;font-size:.48rem;color:#888;letter-spacing:.5px;text-transform:uppercase}
+.karten-grid{display:flex;flex-wrap:wrap;gap:18px;padding:8px 0}
+
+/* NOTIZ */
+.notiz-row-inhalt{max-height:60px;overflow:hidden;font-size:.85rem}
+.ql-container{min-height:120px}
+.ql-toolbar{border-radius:6px 6px 0 0}
+.ql-container{border-radius:0 0 6px 6px}
+
+/* FOTO */
+.foto-vorschau{width:60px;height:60px;object-fit:cover;border-radius:50%;border:2px solid #c0392b}
+.foto-placeholder-sm{width:60px;height:60px;border-radius:50%;border:2px dashed #ced4da;display:flex;align-items:center;justify-content:center;color:#adb5bd;font-size:1.4rem}
+</style>
 </head>
 <body>
 
 <!-- LOGIN -->
-<div id="loginScreen" style="display:none;position:fixed;inset:0;background:#f5f6fa;z-index:9999;display:flex;align-items:center;justify-content:center;">
-    <div class="card shadow p-4" style="width:100%;max-width:380px;">
-        <h4 class="mb-4 text-center">⚽ MatchFlow Login</h4>
-        <div id="loginError" class="alert alert-danger d-none"></div>
-        <div class="mb-3"><label class="form-label">E-Mail</label><input type="email" id="loginEmail" class="form-control"></div>
-        <div class="mb-3"><label class="form-label">Passwort</label><input type="password" id="loginPassword" class="form-control"></div>
-        <button class="btn btn-dark w-100" onclick="doLogin()">Einloggen</button>
-    </div>
+<div id="loginScreen" style="display:none;position:fixed;inset:0;background:#f5f6fa;z-index:9999;display:flex;align-items:center;justify-content:center">
+  <div class="card shadow p-4" style="width:100%;max-width:380px">
+    <h4 class="mb-4 text-center">⚽ MatchFlow Login</h4>
+    <div id="loginError" class="alert alert-danger d-none"></div>
+    <div class="mb-3"><label class="form-label">E-Mail</label><input type="email" id="loginEmail" class="form-control"></div>
+    <div class="mb-3"><label class="form-label">Passwort</label><input type="password" id="loginPassword" class="form-control"></div>
+    <button class="btn btn-dark w-100" onclick="doLogin()">Einloggen</button>
+  </div>
 </div>
 
-<!-- DASHBOARD -->
-<div id="dashboard" style="display:none;">
+<div id="dashboard" style="display:none">
 
 <!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="#">⚽ MatchFlow <span class="logo-small">v1.3</span></a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <div class="ms-auto d-flex flex-wrap gap-1 align-items-center">
-                <button id="navMain"         class="btn btn-outline-light menu-btn nav-active" onclick="showView('main')"><i class="bi bi-speedometer2"></i> Dashboard</button>
-                <button id="navSpieler"      class="btn btn-outline-light menu-btn" onclick="showView('spieler')"><i class="bi bi-trophy-fill"></i> Spieler</button>
-                <button id="navKarten"       class="btn btn-outline-light menu-btn" onclick="showView('karten')"><i class="bi bi-person-badge-fill"></i> Karten</button>
-                <button class="btn btn-outline-light menu-btn" onclick="showView('main')"><i class="bi bi-calendar-plus"></i> Neuer Spiel/Trainingstag</button>
-                <button class="btn btn-outline-light menu-btn" onclick="showView('main')"><i class="bi bi-plus-circle"></i> Neues Spiel</button>
-                <button class="btn btn-outline-light menu-btn" onclick="showView('main')"><i class="bi bi-list-ul"></i> Alle Spiele</button>
-                <button class="btn btn-outline-light menu-btn" onclick="showView('main')"><i class="bi bi-file-earmark-pdf"></i> Export</button>
-                <button id="navMannschaften" class="btn btn-outline-info menu-btn"    onclick="showView('mannschaften')"><i class="bi bi-diagram-3-fill"></i> Mannschaften</button>
-                <button id="navUsers"        class="btn btn-outline-warning menu-btn" onclick="showView('users')"><i class="bi bi-shield-lock-fill"></i> Benutzerverwaltung</button>
-                <button class="btn btn-outline-danger" onclick="doLogout()"><i class="bi bi-box-arrow-right"></i> Logout</button>
-            </div>
-        </div>
+  <div class="container-fluid">
+    <a class="navbar-brand">⚽ MatchFlow <span class="logo-small">v1.4</span></a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <div class="ms-auto d-flex flex-wrap gap-1 align-items-center">
+        <button id="navMain"          class="btn btn-outline-light menu-btn nav-active" onclick="showView('main')"><i class="bi bi-speedometer2"></i> Dashboard</button>
+        <button id="navSpieler"       class="btn btn-outline-light menu-btn" onclick="showView('spieler')"><i class="bi bi-people-fill"></i> Spieler</button>
+        <button id="navKarten"        class="btn btn-outline-light menu-btn" onclick="showView('karten')"><i class="bi bi-person-badge-fill"></i> Karten</button>
+        <!-- ALT: Spieler inkl. Skills – versteckt, nicht klickbar -->
+        <button class="btn btn-outline-secondary menu-btn" disabled title="Archiviert" style="opacity:.35;cursor:not-allowed">
+          <i class="bi bi-archive-fill"></i> Spieler inkl. Skills
+        </button>
+        <button id="navTraining"      class="btn btn-outline-light menu-btn" onclick="showView('training')"><i class="bi bi-calendar-plus"></i> Neues Spiel/Training</button>
+        <button class="btn btn-outline-light menu-btn"><i class="bi bi-file-earmark-pdf"></i> Export</button>
+        <button id="navMannschaften"  class="btn btn-outline-info menu-btn" onclick="showView('mannschaften')"><i class="bi bi-diagram-3-fill"></i> Mannschaften</button>
+        <button id="navUsers"         class="btn btn-outline-warning menu-btn" onclick="showView('users')"><i class="bi bi-shield-lock-fill"></i> Benutzerverwaltung</button>
+        <button class="btn btn-outline-danger" onclick="doLogout()"><i class="bi bi-box-arrow-right"></i> Logout</button>
+      </div>
     </div>
+  </div>
 </nav>
 
-<!-- ===== MAIN VIEW ===== -->
+<!-- ===== MAIN ===== -->
 <div id="viewMain" class="container-fluid p-4">
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Spieler gesamt</h6><h3>5</h3></div></div>
-        <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Im Kader</h6><h3>5</h3></div></div>
-        <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Spiele</h6><h3>5</h3></div></div>
-        <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Tore gesamt</h6><h3>14</h3></div></div>
-    </div>
-    <div class="card shadow-sm p-3 mt-4">
-        <h5>Alle Spiele</h5>
-        <table class="table"><thead class="table-dark"><tr><th>Spiel</th><th>Datum</th><th>Spielform</th><th>Status</th></tr></thead>
-        <tbody>
-        <tr><td>ATUS Bärnbach vs Team X</td><td>20.06.2026</td><td>6+1</td><td><span class="badge bg-success">Beendet</span></td></tr>
-        <tr><td>ATUS Bärnbach vs Team Y</td><td>25.06.2026</td><td>5+1</td><td><span class="badge bg-warning text-dark">Geplant</span></td></tr>
-        </tbody></table>
-    </div>
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Spieler gesamt</h6><h3>5</h3></div></div>
+    <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Im Kader</h6><h3>5</h3></div></div>
+    <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Spiele</h6><h3>5</h3></div></div>
+    <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Tore gesamt</h6><h3>14</h3></div></div>
+  </div>
 </div>
 
-<!-- ===== SPIELER VIEW ===== -->
-<div id="viewSpieler" class="container-fluid p-4" style="display:none;">
-    <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-2">
-        <h4 class="mb-0"><i class="bi bi-trophy-fill text-warning me-2"></i>Spielerverwaltung</h4>
-        <div class="d-flex gap-2">
-            <select id="filterMannschaft" class="form-select form-select-sm" style="width:auto" onchange="filterSpieler()">
-                <option value="">Alle Mannschaften</option>
-                <option value="U10" selected>U10</option>
-                <option value="U12">U12</option>
-            </select>
-            <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('csvInput').click()">
-                <i class="bi bi-upload"></i> CSV
-            </button>
-            <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="handleCSV(event)">
-            <button class="btn btn-dark btn-sm" onclick="openSpielerModal(null)">
-                <i class="bi bi-person-plus-fill"></i> Neuer Spieler
-            </button>
-        </div>
+<!-- ===== SPIELER (NEU – vereinfacht) ===== -->
+<div id="viewSpieler" class="container-fluid p-4" style="display:none">
+  <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-2">
+    <h4 class="mb-0"><i class="bi bi-people-fill text-primary me-2"></i>Spieler</h4>
+    <div class="d-flex gap-2">
+      <select id="spFilterTeam" class="form-select form-select-sm" style="width:auto" onchange="renderSpielerSimple()">
+        <option value="">Alle</option><option value="U10" selected>U10</option><option value="U12">U12</option>
+      </select>
+      <button class="btn btn-dark btn-sm" onclick="openSpielerModalSimple(null)"><i class="bi bi-person-plus-fill"></i> Neuer Spieler</button>
     </div>
-    <p class="text-muted mb-3">Spieler anlegen, bearbeiten und Statistiken einsehen</p>
-
-    <div class="card shadow-sm p-3 mb-4">
-        <div class="table-responsive">
-            <table id="spielerTable" class="table table-striped align-middle nowrap w-100">
-                <thead class="table-dark">
-                <tr>
-                    <th>Foto</th><th>RNr</th><th>Pos</th><th>Nachname</th><th>Vorname</th><th>Geb.Datum</th>
-                    <th title="Spiele">Sp</th>
-                    <th title="Pässe angekommen">P✓</th><th title="Pässe nicht angekommen">P✗</th>
-                    <th title="Pässe-Genauigkeit">P%</th>
-                    <th title="Schüsse aufs Tor">S✓</th><th title="Schüsse nicht aufs Tor">S✗</th>
-                    <th title="Schuss-Genauigkeit">S%</th>
-                    <th>Assists</th><th>Tore</th><th>Fouls</th>
-                    <th title="Gespielte Minuten">Min</th><th title="Auswechslungen">Ausw</th>
-                    <th title="Skill-Level">SLV</th><th title="Spielintelligenz">SPL</th>
-                    <th>Team</th><th></th>
-                </tr>
-                </thead>
-                <tbody id="spielerBody"></tbody>
-            </table>
-        </div>
+  </div>
+  <p class="text-muted mb-3">Stammdaten und Notizen verwalten</p>
+  <div class="card shadow-sm p-3">
+    <div class="table-responsive">
+      <table id="spielerTableSimple" class="table table-striped align-middle w-100">
+        <thead class="table-dark"><tr><th>Foto</th><th>RNr</th><th>Pos</th><th>Nachname</th><th>Vorname</th><th>Geb.Datum</th><th>Mannschaft</th><th>Notizen</th><th></th></tr></thead>
+        <tbody id="spielerBodySimple"></tbody>
+      </table>
     </div>
-
-    <!-- Attribut-Verwaltung -->
-    <div class="card shadow-sm p-3 mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="mb-0"><i class="bi bi-sliders2 me-2 text-primary"></i>Attribut-Verwaltung</h5>
-            <button class="btn btn-dark btn-sm" onclick="openAttrModal(null)"><i class="bi bi-plus-circle"></i> Neue Kategorie</button>
-        </div>
-        <p class="text-muted small mb-3">Hauptattribute für die Spielerkarte. <i class="bi bi-lock-fill fixed-icon"></i> = Basiswert (nicht löschbar). Bearbeiten zum Quellen zuweisen.</p>
-        <div class="table-responsive">
-            <table class="table align-middle">
-                <thead class="table-light"><tr><th>Kürzel</th><th>Name</th><th>Zugewiesene Quellen</th><th>Typ</th><th></th></tr></thead>
-                <tbody id="attributeBody"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Quellen-Verwaltung -->
-    <div class="card shadow-sm p-3 mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="mb-0"><i class="bi bi-database me-2 text-success"></i>Quellen-Verwaltung</h5>
-            <button class="btn btn-dark btn-sm" onclick="openQuelleModal()"><i class="bi bi-plus-circle"></i> Neue Quelle</button>
-        </div>
-        <p class="text-muted small mb-3">Datenpunkte die in die Attribut-Berechnung einfließen. <i class="bi bi-lock-fill fixed-icon"></i> = Basiswert (nicht löschbar, Name anpassbar).</p>
-        <div class="table-responsive">
-            <table class="table align-middle">
-                <thead class="table-light"><tr><th>Name</th><th>Zugeordnetes Attribut</th><th>Typ</th><th></th></tr></thead>
-                <tbody id="quellenBody"></tbody>
-            </table>
-        </div>
-    </div>
+  </div>
 </div>
 
-<!-- ===== KARTEN VIEW ===== -->
-<div id="viewKarten" class="container-fluid p-4" style="display:none;">
+<!-- ===== KARTEN ===== -->
+<div id="viewKarten" class="container-fluid p-4" style="display:none">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h4 class="mb-0"><i class="bi bi-person-badge-fill text-danger me-2"></i>Spielerkarten</h4>
+    <select id="kartenFilterTeam" class="form-select form-select-sm" style="width:auto" onchange="renderAlleKarten()">
+      <option value="">Alle</option><option value="U10">U10</option><option value="U12">U12</option>
+    </select>
+  </div>
+  <div id="kartenGrid" class="karten-grid"></div>
+</div>
+
+<!-- ===== NEUES SPIEL / TRAINING ===== -->
+<div id="viewTraining" class="container-fluid p-4" style="display:none">
+  <h4 class="mb-1"><i class="bi bi-calendar-plus text-success me-2"></i>Neues Spiel / Training</h4>
+  <p class="text-muted mb-4">Trainingstag oder Spiel erfassen und Übungen planen</p>
+
+  <!-- Kopf-Formular -->
+  <div class="card shadow-sm p-4 mb-4">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label fw-bold">Datum</label>
+        <input type="date" id="trDatum" class="form-control" oninput="updateTrainingsName()">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-bold">Kategorie</label>
+        <div class="d-flex gap-2 mt-1">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="trKat" id="trKatTraining" value="Training" checked onchange="katChanged()">
+            <label class="form-check-label" for="trKatTraining">Training</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="trKat" id="trKatSpiel" value="Spiel" onchange="katChanged()">
+            <label class="form-check-label" for="trKatSpiel">Spiel</label>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-bold">Name</label>
+        <input type="text" id="trName" class="form-control" placeholder="2026-06-17: Mittwoch">
+      </div>
+
+      <!-- Spiel-Bereich (conditional) -->
+      <div id="spielBlock" class="col-12 d-none">
+        <div class="card bg-light p-3">
+          <div class="row g-3 align-items-center">
+            <div class="col-auto">
+              <label class="form-label fw-bold mb-0">Spielform</label>
+              <div class="d-flex gap-2 mt-1 heim-auswarts-toggle">
+                <button type="button" class="btn btn-danger btn-sm active" id="btnHeim" onclick="setHeimAuswaerts('heim')">Heim</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnAusw" onclick="setHeimAuswaerts('auswaerts')">Auswärts</button>
+              </div>
+            </div>
+            <div class="col">
+              <div class="d-flex align-items-center gap-2 matchup-display flex-wrap">
+                <input type="text" id="trHeimTeam" class="form-control fw-bold text-center" style="max-width:180px" value="ATUS Bärnbach">
+                <span class="matchup-vs">vs</span>
+                <input type="text" id="trGastTeam" class="form-control fw-bold text-center" style="max-width:180px" placeholder="Gegner">
+              </div>
+              <small class="text-muted">Beide Felder sind frei editierbar (z. B. für Testspiele)</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Uhrzeiten -->
+      <div class="col-md-3">
+        <label class="form-label fw-bold"><i class="bi bi-clock-fill text-success me-1"></i>Beginn</label>
+        <div class="time-input-group"><i class="bi bi-play-fill"></i><input type="text" id="trBeginn" class="form-control" placeholder="18:00"></div>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-bold"><i class="bi bi-clock-fill text-danger me-1"></i>Ende</label>
+        <div class="time-input-group"><i class="bi bi-stop-fill"></i><input type="text" id="trEnde" class="form-control" placeholder="20:00"></div>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-bold"><i class="bi bi-geo-alt-fill text-warning me-1"></i>Treffpunkt</label>
+        <div class="time-input-group"><i class="bi bi-people-fill"></i><input type="text" id="trTreffpunkt" class="form-control" placeholder="17:45"></div>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-bold"><i class="bi bi-hourglass-split text-secondary me-1"></i>Voraussichtl. Ende</label>
+        <div class="time-input-group"><i class="bi bi-flag-fill"></i><input type="text" id="trVorEnde" class="form-control" placeholder="20:30"></div>
+      </div>
+      <div class="col-12">
+        <label class="form-label fw-bold">Notiz zum Training</label>
+        <textarea id="trNotiz" class="form-control" rows="2" placeholder="Allgemeine Notizen, Besonderheiten …"></textarea>
+      </div>
+      <div class="col-12">
+        <button class="btn btn-dark" onclick="trainingKopfSpeichern()"><i class="bi bi-save me-1"></i>Speichern</button>
+        <button class="btn btn-outline-secondary ms-2" onclick="trainingKopfReset()"><i class="bi bi-x-circle me-1"></i>Zurücksetzen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trainings-Details -->
+  <div class="card shadow-sm p-3">
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <h4 class="mb-0"><i class="bi bi-person-badge-fill text-danger me-2"></i>Spielerkarten</h4>
-        <div class="d-flex gap-2">
-            <select id="kartenFilterTeam" class="form-select form-select-sm" style="width:auto" onchange="renderAlleKarten()">
-                <option value="">Alle Mannschaften</option>
-                <option value="U10">U10</option>
-                <option value="U12">U12</option>
-            </select>
-        </div>
+      <h5 class="mb-0"><i class="bi bi-list-check me-2 text-primary"></i>Trainings-Details / Übungen</h5>
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-outline-secondary btn-sm" onclick="openAbschnittModal()"><i class="bi bi-plus-circle"></i> Abschnitt</button>
+        <button class="btn btn-dark btn-sm" onclick="openTrainingDetailModal(null)"><i class="bi bi-plus-circle-fill"></i> Neue Übung</button>
+      </div>
     </div>
-    <div id="kartenGrid" class="karten-grid"></div>
+    <!-- Abschnitte anzeigen -->
+    <div id="abschnitteChips" class="mb-3 d-flex flex-wrap gap-1"></div>
+    <div class="table-responsive">
+      <table id="trainingDetailTable" class="table table-striped align-middle w-100">
+        <thead class="table-dark">
+          <tr><th>#</th><th>Abschnitt</th><th>Übungsname</th><th>Dauer</th><th>YouTube</th><th>Links</th><th>Datei</th><th></th></tr>
+        </thead>
+        <tbody id="trainingDetailBody"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
-<!-- ===== MANNSCHAFTEN VIEW ===== -->
-<div id="viewMannschaften" class="container-fluid p-4" style="display:none;">
-    <div class="d-flex justify-content-between align-items-center mb-1">
-        <h4 class="mb-0"><i class="bi bi-diagram-3-fill text-info"></i> Mannschaften</h4>
-        <button class="btn btn-dark" onclick="openMannschaftModal(null)"><i class="bi bi-plus-circle-fill"></i> Neue Mannschaft</button>
+<!-- ===== MANNSCHAFTEN ===== -->
+<div id="viewMannschaften" class="container-fluid p-4" style="display:none">
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <h4 class="mb-0"><i class="bi bi-diagram-3-fill text-info"></i> Mannschaften</h4>
+    <button class="btn btn-dark" onclick="openMannschaftModal(null)"><i class="bi bi-plus-circle-fill"></i> Neue Mannschaft</button>
+  </div>
+  <p class="text-muted mb-4">Mannschaften verwalten und Verwalter zuweisen</p>
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Gesamt</h6><h3 id="statTeams">2</h3></div></div>
+    <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Aktiv</h6><h3 id="statTeamsAktiv">2</h3></div></div>
+    <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Inaktiv</h6><h3 id="statTeamsInaktiv">0</h3></div></div>
+  </div>
+  <div class="card shadow-sm p-3">
+    <div class="table-responsive">
+      <table class="table table-align-middle">
+        <thead class="table-dark"><tr><th>Bezeichnung</th><th>Aktiv</th><th>Status</th><th>Verwalter</th><th>Aktionen</th></tr></thead>
+        <tbody id="mannschaftenBody">
+          <tr id="mrow-u10"><td><strong id="mname-mrow-u10">U10</strong></td><td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked onchange="toggleMannschaft('mrow-u10',this)"></div></td><td><span class="badge bg-success" id="mstatus-mrow-u10">Aktiv</span></td><td id="mverwalter-mrow-u10"><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>Muster Maria</td><td id="mactions-mrow-u10"><button class="btn btn-outline-secondary btn-sm" onclick="openMannschaftModal('mrow-u10')"><i class="bi bi-pencil"></i></button><button class="btn btn-warning btn-sm ms-1" onclick="softDelete('mrow-u10')"><i class="bi bi-trash" style="color:#fff"></i></button><button class="btn btn-danger btn-sm ms-1" onclick="hardDelete('mrow-u10')"><i class="bi bi-trash-fill"></i></button></td></tr>
+          <tr id="mrow-u12"><td><strong id="mname-mrow-u12">U12</strong></td><td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked onchange="toggleMannschaft('mrow-u12',this)"></div></td><td><span class="badge bg-success" id="mstatus-mrow-u12">Aktiv</span></td><td id="mverwalter-mrow-u12"><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>Huber Karl</td><td id="mactions-mrow-u12"><button class="btn btn-outline-secondary btn-sm" onclick="openMannschaftModal('mrow-u12')"><i class="bi bi-pencil"></i></button><button class="btn btn-warning btn-sm ms-1" onclick="softDelete('mrow-u12')"><i class="bi bi-trash" style="color:#fff"></i></button><button class="btn btn-danger btn-sm ms-1" onclick="hardDelete('mrow-u12')"><i class="bi bi-trash-fill"></i></button></td></tr>
+        </tbody>
+      </table>
     </div>
-    <p class="text-muted mb-4">Mannschaften verwalten und Verwalter zuweisen</p>
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Mannschaften gesamt</h6><h3 id="statTeams">2</h3></div></div>
-        <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Aktiv</h6><h3 id="statTeamsAktiv">2</h3></div></div>
-        <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Inaktiv</h6><h3 id="statTeamsInaktiv">0</h3></div></div>
-    </div>
-    <div class="card shadow-sm p-3">
-        <h5 class="mb-3">Mannschaftsübersicht</h5>
-        <div class="table-responsive">
-            <table class="table table-align-middle">
-                <thead class="table-dark"><tr><th>Bezeichnung</th><th>Aktiv</th><th>Status</th><th>Verwalter</th><th>Aktionen</th></tr></thead>
-                <tbody id="mannschaftenBody">
-                <tr id="mrow-u10">
-                    <td><strong id="mname-mrow-u10">U10</strong></td>
-                    <td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked onchange="toggleMannschaft('mrow-u10',this)"></div></td>
-                    <td><span class="badge bg-success" id="mstatus-mrow-u10">Aktiv</span></td>
-                    <td id="mverwalter-mrow-u10"><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>Muster Maria</td>
-                    <td id="mactions-mrow-u10">
-                        <button class="btn btn-outline-secondary btn-sm" onclick="openMannschaftModal('mrow-u10')"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-warning btn-sm ms-1" onclick="softDelete('mrow-u10')"><i class="bi bi-trash" style="color:#fff"></i></button>
-                        <button class="btn btn-danger btn-sm ms-1" onclick="hardDelete('mrow-u10')"><i class="bi bi-trash-fill"></i></button>
-                    </td>
-                </tr>
-                <tr id="mrow-u12">
-                    <td><strong id="mname-mrow-u12">U12</strong></td>
-                    <td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked onchange="toggleMannschaft('mrow-u12',this)"></div></td>
-                    <td><span class="badge bg-success" id="mstatus-mrow-u12">Aktiv</span></td>
-                    <td id="mverwalter-mrow-u12"><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>Huber Karl</td>
-                    <td id="mactions-mrow-u12">
-                        <button class="btn btn-outline-secondary btn-sm" onclick="openMannschaftModal('mrow-u12')"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-warning btn-sm ms-1" onclick="softDelete('mrow-u12')"><i class="bi bi-trash" style="color:#fff"></i></button>
-                        <button class="btn btn-danger btn-sm ms-1" onclick="hardDelete('mrow-u12')"><i class="bi bi-trash-fill"></i></button>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-        <small class="text-muted mt-2"><i class="bi bi-trash text-warning me-1"></i>Ausblenden &nbsp;|&nbsp; <i class="bi bi-trash-fill text-danger me-1"></i>Definitiv löschen (SuperAdmin)</small>
-    </div>
+  </div>
 </div>
 
-<!-- ===== BENUTZERVERWALTUNG VIEW ===== -->
-<div id="viewUsers" class="container-fluid p-4" style="display:none;">
-    <h4 class="mb-1"><i class="bi bi-shield-lock-fill text-warning"></i> Benutzerverwaltung</h4>
-    <p class="text-muted mb-4">Übersicht der Rollen, Berechtigungen und Benutzer</p>
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm role-card role-superadmin"><div class="d-flex align-items-center mb-2"><i class="bi bi-patch-check-fill text-danger fs-4 me-2"></i><h6 class="mb-0 fw-bold">SuperAdmin</h6></div><small class="text-muted">Voller Zugriff auf alle Bereiche.</small><hr class="my-2"><div><i class="bi bi-check-circle-fill perm-check"></i> Alles verwalten</div><div><i class="bi bi-check-circle-fill perm-check"></i> Benutzer anlegen</div><div><i class="bi bi-check-circle-fill perm-check"></i> Alle Menüpunkte</div></div></div>
-        <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm role-card role-trainer"><div class="d-flex align-items-center mb-2"><i class="bi bi-clipboard2-check-fill text-primary fs-4 me-2"></i><h6 class="mb-0 fw-bold">Trainer</h6></div><small class="text-muted">Freigesch. Menüpunkte verwalten.</small><hr class="my-2"><div><i class="bi bi-check-circle-fill perm-check"></i> Freigesch. verwalten</div><div><i class="bi bi-eye-fill perm-eye"></i> Freigesch. ansehen</div><div><i class="bi bi-x-circle-fill perm-cross"></i> Benutzerverwaltung</div></div></div>
-        <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm role-card role-eltern"><div class="d-flex align-items-center mb-2"><i class="bi bi-house-heart-fill text-success fs-4 me-2"></i><h6 class="mb-0 fw-bold">Eltern</h6></div><small class="text-muted">Nur ansehen.</small><hr class="my-2"><div><i class="bi bi-x-circle-fill perm-cross"></i> Verwalten</div><div><i class="bi bi-eye-fill perm-eye"></i> Freigesch. ansehen</div></div></div>
-        <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm role-card role-spieler"><div class="d-flex align-items-center mb-2"><i class="bi bi-trophy-fill text-warning fs-4 me-2"></i><h6 class="mb-0 fw-bold">Spieler</h6></div><small class="text-muted">Nur ansehen.</small><hr class="my-2"><div><i class="bi bi-x-circle-fill perm-cross"></i> Verwalten</div><div><i class="bi bi-eye-fill perm-eye"></i> Freigesch. ansehen</div></div></div>
+<!-- ===== BENUTZERVERWALTUNG ===== -->
+<div id="viewUsers" class="container-fluid p-4" style="display:none">
+  <h4 class="mb-1"><i class="bi bi-shield-lock-fill text-warning"></i> Benutzerverwaltung</h4>
+  <p class="text-muted mb-4">Rollen, Berechtigungen und Benutzer</p>
+  <div class="card shadow-sm p-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="mb-0">Benutzer</h5>
+      <button class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#modalBenutzer"><i class="bi bi-person-plus-fill"></i> Benutzer hinzufügen</button>
     </div>
-    <div class="card shadow-sm p-3">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="mb-0">Benutzer</h5>
-            <button class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#modalBenutzer"><i class="bi bi-person-plus-fill"></i> Benutzer hinzufügen</button>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-striped align-middle">
-                <thead class="table-dark"><tr><th>Name</th><th>E-Mail</th><th>Rolle(n)</th><th>Trainer-Modus</th><th>Mannschaft</th><th>Status</th></tr></thead>
-                <tbody id="benutzerBody">
-                <tr><td><i class="bi bi-patch-check-fill text-danger me-1"></i>Wolfgang Z.</td><td>zotter.w@gmail.com</td><td><span class="badge bg-danger">SuperAdmin</span></td><td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" onchange="trainerModusChanged('Wolfgang Z.',this.checked)"></div></td><td>Alle</td><td><span class="badge bg-success">Aktiv</span></td></tr>
-                <tr><td>Muster Maria</td><td>maria@beispiel.at</td><td><span class="badge bg-primary me-1">Trainer</span><span class="badge bg-success">Eltern</span></td><td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked onchange="trainerModusChanged('Muster Maria',this.checked)"></div></td><td>U10</td><td><span class="badge bg-success">Aktiv</span></td></tr>
-                <tr><td>Huber Karl</td><td>huber@beispiel.at</td><td><span class="badge bg-primary">Trainer</span></td><td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked onchange="trainerModusChanged('Huber Karl',this.checked)"></div></td><td>U12</td><td><span class="badge bg-success">Aktiv</span></td></tr>
-                <tr><td>Schmid Anna</td><td>schmid@beispiel.at</td><td><span class="badge bg-success">Eltern</span></td><td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" onchange="trainerModusChanged('Schmid Anna',this.checked)"></div></td><td>U10</td><td><span class="badge bg-success">Aktiv</span></td></tr>
-                <tr><td>Riedl Ben</td><td>ben@beispiel.at</td><td><span class="badge bg-warning text-dark">Spieler</span></td><td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" onchange="trainerModusChanged('Riedl Ben',this.checked)"></div></td><td>U10</td><td><span class="badge bg-success">Aktiv</span></td></tr>
-                </tbody>
-            </table>
-        </div>
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead class="table-dark"><tr><th>Name</th><th>E-Mail</th><th>Rolle(n)</th><th>Trainer-Modus</th><th>Mannschaft</th><th>Status</th></tr></thead>
+        <tbody id="benutzerBody">
+          <tr><td><i class="bi bi-patch-check-fill text-danger me-1"></i>Wolfgang Z.</td><td>zotter.w@gmail.com</td><td><span class="badge bg-danger">SuperAdmin</span></td><td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" onchange="trainerModusChanged('Wolfgang Z.',this.checked)"></div></td><td>Alle</td><td><span class="badge bg-success">Aktiv</span></td></tr>
+          <tr><td>Muster Maria</td><td>maria@beispiel.at</td><td><span class="badge bg-primary me-1">Trainer</span><span class="badge bg-success">Eltern</span></td><td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked onchange="trainerModusChanged('Muster Maria',this.checked)"></div></td><td>U10</td><td><span class="badge bg-success">Aktiv</span></td></tr>
+          <tr><td>Huber Karl</td><td>huber@beispiel.at</td><td><span class="badge bg-primary">Trainer</span></td><td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked onchange="trainerModusChanged('Huber Karl',this.checked)"></div></td><td>U12</td><td><span class="badge bg-success">Aktiv</span></td></tr>
+        </tbody>
+      </table>
     </div>
+  </div>
 </div>
-
-</div><!-- Ende Dashboard -->
+</div><!-- end dashboard -->
 
 <!-- ══════════════════════════════════════════════════════════════
      MODALS
 ══════════════════════════════════════════════════════════════ -->
 
-<!-- MODAL: Spieler anlegen / bearbeiten -->
+<!-- MODAL: Spieler (vereinfacht) -->
 <div class="modal fade" id="modalSpieler" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title" id="modalSpielerTitle"><i class="bi bi-person-badge-fill me-2"></i>Spieler</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row g-3">
-                    <!-- Stammdaten + Foto -->
-                    <div class="col-md-6">
-                        <div class="card p-3 h-100">
-                            <h6 class="fw-bold mb-3"><i class="bi bi-person-lines-fill text-primary me-1"></i>Stammdaten</h6>
-                            <!-- Foto-Upload -->
-                            <div class="d-flex align-items-center gap-3 mb-3">
-                                <div id="fotoPreviewWrap">
-                                    <div class="foto-placeholder" id="fotoPlaceholder"><i class="bi bi-person-bounding-box"></i></div>
-                                    <img id="fotoPreview" class="foto-vorschau d-none" src="" alt="Foto">
-                                </div>
-                                <div>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm d-block mb-1" onclick="document.getElementById('spFotoInput').click()">
-                                        <i class="bi bi-camera-fill"></i> Foto hochladen
-                                    </button>
-                                    <button type="button" class="btn btn-outline-danger btn-sm d-block" id="fotoRemoveBtn" style="display:none!important" onclick="removeFoto()">
-                                        <i class="bi bi-x-circle"></i> Entfernen
-                                    </button>
-                                    <input type="file" id="spFotoInput" accept="image/*" style="display:none" onchange="handleFotoUpload(event)">
-                                    <small class="text-muted d-block mt-1" style="font-size:.7rem">JPG, PNG, max. 2 MB</small>
-                                </div>
-                            </div>
-                            <div class="row g-2">
-                                <div class="col-4"><label class="form-label">RNr</label><input type="number" id="spRNr" class="form-control" placeholder="7"></div>
-                                <div class="col-4"><label class="form-label">Position</label>
-                                    <select id="spPosition" class="form-select">
-                                        <option>GK</option><option>IV</option><option>LV</option><option>RV</option>
-                                        <option>DM</option><option>ZM</option><option>OM</option>
-                                        <option>LA</option><option>RA</option><option selected>MF</option><option>ST</option>
-                                    </select>
-                                </div>
-                                <div class="col-4"><label class="form-label">Mannschaft</label>
-                                    <select id="spTeam" class="form-select" onchange="renderSkillWerte(null)">
-                                        <option value="U10">U10</option><option value="U12">U12</option>
-                                    </select>
-                                </div>
-                                <div class="col-6"><label class="form-label">Nachname</label><input type="text" id="spNachname" class="form-control"></div>
-                                <div class="col-6"><label class="form-label">Vorname</label><input type="text" id="spVorname" class="form-control"></div>
-                                <div class="col-6"><label class="form-label">Geb. Datum</label><input type="date" id="spGebDatum" class="form-control"></div>
-                                <div class="col-6"><label class="form-label">Skill-Level (40–100)</label>
-                                    <input type="number" id="spSkillLevel" class="form-control" min="40" max="100" value="60">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Statistiken -->
-                    <div class="col-md-6">
-                        <div class="card p-3 h-100">
-                            <h6 class="fw-bold mb-3"><i class="bi bi-bar-chart-fill text-success me-1"></i>Statistiken</h6>
-                            <div class="row g-2">
-                                <div class="col-4"><label class="form-label">Spiele</label><input type="number" id="spSpiele" class="form-control" value="0" min="0"></div>
-                                <div class="col-4"><label class="form-label">Pässe ✓</label><input type="number" id="spPaesseOk" class="form-control" value="0" min="0" oninput="calcPct('pa')"></div>
-                                <div class="col-4"><label class="form-label">Pässe ✗</label><input type="number" id="spPaesseNk" class="form-control" value="0" min="0" oninput="calcPct('pa')"></div>
-                                <div class="col-12"><small class="text-muted">Pass-Genauigkeit: <strong id="paPct">—</strong></small></div>
-                                <div class="col-4"><label class="form-label">Schüsse ✓</label><input type="number" id="spSchuessOk" class="form-control" value="0" min="0" oninput="calcPct('sc')"></div>
-                                <div class="col-4"><label class="form-label">Schüsse ✗</label><input type="number" id="spSchuessNk" class="form-control" value="0" min="0" oninput="calcPct('sc')"></div>
-                                <div class="col-4"><label class="form-label">Assists</label><input type="number" id="spAssists" class="form-control" value="0" min="0"></div>
-                                <div class="col-12"><small class="text-muted">Schuss-Genauigkeit: <strong id="scPct">—</strong></small></div>
-                                <div class="col-4"><label class="form-label">Tore</label><input type="number" id="spTore" class="form-control" value="0" min="0"></div>
-                                <div class="col-4"><label class="form-label">Fouls</label><input type="number" id="spFouls" class="form-control" value="0" min="0"></div>
-                                <div class="col-4"><label class="form-label">Min gespielt</label><input type="number" id="spMin" class="form-control" value="0" min="0"></div>
-                                <div class="col-4"><label class="form-label">Auswechslungen</label><input type="number" id="spAusw" class="form-control" value="0" min="0"></div>
-                                <div class="col-8"><label class="form-label">Training</label><input type="text" id="spTraining" class="form-control bg-light" readonly placeholder="Wird aus Trainingstagen berechnet"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Spielintelligenz -->
-                    <div class="col-12">
-                        <div class="card p-3">
-                            <h6 class="fw-bold mb-2"><i class="bi bi-lightbulb-fill text-warning me-1"></i>Spielintelligenz</h6>
-                            <div class="d-flex align-items-center gap-3">
-                                <span class="text-muted small">30</span>
-                                <input type="range" id="spSPL" class="form-range flex-grow-1" min="30" max="100" value="60" oninput="document.getElementById('spSPLval').textContent=this.value">
-                                <span class="text-muted small">100</span>
-                                <span class="badge bg-primary fs-6 ms-2" id="spSPLval">60</span>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Skill-Werte + Karten-Vorschau -->
-                    <div class="col-lg-7">
-                        <div class="card p-3 h-100">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="fw-bold mb-0"><i class="bi bi-sliders2 text-primary me-1"></i>Skill-Werte</h6>
-                                <button type="button" class="btn btn-outline-dark btn-sm" onclick="openNeueWertigkeit()">
-                                    <i class="bi bi-plus-circle"></i> Neue Wertigkeit
-                                </button>
-                            </div>
-                            <div id="skillWerteContainer"></div>
-                        </div>
-                    </div>
-                    <!-- Karten-Vorschau -->
-                    <div class="col-lg-5">
-                        <div class="card p-3 h-100 text-center">
-                            <h6 class="fw-bold mb-3"><i class="bi bi-person-badge-fill text-danger me-1"></i>Karten-Vorschau</h6>
-                            <div class="d-flex justify-content-center">
-                                <div id="kartenVorschau"></div>
-                            </div>
-                            <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="aktualisierteKartenVorschau()">
-                                <i class="bi bi-arrow-clockwise"></i> Vorschau aktualisieren
-                            </button>
-                        </div>
-                    </div>
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title" id="modalSpielerTitle"><i class="bi bi-person-fill me-2"></i>Spieler</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <!-- Stammdaten + Foto -->
+          <div class="col-md-5">
+            <div class="card p-3 h-100">
+              <h6 class="fw-bold mb-3"><i class="bi bi-person-lines-fill text-primary me-1"></i>Stammdaten</h6>
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div>
+                  <div class="foto-placeholder-sm" id="spFotoPlaceholder"><i class="bi bi-person"></i></div>
+                  <img id="spFotoPreview" class="foto-vorschau d-none" src="" alt="">
                 </div>
-                <div id="spError" class="alert alert-danger d-none mt-3"></div>
+                <div>
+                  <button type="button" class="btn btn-outline-secondary btn-sm d-block mb-1" onclick="document.getElementById('spFotoInput').click()"><i class="bi bi-camera-fill"></i> Foto</button>
+                  <button type="button" class="btn btn-outline-danger btn-sm d-block" id="spFotoRemoveBtn" style="display:none!important" onclick="removeFoto()"><i class="bi bi-x-circle"></i></button>
+                  <input type="file" id="spFotoInput" accept="image/*" style="display:none" onchange="handleFotoUpload(event)">
+                </div>
+              </div>
+              <div class="row g-2">
+                <div class="col-4"><label class="form-label">RNr</label><input type="number" id="spRNr" class="form-control" placeholder="7"></div>
+                <div class="col-4"><label class="form-label">Position</label>
+                  <select id="spPosition" class="form-select"><option>GK</option><option>IV</option><option>LV</option><option>RV</option><option>DM</option><option>ZM</option><option>OM</option><option>LA</option><option>RA</option><option selected>MF</option><option>ST</option></select>
+                </div>
+                <div class="col-4"><label class="form-label">Mannschaft</label>
+                  <select id="spTeam" class="form-select"><option value="U10">U10</option><option value="U12">U12</option></select>
+                </div>
+                <div class="col-6"><label class="form-label">Nachname</label><input type="text" id="spNachname" class="form-control"></div>
+                <div class="col-6"><label class="form-label">Vorname</label><input type="text" id="spVorname" class="form-control"></div>
+                <div class="col-6"><label class="form-label">Geb. Datum</label><input type="date" id="spGebDatum" class="form-control"></div>
+              </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                <button type="button" class="btn btn-dark" onclick="spielerSpeichern()"><i class="bi bi-save"></i> Speichern</button>
+          </div>
+          <!-- Notizen erfassen -->
+          <div class="col-md-7">
+            <div class="card p-3 h-100">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0"><i class="bi bi-journal-text text-success me-1"></i>Notizen erfassen</h6>
+                <button class="btn btn-dark btn-sm" onclick="openNotizModal()"><i class="bi bi-plus-circle"></i> Notiz hinzufügen</button>
+              </div>
+              <!-- Kategorien -->
+              <div class="mb-3">
+                <label class="form-label fw-bold" style="font-size:.85rem">Kategorien</label>
+                <div id="notizKatChips" class="d-flex flex-wrap gap-1 mb-2"></div>
+                <div class="input-group input-group-sm" style="max-width:260px">
+                  <input type="text" id="neueKatInput" class="form-control" placeholder="Neue Kategorie …">
+                  <button class="btn btn-outline-dark" onclick="neueKatHinzufuegen()"><i class="bi bi-plus"></i></button>
+                </div>
+              </div>
+              <!-- Notizen DataTable -->
+              <div class="table-responsive" style="max-height:220px;overflow-y:auto">
+                <table id="notizTable" class="table table-sm align-middle w-100">
+                  <thead class="table-dark" style="position:sticky;top:0;z-index:1"><tr><th>Datum</th><th>Kategorie</th><th>Notiz</th><th></th></tr></thead>
+                  <tbody id="notizTableBody"></tbody>
+                </table>
+              </div>
             </div>
+          </div>
         </div>
+        <div id="spError" class="alert alert-danger d-none mt-3"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
+        <button type="button" class="btn btn-dark" onclick="spielerSimpleSpeichern()"><i class="bi bi-save"></i> Speichern</button>
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- MODAL: Neue Wertigkeit -->
-<div class="modal fade" id="modalNeueWertigkeit" tabindex="-1" style="z-index:1060">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Neue Wertigkeit</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Name der Wertigkeit</label>
-                    <input type="text" id="nwName" class="form-control" placeholder="z. B. Kopfball, Freistoß …">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Zuordnung zu Hauptattribut</label>
-                    <select id="nwAttribut" class="form-select"></select>
-                </div>
-                <div id="nwError" class="alert alert-danger d-none"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                <button type="button" class="btn btn-dark" onclick="wertigkeitSpeichern()"><i class="bi bi-save"></i> Hinzufügen</button>
-            </div>
+<!-- MODAL: Notiz (WYSIWYG) -->
+<div class="modal fade" id="modalNotiz" tabindex="-1" style="z-index:1060">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title"><i class="bi bi-journal-plus me-2"></i>Notiz erfassen</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Kategorie</label>
+            <select id="notizKat" class="form-select"></select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Datum</label>
+            <input type="date" id="notizDatum" class="form-control">
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-bold">Notiz</label>
+            <div id="quillNotizEditor" style="min-height:150px"></div>
+          </div>
         </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
+        <button type="button" class="btn btn-dark" onclick="notizSpeichern()"><i class="bi bi-save"></i> Speichern</button>
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- MODAL: Attribut-Kategorie anlegen / bearbeiten -->
-<div class="modal fade" id="modalAttr" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title" id="modalAttrTitle"><i class="bi bi-sliders2 me-2"></i>Kategorie</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+<!-- MODAL: Training-Detail -->
+<div class="modal fade" id="modalTrainingDetail" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title" id="modalTDTitle"><i class="bi bi-clipboard-plus me-2"></i>Übung</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Abschnitt</label>
+            <select id="tdAbschnitt" class="form-select"></select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Übungsname</label>
+            <input type="text" id="tdName" class="form-control" placeholder="z. B. Passen in Dreiecken">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-bold">Dauer (Min)</label>
+            <input type="number" id="tdDauer" class="form-control" value="10" min="1">
+          </div>
+
+          <!-- YouTube -->
+          <div class="col-12">
+            <label class="form-label fw-bold"><i class="bi bi-youtube text-danger me-1"></i>YouTube Link</label>
+            <div class="input-group">
+              <input type="text" id="tdYoutube" class="form-control" placeholder="https://www.youtube.com/watch?v=…" oninput="previewYoutube()">
+              <button class="btn btn-outline-danger" onclick="previewYoutube()"><i class="bi bi-search"></i></button>
             </div>
-            <div class="modal-body">
-                <div class="row g-3">
-                    <div class="col-4">
-                        <label class="form-label fw-bold">Kürzel</label>
-                        <input type="text" id="atKuerzel" class="form-control" placeholder="z. B. KON" maxlength="4">
-                    </div>
-                    <div class="col-8">
-                        <label class="form-label fw-bold">Name</label>
-                        <input type="text" id="atName" class="form-control" placeholder="z. B. Konzentration">
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label fw-bold">Quellen zuweisen</label>
-                        <div id="atQuellenList" class="border rounded p-2" style="max-height:200px;overflow-y:auto;"></div>
-                    </div>
+            <div id="youtubePrev" class="mt-2 d-none">
+              <img id="youtubeThumb" src="" alt="Vorschau" style="height:90px;border-radius:8px;border:2px solid #dee2e6">
+              <span id="youtubeTitle" class="ms-2 text-muted small"></span>
+            </div>
+          </div>
+
+          <!-- Externe Links -->
+          <div class="col-12">
+            <label class="form-label fw-bold"><i class="bi bi-link-45deg me-1"></i>Externe Links <small class="text-muted fw-normal">(z. B. advance.football)</small></label>
+            <div id="tdLinksContainer">
+              <div class="input-group mb-2">
+                <input type="url" class="form-control td-link-input" placeholder="https://training.advance.football/…">
+                <button class="btn btn-outline-danger" onclick="removeLinkRow(this)"><i class="bi bi-x"></i></button>
+              </div>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm" onclick="addLinkRow()"><i class="bi bi-plus-circle"></i> Link hinzufügen</button>
+          </div>
+
+          <!-- Datei -->
+          <div class="col-12">
+            <label class="form-label fw-bold"><i class="bi bi-file-earmark-arrow-up me-1"></i>Datei hochladen <small class="text-muted fw-normal">(PDF, Word)</small></label>
+            <div class="d-flex gap-2 align-items-center">
+              <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('tdFileInput').click()"><i class="bi bi-upload"></i> Datei wählen</button>
+              <input type="file" id="tdFileInput" accept=".pdf,.doc,.docx" style="display:none" onchange="handleTdFile(event)">
+              <span id="tdFileName" class="text-muted small">Keine Datei gewählt</span>
+              <button id="tdFileOpenBtn" class="btn btn-outline-primary btn-sm d-none" onclick="openTdFile()"><i class="bi bi-box-arrow-up-right"></i> Öffnen</button>
+            </div>
+          </div>
+
+          <!-- Beschreibung WYSIWYG -->
+          <div class="col-12">
+            <label class="form-label fw-bold"><i class="bi bi-pencil-square me-1"></i>Beschreibung</label>
+            <div id="quillTDEditor" style="min-height:140px"></div>
+          </div>
+
+          <!-- Taktikfeld -->
+          <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <label class="form-label fw-bold mb-0"><i class="bi bi-diagram-2 me-1 text-success"></i>Taktikfeld</label>
+              <button class="btn btn-link btn-sm p-0" type="button" data-bs-toggle="collapse" data-bs-target="#taktikfeldCollapse">
+                <i class="bi bi-chevron-down"></i> ein-/ausblenden
+              </button>
+            </div>
+            <div class="collapse" id="taktikfeldCollapse">
+              <div class="tk-toolbar">
+                <button class="btn btn-sm btn-outline-light active" id="tkToolPlayer" onclick="tkSelectTool('player',this)" style="background:#c0392b;color:#fff;border-color:#c0392b"><i class="bi bi-person-fill"></i> Spieler (Rot)</button>
+                <button class="btn btn-sm btn-outline-primary" id="tkToolPlayer2" onclick="tkSelectTool('player2',this)"><i class="bi bi-person-fill"></i> Spieler (Blau)</button>
+                <button class="btn btn-sm btn-outline-warning" onclick="tkSelectTool('cone',this)"><i class="bi bi-triangle-fill"></i> Hütchen</button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="tkSelectTool('ball',this)"><i class="bi bi-circle-fill"></i> Ball</button>
+                <button class="btn btn-sm btn-outline-light" onclick="tkSelectTool('goal',this)" style="background:#6c757d;color:#fff"><i class="bi bi-square"></i> Tor</button>
+                <button class="btn btn-sm btn-outline-danger ms-2" onclick="tkClear()"><i class="bi bi-trash"></i> Leeren</button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="tkUndo()"><i class="bi bi-arrow-counterclockwise"></i></button>
+              </div>
+              <div class="taktikfeld-wrap">
+                <div id="taktikfeld" onclick="tkPlace(event)">
+                  <svg class="tk-field-svg" viewBox="0 0 100 62" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Spielfeld-Linien -->
+                    <rect x="1" y="1" width="98" height="60" fill="none" stroke="rgba(255,255,255,.6)" stroke-width=".8"/>
+                    <line x1="50" y1="1" x2="50" y2="61" stroke="rgba(255,255,255,.6)" stroke-width=".6"/>
+                    <circle cx="50" cy="31" r="9" fill="none" stroke="rgba(255,255,255,.6)" stroke-width=".6"/>
+                    <circle cx="50" cy="31" r=".8" fill="rgba(255,255,255,.6)"/>
+                    <!-- Strafraum links -->
+                    <rect x="1" y="16" width="16" height="30" fill="none" stroke="rgba(255,255,255,.6)" stroke-width=".6"/>
+                    <rect x="1" y="22" width="6" height="18" fill="none" stroke="rgba(255,255,255,.6)" stroke-width=".4"/>
+                    <!-- Strafraum rechts -->
+                    <rect x="83" y="16" width="16" height="30" fill="none" stroke="rgba(255,255,255,.6)" stroke-width=".6"/>
+                    <rect x="93" y="22" width="6" height="18" fill="none" stroke="rgba(255,255,255,.6)" stroke-width=".4"/>
+                  </svg>
                 </div>
-                <div id="atError" class="alert alert-danger d-none mt-3"></div>
+              </div>
+              <small class="text-muted">Klick auf das Feld platziert das ausgewählte Element. Klick auf Element = auswählen → Entf/Delete zum Löschen. Rechtsklick auf Element löscht direkt.</small>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                <button type="button" class="btn btn-dark" onclick="attributSpeichern()"><i class="bi bi-save"></i> Speichern</button>
-            </div>
+          </div>
         </div>
+        <div id="tdError" class="alert alert-danger d-none mt-3"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
+        <button type="button" class="btn btn-dark" onclick="trainingDetailSpeichern()"><i class="bi bi-save"></i> Speichern</button>
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- MODAL: Neue Quelle -->
-<div class="modal fade" id="modalQuelle" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title"><i class="bi bi-database me-2"></i>Neue Quelle</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Name der Quelle</label>
-                    <input type="text" id="quName" class="form-control" placeholder="z. B. Torschüsse gesamt">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Attribut zuordnen</label>
-                    <select id="quAttribut" class="form-select"></select>
-                </div>
-                <div class="mt-3 pt-2 border-top">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="quFuerAlleUs" disabled>
-                        <label class="form-check-label" for="quFuerAlleUs" id="quFuerAlleUsLabel" style="color:#adb5bd">
-                            Quelle für <strong>ALLE U's</strong> ausspielen
-                            <span class="badge bg-secondary ms-1" id="quFuerAlleUsBadge">nur SuperAdmin</span>
-                        </label>
-                    </div>
-                </div>
-                <div id="quError" class="alert alert-danger d-none"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                <button type="button" class="btn btn-dark" onclick="quelleSpeichern()"><i class="bi bi-save"></i> Speichern</button>
-            </div>
-        </div>
+<!-- MODAL: Abschnitt hinzufügen -->
+<div class="modal fade" id="modalAbschnitt" tabindex="-1" style="z-index:1060">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Neuer Abschnitt</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <label class="form-label fw-bold">Name des Abschnitts</label>
+        <input type="text" id="abschnittName" class="form-control" placeholder="z. B. Spielformen">
+        <div id="abschnittError" class="alert alert-danger d-none mt-2"></div>
+        <hr>
+        <label class="form-label fw-bold">Vorhandene Abschnitte</label>
+        <div id="abschnittListe" class="d-flex flex-wrap gap-1"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Schließen</button>
+        <button type="button" class="btn btn-dark" onclick="abschnittSpeichern()"><i class="bi bi-plus"></i> Hinzufügen</button>
+      </div>
     </div>
+  </div>
 </div>
 
 <!-- MODAL: Mannschaft -->
 <div class="modal fade" id="modalMannschaft" tabindex="-1">
-    <div class="modal-dialog"><div class="modal-content">
-        <div class="modal-header bg-dark text-white">
-            <h5 class="modal-title" id="modalMannschaftTitle"><i class="bi bi-diagram-3-fill me-2"></i>Mannschaft</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-            <div class="mb-3"><label class="form-label fw-bold">Bezeichnung</label><input type="text" id="mfName" class="form-control"></div>
-            <div class="mb-3">
-                <label class="form-label fw-bold">Verwalter <small class="text-muted fw-normal">(Trainer-Modus aktiv)</small></label>
-                <div id="mfVerwalterList" class="border rounded p-2" style="max-height:160px;overflow-y:auto;"></div>
-            </div>
-            <div id="mfError" class="alert alert-danger d-none"></div>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
-            <button type="button" class="btn btn-dark" onclick="mannschaftSpeichern()"><i class="bi bi-save"></i> Speichern</button>
-        </div>
-    </div></div>
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header bg-dark text-white">
+      <h5 class="modal-title" id="modalMannschaftTitle"><i class="bi bi-diagram-3-fill me-2"></i>Mannschaft</h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+      <div class="mb-3"><label class="form-label fw-bold">Bezeichnung</label><input type="text" id="mfName" class="form-control"></div>
+      <div class="mb-3"><label class="form-label fw-bold">Verwalter</label><div id="mfVerwalterList" class="border rounded p-2" style="max-height:160px;overflow-y:auto"></div></div>
+      <div id="mfError" class="alert alert-danger d-none"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
+      <button type="button" class="btn btn-dark" onclick="mannschaftSpeichern()"><i class="bi bi-save"></i> Speichern</button>
+    </div>
+  </div></div>
 </div>
 
 <!-- MODAL: Benutzer -->
 <div class="modal fade" id="modalBenutzer" tabindex="-1">
-    <div class="modal-dialog modal-lg"><div class="modal-content">
-        <div class="modal-header bg-dark text-white">
-            <h5 class="modal-title"><i class="bi bi-person-plus-fill me-2"></i>Neuen Benutzer anlegen</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+  <div class="modal-dialog modal-lg"><div class="modal-content">
+    <div class="modal-header bg-dark text-white">
+      <h5 class="modal-title"><i class="bi bi-person-plus-fill me-2"></i>Neuen Benutzer anlegen</h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+      <div class="row g-3">
+        <div class="col-md-6"><label class="form-label fw-bold">Vorname</label><input type="text" id="buVorname" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Nachname</label><input type="text" id="buNachname" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label fw-bold">E-Mail</label><input type="email" id="buEmail" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Passwort</label><input type="password" id="buPasswort" class="form-control"></div>
+      </div>
+      <hr>
+      <div class="row">
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Rolle(n)</label>
+          <div class="d-flex flex-wrap gap-3">
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="roleSuperAdmin"><label class="form-check-label" for="roleSuperAdmin"><span class="badge bg-danger">SuperAdmin</span></label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="roleTrainer"><label class="form-check-label" for="roleTrainer"><span class="badge bg-primary">Trainer</span></label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="roleEltern"><label class="form-check-label" for="roleEltern"><span class="badge bg-success">Eltern</span></label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="roleSpieler"><label class="form-check-label" for="roleSpieler"><span class="badge bg-warning text-dark">Spieler</span></label></div>
+          </div>
         </div>
-        <div class="modal-body">
-            <div class="row g-3">
-                <div class="col-md-6"><label class="form-label fw-bold">Vorname</label><input type="text" id="buVorname" class="form-control"></div>
-                <div class="col-md-6"><label class="form-label fw-bold">Nachname</label><input type="text" id="buNachname" class="form-control"></div>
-                <div class="col-md-6"><label class="form-label fw-bold">E-Mail</label><input type="email" id="buEmail" class="form-control"></div>
-                <div class="col-md-6"><label class="form-label fw-bold">Passwort</label><input type="password" id="buPasswort" class="form-control" placeholder="Min. 6 Zeichen"></div>
-            </div>
-            <hr>
-            <div class="row">
-                <div class="col-md-6">
-                    <label class="form-label fw-bold">Rolle(n)</label>
-                    <div class="d-flex flex-wrap gap-3">
-                        <div class="form-check"><input class="form-check-input" type="checkbox" id="roleSuperAdmin"><label class="form-check-label" for="roleSuperAdmin"><span class="badge bg-danger">SuperAdmin</span></label></div>
-                        <div class="form-check"><input class="form-check-input" type="checkbox" id="roleTrainer"><label class="form-check-label" for="roleTrainer"><span class="badge bg-primary">Trainer</span></label></div>
-                        <div class="form-check"><input class="form-check-input" type="checkbox" id="roleEltern"><label class="form-check-label" for="roleEltern"><span class="badge bg-success">Eltern</span></label></div>
-                        <div class="form-check"><input class="form-check-input" type="checkbox" id="roleSpieler"><label class="form-check-label" for="roleSpieler"><span class="badge bg-warning text-dark">Spieler</span></label></div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-bold">Trainer-Modus</label>
-                    <div class="form-check form-switch mt-1">
-                        <input class="form-check-input" type="checkbox" id="buTrainerModus">
-                        <label class="form-check-label" for="buTrainerModus">Trainer-Modus aktiv</label>
-                    </div>
-                </div>
-            </div>
-            <div class="mt-3">
-                <label class="form-label fw-bold">Mannschaft zuweisen</label>
-                <select id="buMannschaft" class="form-select"><option value="">— Keine —</option><option value="U10">U10</option><option value="U12">U12</option></select>
-            </div>
-            <div id="buError" class="alert alert-danger d-none mt-3"></div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Trainer-Modus</label>
+          <div class="form-check form-switch mt-1"><input class="form-check-input" type="checkbox" id="buTrainerModus"><label class="form-check-label" for="buTrainerModus">Trainer-Modus aktiv</label></div>
         </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
-            <button type="button" class="btn btn-dark" onclick="benutzerSpeichern()"><i class="bi bi-person-check-fill"></i> Benutzer anlegen</button>
-        </div>
-    </div></div>
+      </div>
+      <div class="mt-3"><label class="form-label fw-bold">Mannschaft</label><select id="buMannschaft" class="form-select"><option value="">— Keine —</option><option value="U10">U10</option><option value="U12">U12</option></select></div>
+      <div id="buError" class="alert alert-danger d-none mt-3"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
+      <button type="button" class="btn btn-dark" onclick="benutzerSpeichern()"><i class="bi bi-person-check-fill"></i> Anlegen</button>
+    </div>
+  </div></div>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════
@@ -624,752 +641,697 @@
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/de.js"></script>
 
 <script>
 // ══════════════════════════════════════════════════════════════
-// DATEN-MODELL
+// DATEN
 // ══════════════════════════════════════════════════════════════
-const FIXED_QUELLEN_IDS = ['q_paok','q_pank','q_scok','q_scnk','q_tore','q_assi','q_foul','q_ming','q_ausw','q_trpz','q_spli'];
-
-let quellen = [
-    { id:'q_paok', name:'Pässe angekommen',       attr:'PAS' },
-    { id:'q_pank', name:'Pässe nicht angekommen',  attr:'PAS' },
-    { id:'q_scok', name:'Schüsse aufs Tor',        attr:'SCH' },
-    { id:'q_scnk', name:'Schüsse nicht aufs Tor',  attr:'SCH' },
-    { id:'q_tore', name:'Tore',                    attr:'SCH' },
-    { id:'q_assi', name:'Assists',                 attr:'PAS' },
-    { id:'q_foul', name:'Fouls',                   attr:'AGG' },
-    { id:'q_ming', name:'Gespielte Minuten',       attr:'FIT' },
-    { id:'q_ausw', name:'Auswechslungen',          attr:'FIT' },
-    { id:'q_trpz', name:'Trainings %',             attr:'FIT' },
-    { id:'q_spli', name:'Spielintelligenz',        attr:'SPL' },
-];
-
-let attribute = [
-    { id:'SCH', name:'Schießen',         quellen:['q_scok','q_scnk','q_tore'],  fixed:true },
-    { id:'PAS', name:'Passen',           quellen:['q_paok','q_pank','q_assi'],  fixed:true },
-    { id:'DRI', name:'Dribbling',        quellen:[],                            fixed:true },
-    { id:'SPD', name:'Tempo',            quellen:[],                            fixed:true },
-    { id:'AGG', name:'Aggressivität',    quellen:['q_foul'],                    fixed:true },
-    { id:'FIT', name:'Fitness',          quellen:['q_ming','q_ausw','q_trpz'],  fixed:true },
-    { id:'SPL', name:'Spielintelligenz', quellen:['q_spli'],                    fixed:true },
-    { id:'KON', name:'Konzentration',    quellen:[],                            fixed:true },
-];
-
-let teamWertigkeiten = {
-    'U10': ['Passen','Schießen','Zweikampf','Laufen'],
-    'U12': ['Passen','Schießen','Zweikampf','Laufen'],
-};
-
-// Skill-Bar-Farben für die Karte (zyklisch)
 const SKILL_COLORS = ['#c0392b','#922b21','#7f8c8d','#616a6b','#a93226','#6e2f1a','#884ea0','#1a5276'];
 
 let spielerData = [
-    { id:'p1', rnr:7,  pos:'MF', nachname:'Schmid', vorname:'Ben',   geb:'2014-07-06', foto:'', spiele:5, paOk:18, paNk:4, scOk:3, scNk:2, assists:3, tore:4, fouls:2, min:380, ausw:1, slv:75, spl:65, team:'U10', skills:{ Passen:72, Schießen:68, Zweikampf:55, Laufen:78 } },
-    { id:'p2', rnr:10, pos:'ST', nachname:'Riedl',  vorname:'Lukas', geb:'2014-09-24', foto:'', spiele:5, paOk:14, paNk:4, scOk:8, scNk:3, assists:5, tore:6, fouls:1, min:420, ausw:0, slv:82, spl:70, team:'U10', skills:{ Passen:65, Schießen:85, Zweikampf:60, Laufen:80 } },
-    { id:'p3', rnr:5,  pos:'IV', nachname:'Pagger', vorname:'Theo',  geb:'2014-07-26', foto:'', spiele:4, paOk:12, paNk:3, scOk:1, scNk:1, assists:2, tore:1, fouls:3, min:310, ausw:2, slv:68, spl:60, team:'U10', skills:{ Passen:60, Schießen:50, Zweikampf:72, Laufen:65 } },
-    { id:'p4', rnr:3,  pos:'GK', nachname:'Hofer',  vorname:'Nico',  geb:'2015-03-12', foto:'', spiele:5, paOk:6,  paNk:2, scOk:0, scNk:0, assists:1, tore:0, fouls:0, min:450, ausw:0, slv:71, spl:72, team:'U10', skills:{ Passen:55, Schießen:42, Zweikampf:68, Laufen:62 } },
-    { id:'p5', rnr:9,  pos:'ST', nachname:'Maier',  vorname:'Jonas', geb:'2014-05-03', foto:'', spiele:3, paOk:9,  paNk:2, scOk:5, scNk:3, assists:4, tore:3, fouls:4, min:250, ausw:2, slv:79, spl:55, team:'U10', skills:{ Passen:68, Schießen:78, Zweikampf:70, Laufen:75 } },
+  { id:'p1', rnr:7,  pos:'MF', nachname:'Schmid', vorname:'Ben',   geb:'2014-07-06', foto:'', team:'U10', skills:{Passen:72,Schießen:68,Zweikampf:55,Laufen:78}, slv:75 },
+  { id:'p2', rnr:10, pos:'ST', nachname:'Riedl',  vorname:'Lukas', geb:'2014-09-24', foto:'', team:'U10', skills:{Passen:65,Schießen:85,Zweikampf:60,Laufen:80}, slv:82 },
+  { id:'p3', rnr:5,  pos:'IV', nachname:'Pagger', vorname:'Theo',  geb:'2014-07-26', foto:'', team:'U10', skills:{Passen:60,Schießen:50,Zweikampf:72,Laufen:65}, slv:68 },
+  { id:'p4', rnr:3,  pos:'GK', nachname:'Hofer',  vorname:'Nico',  geb:'2015-03-12', foto:'', team:'U10', skills:{Passen:55,Schießen:42,Zweikampf:68,Laufen:62}, slv:71 },
+  { id:'p5', rnr:9,  pos:'ST', nachname:'Maier',  vorname:'Jonas', geb:'2014-05-03', foto:'', team:'U10', skills:{Passen:68,Schießen:78,Zweikampf:70,Laufen:75}, slv:79 },
 ];
 let spielerCounter = spielerData.length;
 let editingSpielerID = null;
-let editingAttrID    = null;
 let pendingFotoBase64 = null;
 
+let notizKategorien = ['Technik','Taktik','Allgemein','Stärken','Verbesserung'];
+let spielerNotizen  = { p1:[], p2:[], p3:[], p4:[], p5:[] };
+let notizCounter    = 0;
+let editingNotizSpielerID = null;
+
+let trainingsAbschnitte = ['Einleitung','Hauptteil (1)','Technik','Hauptteil (2)','Ende'];
+let trainingDetails = [
+  { id:'td1', abschnitt:'Einleitung',    name:'Aufwärmen – Kreisspiel',   dauer:10, youtubeUrl:'', beschreibung:'<p>Kreisspiel mit 1-2 Kontakten. Alle Spieler im Kreis, ein Ball.</p>', links:[], fileBlobUrl:null, fileName:null },
+  { id:'td2', abschnitt:'Hauptteil (1)', name:'Passen in Dreiecken',      dauer:15, youtubeUrl:'', beschreibung:'', links:['https://training.advance.football/programs/wettrennen-auf-2-gegen-1'], fileBlobUrl:null, fileName:null },
+  { id:'td3', abschnitt:'Technik',       name:'Dribbling mit Hütchen',    dauer:20, youtubeUrl:'https://www.youtube.com/watch?v=dQw4w9WgXcQ', beschreibung:'<p>Parcours mit 6 Hütchen, Slalom, dann Abschluss.</p>', links:[], fileBlobUrl:null, fileName:null },
+  { id:'td4', abschnitt:'Ende',          name:'Abschluss-Spiel 4 vs 4',   dauer:15, youtubeUrl:'', beschreibung:'', links:[], fileBlobUrl:null, fileName:null },
+];
+let tdCounter = trainingDetails.length;
+let editingTDID = null;
+
+let tdFileBlobUrl = null;
+let tdFileName    = null;
+
 const trainerModusSet = new Set(['Muster Maria','Huber Karl']);
+const mannschaftVerwalter = { 'mrow-u10':['Muster Maria'], 'mrow-u12':['Huber Karl'] };
+let editingRowId = null, mRowCounter = 0;
+
+// Quill Instanzen
+let quillNotiz = null;
+let quillTD    = null;
 
 // ══════════════════════════════════════════════════════════════
 // NAVIGATION
 // ══════════════════════════════════════════════════════════════
-const views  = ['main','spieler','karten','mannschaften','users'];
-const navMap = { main:'navMain', spieler:'navSpieler', karten:'navKarten', mannschaften:'navMannschaften', users:'navUsers' };
-let dtSpieler = null;
+const views  = ['main','spieler','karten','training','mannschaften','users'];
+const navMap = { main:'navMain', spieler:'navSpieler', karten:'navKarten', training:'navTraining', mannschaften:'navMannschaften', users:'navUsers' };
+let dtSpielerSimple = null;
+let dtTraining      = null;
 
 window.showView = function(view) {
-    views.forEach(v => {
-        const el = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1));
-        if (el) el.style.display = v === view ? 'block' : 'none';
-    });
-    Object.entries(navMap).forEach(([v,id]) => document.getElementById(id)?.classList.toggle('nav-active', v === view));
-    if (view === 'spieler') { renderSpielerTable(); renderAttributeTable(); renderQuellenTable(); }
-    if (view === 'karten')  { renderAlleKarten(); }
+  views.forEach(v => {
+    const id = 'view' + v.charAt(0).toUpperCase() + v.slice(1);
+    const el = document.getElementById(id);
+    if (el) el.style.display = v === view ? 'block' : 'none';
+  });
+  Object.entries(navMap).forEach(([v,id]) => document.getElementById(id)?.classList.toggle('nav-active', v === view));
+  if (view === 'spieler')  { renderSpielerSimple(); renderNotizKatChips(); }
+  if (view === 'karten')   renderAlleKarten();
+  if (view === 'training') { initTrainingPage(); renderTrainingDetails(); }
 };
 
 // ══════════════════════════════════════════════════════════════
-// SKILL-KARTE RENDERER
+// FLATPICKR (Uhrzeiten)
 // ══════════════════════════════════════════════════════════════
-function buildKarteHTML(s) {
-    const skills = s.skills || {};
-    const keys   = Object.keys(skills);
-    const fotoHTML = s.foto
-        ? `<img src="${s.foto}" style="width:100%;height:140px;object-fit:cover;object-position:top;">`
-        : `<div style="width:100%;height:140px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#333,#555);font-size:3rem;color:#888;"><i class="bi bi-person-bounding-box"></i></div>`;
+document.addEventListener('DOMContentLoaded', () => {
+  ['trBeginn','trEnde','trTreffpunkt','trVorEnde'].forEach(id => {
+    flatpickr('#'+id, { enableTime:true, noCalendar:true, dateFormat:'H:i', time_24hr:true, locale:'de' });
+  });
+  // Standard-Datum heute
+  const heute = new Date().toISOString().split('T')[0];
+  document.getElementById('trDatum').value = heute;
+  updateTrainingsName();
+});
 
-    const skillRows = keys.map((k, i) => {
-        const val  = skills[k];
-        const pct  = Math.round(Math.max(0, Math.min(100, (val - 40) / 60 * 100)));
-        const col  = SKILL_COLORS[i % SKILL_COLORS.length];
-        return `<div class="ma-skill-row">
-            <span class="ma-skill-label">${k}</span>
-            <div class="ma-skill-bar-wrap"><div class="ma-skill-bar" style="width:${pct}%;background:${col};"></div></div>
-            <span class="ma-skill-val">${val}</span>
-        </div>`;
-    }).join('');
-
-    const tore   = s.tore   || 0;
-    const assists = s.assists || 0;
-    const spiele  = s.spiele  || 0;
-
-    return `<div class="ma-card">
-        <div class="ma-card-header">
-            <div class="ma-name-col">${s.nachname.toUpperCase()}</div>
-            <div class="ma-photo-wrap">${fotoHTML}</div>
-            <div class="ma-slv-badge">${s.slv}</div>
-            <div class="ma-pos-badge">${s.pos}</div>
-        </div>
-        <div style="padding:4px 8px 2px;background:rgba(0,0,0,.5);">
-            <span style="font-size:.65rem;font-weight:700;color:#c0392b;letter-spacing:1px;text-transform:uppercase;">${s.vorname} ${s.nachname}</span>
-        </div>
-        <div class="ma-skills">${skillRows || '<span style="color:#888;font-size:.7rem;">Keine Skills</span>'}</div>
-        <div class="ma-footer">
-            <div class="ma-footer-stat"><div class="label">Tore</div><div class="value">${tore}</div></div>
-            <div class="ma-team-badge">${s.team}</div>
-            <div class="ma-footer-stat"><div class="label">Spiele</div><div class="value">${spiele}</div></div>
-        </div>
-        <div class="ma-bottom-strip">ATUS Bärnbach &nbsp;·&nbsp; ${s.team} &nbsp;·&nbsp; 2025</div>
-    </div>`;
+// ══════════════════════════════════════════════════════════════
+// SPIELER (vereinfacht)
+// ══════════════════════════════════════════════════════════════
+function renderSpielerSimple() {
+  const filter = document.getElementById('spFilterTeam').value;
+  const data   = filter ? spielerData.filter(s => s.team === filter) : spielerData;
+  document.getElementById('spielerBodySimple').innerHTML = data.map(s => {
+    const nAnzahl = (spielerNotizen[s.id] || []).length;
+    const fotoCell = s.foto
+      ? `<img src="${s.foto}" style="width:34px;height:34px;object-fit:cover;border-radius:50%;border:2px solid #c0392b">`
+      : `<div style="width:34px;height:34px;border-radius:50%;border:2px dashed #ced4da;display:flex;align-items:center;justify-content:center;color:#adb5bd"><i class="bi bi-person"></i></div>`;
+    return `<tr>
+      <td>${fotoCell}</td><td>${s.rnr}</td>
+      <td><span class="badge bg-secondary">${s.pos}</span></td>
+      <td><strong>${s.nachname}</strong></td><td>${s.vorname}</td>
+      <td>${s.geb ? new Date(s.geb).toLocaleDateString('de-AT') : '—'}</td>
+      <td><span class="badge bg-dark">${s.team}</span></td>
+      <td><span class="badge ${nAnzahl>0?'bg-success':'bg-light text-dark border'}">${nAnzahl} Notiz${nAnzahl!==1?'en':''}</span></td>
+      <td>
+        <button class="btn btn-outline-secondary btn-sm" onclick="openSpielerModalSimple('${s.id}')"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-outline-danger btn-sm ms-1" onclick="spielerLoeschen('${s.id}')"><i class="bi bi-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+  if (dtSpielerSimple) { dtSpielerSimple.destroy(); dtSpielerSimple = null; }
+  dtSpielerSimple = $('#spielerTableSimple').DataTable({
+    responsive:true,
+    language:{ url:'https://cdn.datatables.net/plug-ins/1.13.6/i18n/de-DE.json' },
+    columnDefs:[{orderable:false, targets:-1}]
+  });
 }
 
-window.renderAlleKarten = function() {
-    const filter = document.getElementById('kartenFilterTeam')?.value || '';
-    const data   = filter ? spielerData.filter(s => s.team === filter) : spielerData;
-    document.getElementById('kartenGrid').innerHTML = data.length === 0
-        ? '<p class="text-muted">Keine Spieler gefunden.</p>'
-        : data.map(s => buildKarteHTML(s)).join('');
+window.openSpielerModalSimple = function(id) {
+  editingSpielerID = id;
+  pendingFotoBase64 = null;
+  const s = id ? spielerData.find(x => x.id === id) : null;
+  document.getElementById('modalSpielerTitle').innerHTML = `<i class="bi bi-person-fill me-2"></i>${s ? 'Spieler bearbeiten' : 'Neuer Spieler'}`;
+  // Foto
+  document.getElementById('spFotoPreview').classList.add('d-none');
+  document.getElementById('spFotoPlaceholder').classList.remove('d-none');
+  document.getElementById('spFotoRemoveBtn').style.display = 'none';
+  if (s?.foto) {
+    document.getElementById('spFotoPreview').src = s.foto;
+    document.getElementById('spFotoPreview').classList.remove('d-none');
+    document.getElementById('spFotoPlaceholder').classList.add('d-none');
+    document.getElementById('spFotoRemoveBtn').style.display = '';
+  }
+  document.getElementById('spRNr').value      = s?.rnr      || '';
+  document.getElementById('spNachname').value = s?.nachname || '';
+  document.getElementById('spVorname').value  = s?.vorname  || '';
+  document.getElementById('spGebDatum').value = s?.geb      || '';
+  document.getElementById('spPosition').value = s?.pos      || 'MF';
+  document.getElementById('spTeam').value     = s?.team     || 'U10';
+  document.getElementById('spError').classList.add('d-none');
+  editingNotizSpielerID = id || null;
+  renderNotizKatSelect();
+  renderNotizTable(id);
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSpieler')).show();
 };
 
-window.aktualisierteKartenVorschau = function() {
-    const skills = {};
-    document.querySelectorAll('#skillWerteContainer input[type=range]').forEach(inp => {
-        skills[inp.dataset.skill] = parseInt(inp.value);
-    });
-    const preview = {
-        nachname: document.getElementById('spNachname').value || 'Nachname',
-        vorname:  document.getElementById('spVorname').value  || 'Vorname',
-        pos:      document.getElementById('spPosition').value || 'MF',
-        team:     document.getElementById('spTeam').value     || 'U10',
-        slv:      parseInt(document.getElementById('spSkillLevel').value) || 60,
-        tore:     parseInt(document.getElementById('spTore').value)       || 0,
-        assists:  parseInt(document.getElementById('spAssists').value)    || 0,
-        spiele:   parseInt(document.getElementById('spSpiele').value)     || 0,
-        foto:     pendingFotoBase64 || (editingSpielerID ? (spielerData.find(s=>s.id===editingSpielerID)?.foto||'') : ''),
-        skills,
-    };
-    document.getElementById('kartenVorschau').innerHTML = buildKarteHTML(preview);
+window.spielerSimpleSpeichern = function() {
+  const nachname = document.getElementById('spNachname').value.trim();
+  const vorname  = document.getElementById('spVorname').value.trim();
+  const err      = document.getElementById('spError');
+  if (!nachname || !vorname) { err.classList.remove('d-none'); err.textContent='Vor- und Nachname erforderlich.'; return; }
+  err.classList.add('d-none');
+  const existFoto = editingSpielerID ? (spielerData.find(s=>s.id===editingSpielerID)?.foto||'') : '';
+  const obj = {
+    id:       editingSpielerID || ('p'+(++spielerCounter)),
+    rnr:      parseInt(document.getElementById('spRNr').value)||0,
+    pos:      document.getElementById('spPosition').value,
+    nachname, vorname,
+    geb:      document.getElementById('spGebDatum').value,
+    team:     document.getElementById('spTeam').value,
+    foto:     pendingFotoBase64 !== null ? pendingFotoBase64 : existFoto,
+    skills:{}, slv:60,
+  };
+  if (editingSpielerID) {
+    const idx = spielerData.findIndex(s => s.id === editingSpielerID);
+    if (idx !== -1) { const old = spielerData[idx]; obj.skills = old.skills; obj.slv = old.slv; spielerData[idx] = obj; }
+  } else {
+    spielerData.push(obj);
+    spielerNotizen[obj.id] = [];
+  }
+  renderSpielerSimple();
+  bootstrap.Modal.getInstance(document.getElementById('modalSpieler')).hide();
 };
 
-// ══════════════════════════════════════════════════════════════
-// FOTO UPLOAD
-// ══════════════════════════════════════════════════════════════
-window.handleFotoUpload = function(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { alert('Bild zu groß (max. 2 MB).'); return; }
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        pendingFotoBase64 = e.target.result;
-        document.getElementById('fotoPreview').src = pendingFotoBase64;
-        document.getElementById('fotoPreview').classList.remove('d-none');
-        document.getElementById('fotoPlaceholder').classList.add('d-none');
-        document.getElementById('fotoRemoveBtn').style.display = '';
-        aktualisierteKartenVorschau();
-    };
-    reader.readAsDataURL(file);
-    event.target.value = '';
-};
-
-window.removeFoto = function() {
-    pendingFotoBase64 = null;
-    document.getElementById('fotoPreview').classList.add('d-none');
-    document.getElementById('fotoPreview').src = '';
-    document.getElementById('fotoPlaceholder').classList.remove('d-none');
-    document.getElementById('fotoRemoveBtn').style.display = 'none';
-};
-
-// ══════════════════════════════════════════════════════════════
-// SPIELER TABELLE
-// ══════════════════════════════════════════════════════════════
-function pct(ok, nk) {
-    const t = ok + nk;
-    return t === 0 ? '—' : Math.round(ok / t * 100) + '%';
-}
-
-function renderSpielerTable() {
-    const filter = document.getElementById('filterMannschaft').value;
-    const data   = filter ? spielerData.filter(s => s.team === filter) : spielerData;
-    document.getElementById('spielerBody').innerHTML = data.map(s => {
-        const fotoCell = s.foto
-            ? `<img src="${s.foto}" style="width:36px;height:36px;object-fit:cover;border-radius:50%;border:2px solid #c0392b;">`
-            : `<div style="width:36px;height:36px;border-radius:50%;border:2px dashed #ced4da;display:flex;align-items:center;justify-content:center;color:#adb5bd;font-size:.9rem;"><i class="bi bi-person"></i></div>`;
-        return `<tr>
-            <td>${fotoCell}</td>
-            <td>${s.rnr}</td><td><span class="badge bg-secondary">${s.pos}</span></td>
-            <td><strong>${s.nachname}</strong></td><td>${s.vorname}</td>
-            <td>${s.geb ? new Date(s.geb).toLocaleDateString('de-AT') : '—'}</td>
-            <td>${s.spiele}</td>
-            <td>${s.paOk}</td><td>${s.paNk}</td><td>${pct(s.paOk,s.paNk)}</td>
-            <td>${s.scOk}</td><td>${s.scNk}</td><td>${pct(s.scOk,s.scNk)}</td>
-            <td>${s.assists}</td><td>${s.tore}</td><td>${s.fouls}</td>
-            <td>${s.min}</td><td>${s.ausw}</td>
-            <td><span class="badge bg-primary">${s.slv}</span></td>
-            <td><span class="badge bg-info text-dark">${s.spl}</span></td>
-            <td><span class="badge bg-dark">${s.team}</span></td>
-            <td>
-                <button class="btn btn-outline-secondary btn-sm" onclick="openSpielerModal('${s.id}')"><i class="bi bi-pencil"></i></button>
-                <button class="btn btn-outline-danger btn-sm ms-1" onclick="spielerLoeschen('${s.id}')"><i class="bi bi-trash"></i></button>
-            </td>
-        </tr>`;
-    }).join('');
-    if (dtSpieler) { dtSpieler.destroy(); dtSpieler = null; }
-    dtSpieler = $('#spielerTable').DataTable({
-        responsive: true,
-        language: { url:'https://cdn.datatables.net/plug-ins/1.13.6/i18n/de-DE.json' },
-        columnDefs:[{ orderable:false, targets:-1 }]
-    });
-}
-
-window.filterSpieler = function() { renderSpielerTable(); };
 window.spielerLoeschen = function(id) {
-    if (!confirm('Spieler wirklich löschen?')) return;
-    spielerData = spielerData.filter(s => s.id !== id);
-    renderSpielerTable();
+  if (!confirm('Spieler löschen?')) return;
+  spielerData = spielerData.filter(s => s.id !== id);
+  renderSpielerSimple();
+};
+
+window.handleFotoUpload = function(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 2*1024*1024) { alert('Bild zu groß (max. 2 MB).'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    pendingFotoBase64 = e.target.result;
+    document.getElementById('spFotoPreview').src = pendingFotoBase64;
+    document.getElementById('spFotoPreview').classList.remove('d-none');
+    document.getElementById('spFotoPlaceholder').classList.add('d-none');
+    document.getElementById('spFotoRemoveBtn').style.display = '';
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+};
+window.removeFoto = function() {
+  pendingFotoBase64 = null;
+  document.getElementById('spFotoPreview').classList.add('d-none');
+  document.getElementById('spFotoPreview').src = '';
+  document.getElementById('spFotoPlaceholder').classList.remove('d-none');
+  document.getElementById('spFotoRemoveBtn').style.display = 'none';
 };
 
 // ══════════════════════════════════════════════════════════════
-// SPIELER MODAL
+// NOTIZEN
 // ══════════════════════════════════════════════════════════════
-window.openSpielerModal = function(id) {
-    editingSpielerID = id;
-    pendingFotoBase64 = null;
-    const s = id ? spielerData.find(x => x.id === id) : null;
-    document.getElementById('modalSpielerTitle').innerHTML =
-        `<i class="bi bi-person-badge-fill me-2"></i>${s ? 'Spieler bearbeiten' : 'Neuer Spieler'}`;
-
-    // Foto
-    document.getElementById('fotoPreview').classList.add('d-none');
-    document.getElementById('fotoPreview').src = '';
-    document.getElementById('fotoPlaceholder').classList.remove('d-none');
-    document.getElementById('fotoRemoveBtn').style.display = 'none';
-    if (s?.foto) {
-        document.getElementById('fotoPreview').src = s.foto;
-        document.getElementById('fotoPreview').classList.remove('d-none');
-        document.getElementById('fotoPlaceholder').classList.add('d-none');
-        document.getElementById('fotoRemoveBtn').style.display = '';
-    }
-
-    document.getElementById('spRNr').value        = s?.rnr      || '';
-    document.getElementById('spNachname').value   = s?.nachname || '';
-    document.getElementById('spVorname').value    = s?.vorname  || '';
-    document.getElementById('spGebDatum').value   = s?.geb      || '';
-    document.getElementById('spPosition').value   = s?.pos      || 'MF';
-    document.getElementById('spTeam').value       = s?.team     || 'U10';
-    document.getElementById('spSkillLevel').value = s?.slv      || 60;
-    document.getElementById('spSpiele').value     = s?.spiele   || 0;
-    document.getElementById('spPaesseOk').value   = s?.paOk     || 0;
-    document.getElementById('spPaesseNk').value   = s?.paNk     || 0;
-    document.getElementById('spSchuessOk').value  = s?.scOk     || 0;
-    document.getElementById('spSchuessNk').value  = s?.scNk     || 0;
-    document.getElementById('spAssists').value    = s?.assists  || 0;
-    document.getElementById('spTore').value       = s?.tore     || 0;
-    document.getElementById('spFouls').value      = s?.fouls    || 0;
-    document.getElementById('spMin').value        = s?.min      || 0;
-    document.getElementById('spAusw').value       = s?.ausw     || 0;
-    document.getElementById('spSPL').value        = s?.spl      || 60;
-    document.getElementById('spSPLval').textContent = s?.spl    || 60;
-    document.getElementById('spError').classList.add('d-none');
-    calcPct('pa'); calcPct('sc');
-    renderSkillWerte(s);
-    aktualisierteKartenVorschau();
-    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSpieler')).show();
+function renderNotizKatChips() {
+  document.getElementById('notizKatChips').innerHTML = notizKategorien.map(k =>
+    `<span class="badge bg-secondary" style="cursor:pointer" onclick="katLoeschen('${k}')" title="Klick zum Löschen">${k} <i class="bi bi-x ms-1"></i></span>`
+  ).join('');
+}
+function renderNotizKatSelect() {
+  const sel = document.getElementById('notizKat');
+  sel.innerHTML = notizKategorien.map(k => `<option>${k}</option>`).join('');
+}
+function renderNotizTable(spielerId) {
+  if (!spielerId) { document.getElementById('notizTableBody').innerHTML = ''; return; }
+  const notizen = spielerNotizen[spielerId] || [];
+  document.getElementById('notizTableBody').innerHTML = notizen.map(n => `
+    <tr>
+      <td>${n.datum}</td>
+      <td><span class="badge bg-secondary">${n.kategorie}</span></td>
+      <td><div class="notiz-row-inhalt">${n.inhalt}</div></td>
+      <td><button class="btn btn-outline-danger btn-sm" onclick="notizLoeschen('${spielerId}','${n.id}')"><i class="bi bi-trash"></i></button></td>
+    </tr>`).join('') || '<tr><td colspan="4" class="text-center text-muted">Noch keine Notizen</td></tr>';
+}
+window.neueKatHinzufuegen = function() {
+  const val = document.getElementById('neueKatInput').value.trim();
+  if (!val || notizKategorien.includes(val)) return;
+  notizKategorien.push(val);
+  document.getElementById('neueKatInput').value = '';
+  renderNotizKatChips();
+  renderNotizKatSelect();
+};
+window.katLoeschen = function(k) {
+  if (!confirm(`Kategorie "${k}" löschen?`)) return;
+  notizKategorien = notizKategorien.filter(x => x !== k);
+  renderNotizKatChips(); renderNotizKatSelect();
+};
+window.openNotizModal = function() {
+  if (!editingNotizSpielerID) { alert('Bitte zuerst Spieler speichern.'); return; }
+  if (!spielerNotizen[editingNotizSpielerID]) spielerNotizen[editingNotizSpielerID] = [];
+  document.getElementById('notizDatum').value = new Date().toISOString().split('T')[0];
+  renderNotizKatSelect();
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalNotiz')).show();
+};
+document.getElementById('modalNotiz').addEventListener('shown.bs.modal', () => {
+  if (!quillNotiz) {
+    quillNotiz = new Quill('#quillNotizEditor', { theme:'snow', placeholder:'Notiz hier eingeben …', modules:{ toolbar:[[{header:[1,2,false]}],'bold','italic','underline','strike',{list:'ordered'},{list:'bullet'},'clean'] } });
+  } else {
+    quillNotiz.setContents([]);
+  }
+});
+window.notizSpeichern = function() {
+  const inhalt = quillNotiz ? quillNotiz.root.innerHTML : '';
+  const sid    = editingNotizSpielerID;
+  if (!sid) return;
+  if (!spielerNotizen[sid]) spielerNotizen[sid] = [];
+  spielerNotizen[sid].push({
+    id: 'n'+(++notizCounter),
+    datum: document.getElementById('notizDatum').value,
+    kategorie: document.getElementById('notizKat').value,
+    inhalt,
+  });
+  renderNotizTable(sid);
+  bootstrap.Modal.getInstance(document.getElementById('modalNotiz')).hide();
+};
+window.notizLoeschen = function(sid, nid) {
+  if (!confirm('Notiz löschen?')) return;
+  spielerNotizen[sid] = (spielerNotizen[sid]||[]).filter(n => n.id !== nid);
+  renderNotizTable(sid);
 };
 
-window.renderSkillWerte = function(s) {
-    const team = s?.team || document.getElementById('spTeam')?.value || 'U10';
-    const wertigkeiten = teamWertigkeiten[team] || [];
-    const container = document.getElementById('skillWerteContainer');
-    if (!container) return;
-    if (wertigkeiten.length === 0) {
-        container.innerHTML = '<small class="text-muted">Keine Wertigkeiten definiert.</small>';
-        return;
-    }
-    container.innerHTML = wertigkeiten.map((w, i) => {
-        const val = s?.skills?.[w] ?? 50;
-        const col = SKILL_COLORS[i % SKILL_COLORS.length];
-        return `<div class="skill-row">
-            <label>${w}</label>
-            <input type="range" min="40" max="100" value="${val}" style="accent-color:${col}"
-                oninput="this.nextElementSibling.textContent=this.value;aktualisierteKartenVorschau()"
-                data-skill="${w}">
-            <span class="val-badge badge" style="background:${col}">${val}</span>
-        </div>`;
-    }).join('');
+// ══════════════════════════════════════════════════════════════
+// KARTEN
+// ══════════════════════════════════════════════════════════════
+function buildKarte(s) {
+  const skills = s.skills || {};
+  const keys   = Object.keys(skills);
+  const foto   = s.foto
+    ? `<img src="${s.foto}" style="width:100%;height:120px;object-fit:cover;object-position:top">`
+    : `<div class="ma-photo-ph"><i class="bi bi-person-bounding-box"></i></div>`;
+  const bars = keys.map((k,i) => {
+    const v = skills[k], pct = Math.round(Math.max(0,Math.min(100,(v-40)/60*100)));
+    const c = SKILL_COLORS[i%SKILL_COLORS.length];
+    return `<div class="ma-skill-row"><span class="ma-skill-label">${k}</span><div class="ma-skill-bar-wrap"><div class="ma-skill-bar" style="width:${pct}%;background:${c}"></div></div><span class="ma-skill-val">${v}</span></div>`;
+  }).join('');
+  return `<div class="ma-card">
+    <div class="ma-card-header"><div class="ma-name-col">${s.nachname.toUpperCase()}</div><div class="ma-photo-wrap">${foto}</div><div class="ma-slv-badge">${s.slv||'—'}</div><div class="ma-pos-badge">${s.pos}</div></div>
+    <div style="padding:3px 7px 2px;background:rgba(0,0,0,.5)"><span style="font-size:.62rem;font-weight:700;color:#c0392b;letter-spacing:1px;text-transform:uppercase">${s.vorname} ${s.nachname}</span></div>
+    <div class="ma-skills">${bars||'<span style="color:#888;font-size:.7rem">Keine Skills</span>'}</div>
+    <div class="ma-footer"><div class="ma-footer-stat"><div class="label">Team</div><div class="value" style="font-size:.75rem">${s.team}</div></div><div class="ma-team-badge">${s.pos}</div><div class="ma-footer-stat"><div class="label">SLV</div><div class="value">${s.slv||'—'}</div></div></div>
+    <div class="ma-bottom-strip">ATUS Bärnbach · ${s.team} · 2025</div>
+  </div>`;
+}
+window.renderAlleKarten = function() {
+  const f = document.getElementById('kartenFilterTeam')?.value||'';
+  const d = f ? spielerData.filter(s=>s.team===f) : spielerData;
+  document.getElementById('kartenGrid').innerHTML = d.map(buildKarte).join('') || '<p class="text-muted">Keine Spieler.</p>';
 };
 
-window.calcPct = function(type) {
-    if (type === 'pa') {
-        const ok = parseInt(document.getElementById('spPaesseOk').value)||0;
-        const nk = parseInt(document.getElementById('spPaesseNk').value)||0;
-        document.getElementById('paPct').textContent = pct(ok, nk);
-    } else {
-        const ok = parseInt(document.getElementById('spSchuessOk').value)||0;
-        const nk = parseInt(document.getElementById('spSchuessNk').value)||0;
-        document.getElementById('scPct').textContent = pct(ok, nk);
-    }
+// ══════════════════════════════════════════════════════════════
+// TRAINING SEITE
+// ══════════════════════════════════════════════════════════════
+window.updateTrainingsName = function() {
+  const dv = document.getElementById('trDatum').value;
+  if (!dv) return;
+  const d   = new Date(dv+'T12:00:00');
+  const tage = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  document.getElementById('trName').value = `${dv}: ${tage[d.getDay()]}`;
 };
 
-window.spielerSpeichern = function() {
-    const nachname = document.getElementById('spNachname').value.trim();
-    const vorname  = document.getElementById('spVorname').value.trim();
-    const err      = document.getElementById('spError');
-    if (!nachname || !vorname) { err.classList.remove('d-none'); err.textContent='Bitte Vor- und Nachname eingeben.'; return; }
-    err.classList.add('d-none');
+window.katChanged = function() {
+  const isSpiel = document.getElementById('trKatSpiel').checked;
+  document.getElementById('spielBlock').classList.toggle('d-none', !isSpiel);
+  if (isSpiel) {
+    const dv = document.getElementById('trDatum').value;
+    const d  = dv ? new Date(dv+'T12:00:00') : new Date();
+    document.getElementById('trName').value = `Spiel: ${d.toLocaleDateString('de-AT')}`;
+  } else {
+    updateTrainingsName();
+  }
+};
 
-    const skills = {};
-    document.querySelectorAll('#skillWerteContainer input[type=range]').forEach(inp => {
-        skills[inp.dataset.skill] = parseInt(inp.value);
+window.setHeimAuswaerts = function(mode) {
+  const btnHeim = document.getElementById('btnHeim');
+  const btnAusw = document.getElementById('btnAusw');
+  btnHeim.classList.toggle('btn-danger',  mode==='heim');
+  btnHeim.classList.toggle('btn-outline-secondary', mode!=='heim');
+  btnAusw.classList.toggle('btn-primary', mode==='auswaerts');
+  btnAusw.classList.toggle('btn-outline-secondary', mode!=='auswaerts');
+  if (mode === 'auswaerts') {
+    // Swap Teams: ATUS rechts
+    document.getElementById('trHeimTeam').value = document.getElementById('trGastTeam').value || 'Gegner';
+    document.getElementById('trGastTeam').value = 'ATUS Bärnbach';
+  } else {
+    document.getElementById('trHeimTeam').value = 'ATUS Bärnbach';
+    document.getElementById('trGastTeam').value = '';
+  }
+};
+
+window.trainingKopfSpeichern = function() {
+  alert('Training gespeichert! (Firestore-Anbindung folgt in einem späteren Schritt)');
+};
+window.trainingKopfReset = function() {
+  document.getElementById('trKatTraining').checked = true;
+  document.getElementById('spielBlock').classList.add('d-none');
+  document.getElementById('trHeimTeam').value = 'ATUS Bärnbach';
+  document.getElementById('trGastTeam').value = '';
+  document.getElementById('trNotiz').value = '';
+  updateTrainingsName();
+};
+
+function initTrainingPage() {
+  renderAbschnitteChips();
+}
+
+function renderAbschnitteChips() {
+  document.getElementById('abschnitteChips').innerHTML = trainingsAbschnitte.map(a =>
+    `<span class="badge training-section-badge bg-dark me-1">${a}</span>`
+  ).join('');
+}
+
+function renderTrainingDetails() {
+  document.getElementById('trainingDetailBody').innerHTML = trainingDetails.map(td => {
+    const ytId = extractYTId(td.youtubeUrl);
+    const ytCell = ytId ? `<img src="https://img.youtube.com/vi/${ytId}/default.jpg" style="height:30px;border-radius:4px">` : '—';
+    const linksCell = td.links.length > 0 ? `<span class="badge bg-info text-dark">${td.links.length}</span>` : '—';
+    const fileCell  = td.fileName ? `<i class="bi bi-file-earmark-fill text-danger" title="${td.fileName}"></i>` : '—';
+    return `<tr>
+      <td>${td.id}</td>
+      <td><span class="badge bg-secondary">${td.abschnitt}</span></td>
+      <td><strong>${td.name}</strong></td>
+      <td>${td.dauer} Min</td>
+      <td>${ytCell}</td>
+      <td>${linksCell}</td>
+      <td>${fileCell}</td>
+      <td>
+        <button class="btn btn-outline-secondary btn-sm" onclick="openTrainingDetailModal('${td.id}')"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-outline-danger btn-sm ms-1" onclick="tdLoeschen('${td.id}')"><i class="bi bi-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+  if (dtTraining) { dtTraining.destroy(); dtTraining = null; }
+  dtTraining = $('#trainingDetailTable').DataTable({
+    responsive:true,
+    language:{ url:'https://cdn.datatables.net/plug-ins/1.13.6/i18n/de-DE.json' },
+    columnDefs:[{orderable:false, targets:-1}]
+  });
+}
+
+window.tdLoeschen = function(id) {
+  if (!confirm('Übung löschen?')) return;
+  trainingDetails = trainingDetails.filter(t => t.id !== id);
+  renderTrainingDetails();
+};
+
+// ══════════════════════════════════════════════════════════════
+// TRAINING DETAIL MODAL
+// ══════════════════════════════════════════════════════════════
+window.openTrainingDetailModal = function(id) {
+  editingTDID = id;
+  const td = id ? trainingDetails.find(t => t.id === id) : null;
+  document.getElementById('modalTDTitle').innerHTML = `<i class="bi bi-clipboard-plus me-2"></i>${td ? 'Übung bearbeiten' : 'Neue Übung'}`;
+  document.getElementById('tdError').classList.add('d-none');
+
+  // Abschnitt Dropdown
+  document.getElementById('tdAbschnitt').innerHTML = trainingsAbschnitte.map(a =>
+    `<option ${td?.abschnitt===a?'selected':''}>${a}</option>`).join('');
+
+  document.getElementById('tdName').value   = td?.name  || '';
+  document.getElementById('tdDauer').value  = td?.dauer || 10;
+  document.getElementById('tdYoutube').value = td?.youtubeUrl || '';
+
+  // Links
+  const linksC = document.getElementById('tdLinksContainer');
+  linksC.innerHTML = '';
+  const links = td?.links.length ? td.links : [''];
+  links.forEach(l => { addLinkRow(l); });
+
+  // Datei
+  tdFileBlobUrl = td?.fileBlobUrl || null;
+  tdFileName    = td?.fileName    || null;
+  document.getElementById('tdFileName').textContent = tdFileName || 'Keine Datei gewählt';
+  document.getElementById('tdFileOpenBtn').classList.toggle('d-none', !tdFileBlobUrl);
+
+  // YouTube Preview
+  previewYoutube();
+
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalTrainingDetail')).show();
+};
+
+document.getElementById('modalTrainingDetail').addEventListener('shown.bs.modal', () => {
+  const td = editingTDID ? trainingDetails.find(t => t.id === editingTDID) : null;
+  if (!quillTD) {
+    quillTD = new Quill('#quillTDEditor', { theme:'snow', placeholder:'Beschreibung der Übung …',
+      modules:{ toolbar:[[{header:[1,2,false]}],'bold','italic','underline',{list:'ordered'},{list:'bullet'},'link','clean'] }
     });
+  }
+  quillTD.root.innerHTML = td?.beschreibung || '';
+  // Taktikfeld Items laden
+  tkItems = td?.tkItems || [];
+  renderTkItems();
+});
 
-    const team = document.getElementById('spTeam').value;
-    const neueWertigkeiten = Object.keys(skills).filter(w => !(teamWertigkeiten[team]||[]).includes(w));
-    if (neueWertigkeiten.length > 0) {
-        if (!teamWertigkeiten[team]) teamWertigkeiten[team] = [];
-        neueWertigkeiten.forEach(w => { if (!teamWertigkeiten[team].includes(w)) teamWertigkeiten[team].push(w); });
-        spielerData.filter(sp => sp.team === team).forEach(sp => {
-            neueWertigkeiten.forEach(w => { if (!(w in sp.skills)) sp.skills[w] = 50; });
-        });
-    }
+window.trainingDetailSpeichern = function() {
+  const name = document.getElementById('tdName').value.trim();
+  const err  = document.getElementById('tdError');
+  if (!name) { err.classList.remove('d-none'); err.textContent='Bitte einen Namen eingeben.'; return; }
+  err.classList.add('d-none');
+  const links = [...document.querySelectorAll('.td-link-input')].map(i=>i.value.trim()).filter(Boolean);
+  const obj = {
+    id: editingTDID || ('td'+(++tdCounter)),
+    abschnitt: document.getElementById('tdAbschnitt').value,
+    name, dauer: parseInt(document.getElementById('tdDauer').value)||10,
+    youtubeUrl: document.getElementById('tdYoutube').value.trim(),
+    beschreibung: quillTD ? quillTD.root.innerHTML : '',
+    links, fileBlobUrl: tdFileBlobUrl, fileName: tdFileName,
+    tkItems: [...tkItems],
+  };
+  if (editingTDID) {
+    const idx = trainingDetails.findIndex(t => t.id === editingTDID);
+    if (idx !== -1) trainingDetails[idx] = obj;
+  } else {
+    trainingDetails.push(obj);
+  }
+  renderTrainingDetails();
+  bootstrap.Modal.getInstance(document.getElementById('modalTrainingDetail')).hide();
+};
 
-    const existingFoto = editingSpielerID ? (spielerData.find(s=>s.id===editingSpielerID)?.foto||'') : '';
-    const obj = {
-        id:       editingSpielerID || ('p'+(++spielerCounter)),
-        rnr:      parseInt(document.getElementById('spRNr').value)||0,
-        pos:      document.getElementById('spPosition').value,
-        nachname, vorname,
-        geb:      document.getElementById('spGebDatum').value,
-        team,
-        slv:      parseInt(document.getElementById('spSkillLevel').value)||60,
-        spl:      parseInt(document.getElementById('spSPL').value)||60,
-        spiele:   parseInt(document.getElementById('spSpiele').value)||0,
-        paOk:     parseInt(document.getElementById('spPaesseOk').value)||0,
-        paNk:     parseInt(document.getElementById('spPaesseNk').value)||0,
-        scOk:     parseInt(document.getElementById('spSchuessOk').value)||0,
-        scNk:     parseInt(document.getElementById('spSchuessNk').value)||0,
-        assists:  parseInt(document.getElementById('spAssists').value)||0,
-        tore:     parseInt(document.getElementById('spTore').value)||0,
-        fouls:    parseInt(document.getElementById('spFouls').value)||0,
-        min:      parseInt(document.getElementById('spMin').value)||0,
-        ausw:     parseInt(document.getElementById('spAusw').value)||0,
-        foto:     pendingFotoBase64 !== null ? pendingFotoBase64 : existingFoto,
-        skills,
-    };
+// Links
+window.addLinkRow = function(val='') {
+  document.getElementById('tdLinksContainer').insertAdjacentHTML('beforeend', `
+    <div class="input-group mb-2">
+      <input type="url" class="form-control td-link-input" value="${val}" placeholder="https://…">
+      <button class="btn btn-outline-danger" onclick="removeLinkRow(this)"><i class="bi bi-x"></i></button>
+    </div>`);
+};
+window.removeLinkRow = function(btn) { btn.closest('.input-group').remove(); };
 
-    if (editingSpielerID) {
-        const idx = spielerData.findIndex(s => s.id === editingSpielerID);
-        if (idx !== -1) spielerData[idx] = obj;
-    } else {
-        spielerData.push(obj);
-    }
-    renderSpielerTable();
-    bootstrap.Modal.getInstance(document.getElementById('modalSpieler')).hide();
+// Datei
+window.handleTdFile = function(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  tdFileBlobUrl = URL.createObjectURL(file);
+  tdFileName    = file.name;
+  document.getElementById('tdFileName').textContent = file.name;
+  document.getElementById('tdFileOpenBtn').classList.remove('d-none');
+  event.target.value = '';
+};
+window.openTdFile = function() {
+  if (tdFileBlobUrl) window.open(tdFileBlobUrl, '_blank');
+};
+
+// YouTube
+function extractYTId(url) {
+  if (!url) return null;
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
+  return m ? m[1] : null;
+}
+window.previewYoutube = function() {
+  const url  = document.getElementById('tdYoutube').value;
+  const ytId = extractYTId(url);
+  const prev = document.getElementById('youtubePrev');
+  if (ytId) {
+    document.getElementById('youtubeThumb').src = `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`;
+    prev.classList.remove('d-none');
+  } else {
+    prev.classList.add('d-none');
+  }
+};
+
+// Abschnitte
+window.openAbschnittModal = function() {
+  document.getElementById('abschnittName').value = '';
+  document.getElementById('abschnittError').classList.add('d-none');
+  renderAbschnittListe();
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAbschnitt')).show();
+};
+function renderAbschnittListe() {
+  document.getElementById('abschnittListe').innerHTML = trainingsAbschnitte.map(a => {
+    const fixed = ['Einleitung','Hauptteil (1)','Technik','Hauptteil (2)','Ende'].includes(a);
+    return `<span class="badge ${fixed?'bg-dark':'bg-secondary'} me-1 mb-1" style="font-size:.8rem">${a}${!fixed?` <i class="bi bi-x" style="cursor:pointer" onclick="abschnittLoeschen('${a}')"></i>`:''}</span>`;
+  }).join('');
+}
+window.abschnittSpeichern = function() {
+  const name = document.getElementById('abschnittName').value.trim();
+  const err  = document.getElementById('abschnittError');
+  if (!name) { err.classList.remove('d-none'); err.textContent='Bitte Namen eingeben.'; return; }
+  if (trainingsAbschnitte.includes(name)) { err.classList.remove('d-none'); err.textContent='Existiert bereits.'; return; }
+  trainingsAbschnitte.push(name);
+  renderAbschnittListe(); renderAbschnitteChips(); document.getElementById('abschnittName').value='';
+};
+window.abschnittLoeschen = function(name) {
+  if (!confirm(`Abschnitt "${name}" löschen?`)) return;
+  trainingsAbschnitte = trainingsAbschnitte.filter(a => a !== name);
+  renderAbschnittListe(); renderAbschnitteChips();
 };
 
 // ══════════════════════════════════════════════════════════════
-// NEUE WERTIGKEIT
+// TAKTIKFELD
 // ══════════════════════════════════════════════════════════════
-window.openNeueWertigkeit = function() {
-    document.getElementById('nwName').value = '';
-    document.getElementById('nwError').classList.add('d-none');
-    document.getElementById('nwAttribut').innerHTML = attribute.map(a =>
-        `<option value="${a.id}">${a.name} (${a.id})</option>`).join('');
-    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalNeueWertigkeit')).show();
+let tkTool     = 'player';
+let tkItems    = [];
+let tkSelected = null;
+let tkPNum     = { player:1, player2:1 };
+
+window.tkSelectTool = function(tool, btn) {
+  tkTool = tool; tkSelected = null;
+  document.querySelectorAll('.tk-toolbar .btn').forEach(b => b.style.outline='none');
+  if (btn) btn.style.outline = '3px solid #fff';
 };
 
-window.wertigkeitSpeichern = function() {
-    const name = document.getElementById('nwName').value.trim();
-    const err  = document.getElementById('nwError');
-    if (!name) { err.classList.remove('d-none'); err.textContent='Bitte einen Namen eingeben.'; return; }
-    const team = document.getElementById('spTeam').value || 'U10';
-    if (!teamWertigkeiten[team]) teamWertigkeiten[team] = [];
-    if (teamWertigkeiten[team].includes(name)) { err.classList.remove('d-none'); err.textContent='Diese Wertigkeit existiert bereits.'; return; }
-    teamWertigkeiten[team].push(name);
-    spielerData.filter(s => s.team === team).forEach(s => { if (!(name in s.skills)) s.skills[name] = 50; });
-    const s = editingSpielerID ? spielerData.find(x => x.id === editingSpielerID) : null;
-    renderSkillWerte(s);
-    bootstrap.Modal.getInstance(document.getElementById('modalNeueWertigkeit')).hide();
+window.tkPlace = function(event) {
+  const field = document.getElementById('taktikfeld');
+  const rect  = field.getBoundingClientRect();
+  const xPct  = (event.clientX - rect.left)  / rect.width  * 100;
+  const yPct  = (event.clientY - rect.top)   / rect.height * 100;
+  if (event.target.classList.contains('tk-item')) {
+    // Select existing
+    tkSelected = event.target.dataset.id;
+    document.querySelectorAll('.tk-item').forEach(el => el.classList.remove('selected'));
+    event.target.classList.add('selected');
+    return;
+  }
+  const id = 'tk_'+Date.now();
+  const num = (tkTool==='player'||tkTool==='player2') ? tkPNum[tkTool]++ : null;
+  tkItems.push({ id, type:tkTool, x:xPct, y:yPct, num });
+  renderTkItems();
 };
 
-// ══════════════════════════════════════════════════════════════
-// ATTRIBUT-TABELLE
-// ══════════════════════════════════════════════════════════════
-function renderAttributeTable() {
-    const tbody = document.getElementById('attributeBody');
-    tbody.innerHTML = attribute.map(a => {
-        const quellenBadges = a.quellen.map(qid => {
-            const q = quellen.find(x => x.id === qid);
-            return q ? `<span class="badge bg-light text-dark border me-1" style="font-size:.72rem;">${q.name}</span>` : '';
-        }).join('');
-        const lockIcon = a.fixed ? '<i class="bi bi-lock-fill fixed-icon me-1"></i>' : '';
-        const delBtn   = a.fixed
-            ? `<button class="btn btn-outline-secondary btn-sm" disabled title="Basiswert"><i class="bi bi-trash"></i></button>`
-            : `<button class="btn btn-outline-danger btn-sm" onclick="attributLoeschen('${a.id}')"><i class="bi bi-trash"></i></button>`;
-        return `<tr>
-            <td><strong>${a.id}</strong></td>
-            <td>${lockIcon}${a.name}</td>
-            <td>${quellenBadges || '<span class="text-muted small">—</span>'}</td>
-            <td>${a.fixed ? '<span class="badge bg-secondary">Basis</span>' : '<span class="badge bg-info text-dark">Custom</span>'}</td>
-            <td>
-                <button class="btn btn-outline-secondary btn-sm me-1" onclick="openAttrModal('${a.id}')"><i class="bi bi-pencil"></i></button>
-                ${delBtn}
-            </td>
-        </tr>`;
-    }).join('');
+function renderTkItems() {
+  const field = document.getElementById('taktikfeld');
+  field.querySelectorAll('.tk-item').forEach(el => el.remove());
+  tkItems.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'tk-item ' + item.type;
+    el.dataset.id = item.id;
+    el.style.left = item.x + '%';
+    el.style.top  = item.y + '%';
+    if (item.type==='player')  el.style.background = '#c0392b';
+    if (item.type==='player2') el.style.background = '#1a5276';
+    if (item.type==='ball')    { el.style.background='#fff'; el.style.color='#333'; }
+    if (item.type==='goal')    el.style.background = 'transparent';
+    el.textContent = item.num != null ? item.num : (item.type==='cone'?'▲': item.type==='ball'?'⚽':'');
+    el.addEventListener('contextmenu', e => { e.preventDefault(); tkDeleteItem(item.id); });
+    field.appendChild(el);
+  });
 }
 
-window.openAttrModal = function(id) {
-    editingAttrID = id || null;
-    const existing = id ? attribute.find(a => a.id === id) : null;
-    document.getElementById('modalAttrTitle').innerHTML =
-        `<i class="bi bi-sliders2 me-2"></i>${existing ? 'Kategorie bearbeiten' : 'Neue Kategorie'}`;
-    document.getElementById('atError').classList.add('d-none');
+window.tkClear = function() { if (confirm('Taktikfeld leeren?')) { tkItems=[]; tkPNum={player:1,player2:1}; renderTkItems(); } };
+window.tkUndo  = function() { tkItems.pop(); renderTkItems(); };
+window.tkDeleteItem = function(id) { tkItems = tkItems.filter(i=>i.id!==id); renderTkItems(); };
 
-    // Kürzel + Name
-    const kuerzelInput = document.getElementById('atKuerzel');
-    kuerzelInput.value    = existing?.id   || '';
-    kuerzelInput.disabled = !!existing;     // Kürzel bei Bearbeitung nicht änderbar
-    document.getElementById('atName').value = existing?.name || '';
-
-    // Quellen-Checkboxen mit aktuellem Stand
-    const currentQuellen = existing?.quellen || [];
-    document.getElementById('atQuellenList').innerHTML = quellen.map(q =>
-        `<div class="form-check">
-            <input class="form-check-input" type="checkbox" id="atq-${q.id}" value="${q.id}"
-                ${currentQuellen.includes(q.id) ? 'checked' : ''}>
-            <label class="form-check-label" for="atq-${q.id}">${q.name}</label>
-        </div>`
-    ).join('');
-    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAttr')).show();
-};
-
-window.attributSpeichern = function() {
-    const kuerzel = document.getElementById('atKuerzel').value.trim().toUpperCase();
-    const name    = document.getElementById('atName').value.trim();
-    const err     = document.getElementById('atError');
-    if (!kuerzel || !name) { err.classList.remove('d-none'); err.textContent='Kürzel und Name erforderlich.'; return; }
-
-    const selectedQuellen = [...document.querySelectorAll('#atQuellenList input:checked')].map(cb => cb.value);
-
-    if (editingAttrID) {
-        // Bearbeitung bestehender Kategorie
-        const existing = attribute.find(a => a.id === editingAttrID);
-        if (existing) { existing.name = name; existing.quellen = selectedQuellen; }
-    } else {
-        // Neue Kategorie
-        if (attribute.find(a => a.id === kuerzel)) { err.classList.remove('d-none'); err.textContent='Dieses Kürzel existiert bereits.'; return; }
-        attribute.push({ id:kuerzel, name, quellen:selectedQuellen, fixed:false });
-    }
-    renderAttributeTable();
-    renderQuellenTable();
-    bootstrap.Modal.getInstance(document.getElementById('modalAttr')).hide();
-};
-
-window.attributLoeschen = function(id) {
-    if (!confirm('Kategorie löschen?')) return;
-    attribute = attribute.filter(a => a.id !== id);
-    renderAttributeTable();
-};
-
-// ══════════════════════════════════════════════════════════════
-// QUELLEN-TABELLE
-// ══════════════════════════════════════════════════════════════
-function renderQuellenTable() {
-    const tbody = document.getElementById('quellenBody');
-    tbody.innerHTML = quellen.map(q => {
-        const attr    = attribute.find(a => a.id === q.attr);
-        const isFixed = FIXED_QUELLEN_IDS.includes(q.id);
-        const lockIcon = isFixed ? '<i class="bi bi-lock-fill fixed-icon me-1"></i>' : '';
-        const delBtn   = isFixed
-            ? `<button class="btn btn-outline-secondary btn-sm" disabled title="Basiswert"><i class="bi bi-trash"></i></button>`
-            : `<button class="btn btn-outline-danger btn-sm" onclick="quelleLoeschen('${q.id}')"><i class="bi bi-trash"></i></button>`;
-        return `<tr>
-            <td>${lockIcon}<span id="qname-${q.id}">${q.name}</span></td>
-            <td>${attr ? `<span class="badge bg-primary me-1">${attr.id}</span>${attr.name}` : '<span class="text-muted">—</span>'}</td>
-            <td>${isFixed ? '<span class="badge bg-secondary">Basis</span>' : '<span class="badge bg-info text-dark">Custom</span>'}</td>
-            <td>
-                <button class="btn btn-outline-secondary btn-sm me-1" onclick="renameQuelle('${q.id}')"><i class="bi bi-pencil"></i></button>
-                ${delBtn}
-            </td>
-        </tr>`;
-    }).join('');
-}
-
-window.renameQuelle = function(id) {
-    const q = quellen.find(x => x.id === id);
-    if (!q) return;
-    const newName = prompt('Neuer Name:', q.name);
-    if (newName && newName.trim()) { q.name = newName.trim(); renderQuellenTable(); renderAttributeTable(); }
-};
-
-window.quelleLoeschen = function(id) {
-    if (!confirm('Quelle löschen?')) return;
-    quellen = quellen.filter(q => q.id !== id);
-    attribute.forEach(a => { a.quellen = a.quellen.filter(qid => qid !== id); });
-    renderQuellenTable(); renderAttributeTable();
-};
-
-window.openQuelleModal = function() {
-    document.getElementById('quName').value = '';
-    document.getElementById('quError').classList.add('d-none');
-    document.getElementById('quAttribut').innerHTML = '<option value="">— Kein Attribut —</option>' +
-        attribute.map(a => `<option value="${a.id}">${a.name} (${a.id})</option>`).join('');
-    const isSuperAdmin = true;
-    const cb = document.getElementById('quFuerAlleUs');
-    cb.disabled = !isSuperAdmin; cb.checked = false;
-    const label = document.getElementById('quFuerAlleUsLabel');
-    const badge = document.getElementById('quFuerAlleUsBadge');
-    if (isSuperAdmin) { label.style.color=''; badge.className='badge bg-danger ms-1'; badge.textContent='SuperAdmin'; }
-    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalQuelle')).show();
-};
-
-window.quelleSpeichern = function() {
-    const name       = document.getElementById('quName').value.trim();
-    const attr       = document.getElementById('quAttribut').value;
-    const fuerAlleUs = document.getElementById('quFuerAlleUs').checked;
-    const err        = document.getElementById('quError');
-    if (!name) { err.classList.remove('d-none'); err.textContent='Bitte einen Namen eingeben.'; return; }
-    const id = 'q_' + Date.now();
-    quellen.push({ id, name, attr });
-    if (attr) { const a = attribute.find(x => x.id === attr); if (a) a.quellen.push(id); }
-    if (fuerAlleUs) {
-        Object.keys(teamWertigkeiten).forEach(t => {
-            if (!teamWertigkeiten[t].includes(name)) teamWertigkeiten[t].push(name);
-            spielerData.filter(s => s.team === t).forEach(s => { if (!(name in s.skills)) s.skills[name] = 50; });
-        });
-    }
-    renderQuellenTable(); renderAttributeTable();
-    bootstrap.Modal.getInstance(document.getElementById('modalQuelle')).hide();
-};
-
-// ══════════════════════════════════════════════════════════════
-// CSV UPLOAD
-// ══════════════════════════════════════════════════════════════
-window.handleCSV = function(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const lines   = e.target.result.split('\n').filter(l => l.trim());
-        const headers = lines[0].split(',').map(h => h.trim());
-        let added = 0;
-        for (let i = 1; i < lines.length; i++) {
-            const vals = lines[i].split(',').map(v => v.trim());
-            if (vals.length < 2) continue;
-            const row = {};
-            headers.forEach((h, idx) => row[h] = vals[idx]||'');
-            spielerData.push({
-                id:'p'+(++spielerCounter), rnr:parseInt(row.RNr)||0,
-                pos:row.Position||'MF', nachname:row.Nachname||'', vorname:row.Vorname||'',
-                geb:row.GebDatum||'', foto:'',
-                spiele:parseInt(row.Spiele)||0, paOk:parseInt(row.PaesseOk)||0,
-                paNk:parseInt(row.PaesseNk)||0, scOk:parseInt(row.SchuessOk)||0,
-                scNk:parseInt(row.SchuessNk)||0, assists:parseInt(row.Assists)||0,
-                tore:parseInt(row.Tore)||0, fouls:parseInt(row.Fouls)||0,
-                min:parseInt(row.MinGespielt)||0, ausw:parseInt(row.Auswechslungen)||0,
-                slv:parseInt(row.SkillLevel)||60, spl:parseInt(row.SPL)||60,
-                team:row.Mannschaft||'U10', skills:{},
-            });
-            added++;
-        }
-        renderSpielerTable();
-        alert(`${added} Spieler importiert.`);
-    };
-    reader.readAsText(file);
-    event.target.value = '';
-};
+document.addEventListener('keydown', e => {
+  if ((e.key==='Delete'||e.key==='Backspace') && tkSelected && document.getElementById('modalTrainingDetail').classList.contains('show')) {
+    tkDeleteItem(tkSelected); tkSelected=null;
+  }
+});
 
 // ══════════════════════════════════════════════════════════════
 // MANNSCHAFTEN
 // ══════════════════════════════════════════════════════════════
-const mannschaftVerwalter = { 'mrow-u10':['Muster Maria'], 'mrow-u12':['Huber Karl'] };
-let editingRowId = null, mRowCounter = 0;
-
 function renderVerwalter(rowId) {
-    const names = mannschaftVerwalter[rowId]||[];
-    const el = document.getElementById('mverwalter-'+rowId);
-    if (!el) return;
-    el.innerHTML = names.length === 0 ? '<span class="text-muted">—</span>'
-        : names.map(n=>`<span class="me-2"><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>${n}</span>`).join('');
+  const names = mannschaftVerwalter[rowId]||[];
+  const el = document.getElementById('mverwalter-'+rowId);
+  if (!el) return;
+  el.innerHTML = names.length===0?'<span class="text-muted">—</span>':names.map(n=>`<span class="me-2"><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>${n}</span>`).join('');
 }
-
 window.openMannschaftModal = function(rowId) {
-    editingRowId = rowId;
-    document.getElementById('modalMannschaftTitle').innerHTML =
-        `<i class="bi bi-diagram-3-fill me-2"></i>${rowId ? 'Mannschaft bearbeiten' : 'Neue Mannschaft'}`;
-    document.getElementById('mfError').classList.add('d-none');
-    document.getElementById('mfName').value = rowId ? (document.getElementById('mname-'+rowId)?.textContent||'') : '';
-    const current = rowId ? (mannschaftVerwalter[rowId]||[]) : [];
-    const liste = [...trainerModusSet].sort();
-    document.getElementById('mfVerwalterList').innerHTML = liste.length === 0
-        ? '<small class="text-muted">Kein Benutzer mit aktivem Trainer-Modus.</small>'
-        : liste.map(n => {
-            const cbId = 'mfv-'+n.replace(/\s/g,'');
-            return `<div class="form-check"><input class="form-check-input" type="checkbox" id="${cbId}" value="${n}" ${current.includes(n)?'checked':''}><label class="form-check-label" for="${cbId}"><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>${n}</label></div>`;
-        }).join('');
-    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalMannschaft')).show();
+  editingRowId = rowId;
+  document.getElementById('modalMannschaftTitle').innerHTML = `<i class="bi bi-diagram-3-fill me-2"></i>${rowId?'Bearbeiten':'Neue Mannschaft'}`;
+  document.getElementById('mfError').classList.add('d-none');
+  document.getElementById('mfName').value = rowId?(document.getElementById('mname-'+rowId)?.textContent||''):'';
+  const current = rowId?(mannschaftVerwalter[rowId]||[]):[];
+  const liste = [...trainerModusSet].sort();
+  document.getElementById('mfVerwalterList').innerHTML = liste.length===0
+    ? '<small class="text-muted">Kein Benutzer mit Trainer-Modus.</small>'
+    : liste.map(n=>`<div class="form-check"><input class="form-check-input" type="checkbox" id="mfv-${n.replace(/\s/g,'')}" value="${n}" ${current.includes(n)?'checked':''}><label class="form-check-label" for="mfv-${n.replace(/\s/g,'')}">${n}</label></div>`).join('');
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalMannschaft')).show();
 };
-
 window.mannschaftSpeichern = function() {
-    const name = document.getElementById('mfName').value.trim();
-    const err  = document.getElementById('mfError');
-    if (!name) { err.classList.remove('d-none'); err.textContent='Bitte Bezeichnung eingeben.'; return; }
-    err.classList.add('d-none');
-    const selected = [...document.querySelectorAll('#mfVerwalterList input:checked')].map(cb=>cb.value);
-    if (editingRowId) {
-        document.getElementById('mname-'+editingRowId).textContent = name;
-        mannschaftVerwalter[editingRowId] = selected;
-        renderVerwalter(editingRowId);
-    } else {
-        const rowId = 'mrow-'+(++mRowCounter);
-        mannschaftVerwalter[rowId] = selected;
-        document.getElementById('mannschaftenBody').insertAdjacentHTML('beforeend',`
-            <tr id="${rowId}">
-                <td><strong id="mname-${rowId}">${name}</strong></td>
-                <td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked onchange="toggleMannschaft('${rowId}',this)"></div></td>
-                <td><span class="badge bg-success" id="mstatus-${rowId}">Aktiv</span></td>
-                <td id="mverwalter-${rowId}"></td>
-                <td id="mactions-${rowId}">
-                    <button class="btn btn-outline-secondary btn-sm" onclick="openMannschaftModal('${rowId}')"><i class="bi bi-pencil"></i></button>
-                    <button class="btn btn-warning btn-sm ms-1" onclick="softDelete('${rowId}')"><i class="bi bi-trash" style="color:#fff"></i></button>
-                    <button class="btn btn-danger btn-sm ms-1" onclick="hardDelete('${rowId}')"><i class="bi bi-trash-fill"></i></button>
-                </td>
-            </tr>`);
-        renderVerwalter(rowId);
-        ['spTeam','filterMannschaft','kartenFilterTeam','buMannschaft'].forEach(sel => {
-            const el = document.getElementById(sel);
-            if (el && ![...el.options].some(o=>o.value===name))
-                el.insertAdjacentHTML('beforeend',`<option value="${name}">${name}</option>`);
-        });
-        if (!teamWertigkeiten[name]) teamWertigkeiten[name] = [...(teamWertigkeiten['U10']||[])];
-        updateMannschaftStats();
-    }
-    bootstrap.Modal.getInstance(document.getElementById('modalMannschaft')).hide();
-};
-
-window.toggleMannschaft = function(rowId, cb) {
-    const badge = document.getElementById('mstatus-'+rowId);
-    badge.className = cb.checked ? 'badge bg-success' : 'badge bg-secondary';
-    badge.textContent = cb.checked ? 'Aktiv' : 'Inaktiv';
+  const name = document.getElementById('mfName').value.trim();
+  const err  = document.getElementById('mfError');
+  if (!name) { err.classList.remove('d-none'); err.textContent='Bezeichnung erforderlich.'; return; }
+  err.classList.add('d-none');
+  const sel = [...document.querySelectorAll('#mfVerwalterList input:checked')].map(cb=>cb.value);
+  if (editingRowId) {
+    document.getElementById('mname-'+editingRowId).textContent = name;
+    mannschaftVerwalter[editingRowId] = sel;
+    renderVerwalter(editingRowId);
+  } else {
+    const rowId = 'mrow-'+(++mRowCounter);
+    mannschaftVerwalter[rowId] = sel;
+    document.getElementById('mannschaftenBody').insertAdjacentHTML('beforeend',`<tr id="${rowId}"><td><strong id="mname-${rowId}">${name}</strong></td><td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked onchange="toggleMannschaft('${rowId}',this)"></div></td><td><span class="badge bg-success" id="mstatus-${rowId}">Aktiv</span></td><td id="mverwalter-${rowId}"></td><td id="mactions-${rowId}"><button class="btn btn-outline-secondary btn-sm" onclick="openMannschaftModal('${rowId}')"><i class="bi bi-pencil"></i></button><button class="btn btn-warning btn-sm ms-1" onclick="softDelete('${rowId}')"><i class="bi bi-trash" style="color:#fff"></i></button><button class="btn btn-danger btn-sm ms-1" onclick="hardDelete('${rowId}')"><i class="bi bi-trash-fill"></i></button></td></tr>`);
+    renderVerwalter(rowId);
+    ['spTeam','spFilterTeam','kartenFilterTeam','buMannschaft'].forEach(selId=>{const e=document.getElementById(selId);if(e&&![...e.options].some(o=>o.value===name))e.insertAdjacentHTML('beforeend',`<option value="${name}">${name}</option>`);});
     updateMannschaftStats();
+  }
+  bootstrap.Modal.getInstance(document.getElementById('modalMannschaft')).hide();
 };
-window.softDelete = function(rowId) {
-    document.getElementById('mactions-'+rowId).innerHTML=`
-        <span class="text-muted small me-2">Ausblenden?</span>
-        <button class="btn btn-warning btn-sm" onclick="softDeleteConfirm('${rowId}')"><i class="bi bi-check-lg" style="color:#fff"></i> Ja</button>
-        <button class="btn btn-outline-secondary btn-sm ms-1" onclick="restoreActions('${rowId}')"><i class="bi bi-x-lg"></i></button>`;
+window.toggleMannschaft = function(rowId,cb) {
+  const b=document.getElementById('mstatus-'+rowId); b.className=cb.checked?'badge bg-success':'badge bg-secondary'; b.textContent=cb.checked?'Aktiv':'Inaktiv'; updateMannschaftStats();
 };
-window.softDeleteConfirm = function(rowId) {
-    const row=document.getElementById(rowId); row.style.opacity='.45';
-    row.querySelector('input[type=checkbox]').disabled=true;
-    document.getElementById('mstatus-'+rowId).className='badge bg-dark';
-    document.getElementById('mstatus-'+rowId).textContent='Ausgeblendet';
-    document.getElementById('mactions-'+rowId).innerHTML=`
-        <button class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-pencil"></i></button>
-        <button class="btn btn-success btn-sm ms-1" onclick="restoreRow('${rowId}')"><i class="bi bi-arrow-counterclockwise"></i></button>
-        <button class="btn btn-danger btn-sm ms-1" onclick="hardDelete('${rowId}')"><i class="bi bi-trash-fill"></i></button>`;
-    updateMannschaftStats();
-};
-window.restoreRow = function(rowId) {
-    const row=document.getElementById(rowId); row.style.opacity='1';
-    const cb=row.querySelector('input[type=checkbox]'); cb.disabled=false; cb.checked=true;
-    document.getElementById('mstatus-'+rowId).className='badge bg-success';
-    document.getElementById('mstatus-'+rowId).textContent='Aktiv';
-    restoreActions(rowId); updateMannschaftStats();
-};
-window.hardDelete = function(rowId) {
-    document.getElementById('mactions-'+rowId).innerHTML=`
-        <span class="text-danger small me-2 fw-bold">Unwiderruflich?</span>
-        <button class="btn btn-danger btn-sm" onclick="hardDeleteConfirm('${rowId}')"><i class="bi bi-trash-fill"></i> Ja</button>
-        <button class="btn btn-outline-secondary btn-sm ms-1" onclick="restoreActions('${rowId}')"><i class="bi bi-x-lg"></i></button>`;
-};
-window.hardDeleteConfirm = function(rowId) {
-    document.getElementById(rowId).remove(); delete mannschaftVerwalter[rowId]; updateMannschaftStats();
-};
-window.restoreActions = function(rowId) {
-    document.getElementById('mactions-'+rowId).innerHTML=`
-        <button class="btn btn-outline-secondary btn-sm" onclick="openMannschaftModal('${rowId}')"><i class="bi bi-pencil"></i></button>
-        <button class="btn btn-warning btn-sm ms-1" onclick="softDelete('${rowId}')"><i class="bi bi-trash" style="color:#fff"></i></button>
-        <button class="btn btn-danger btn-sm ms-1" onclick="hardDelete('${rowId}')"><i class="bi bi-trash-fill"></i></button>`;
-};
-function updateMannschaftStats() {
-    const rows=[...document.querySelectorAll('#mannschaftenBody tr')];
-    document.getElementById('statTeams').textContent=rows.length;
-    document.getElementById('statTeamsAktiv').textContent=rows.filter(r=>r.querySelector('.badge')?.textContent==='Aktiv').length;
-    document.getElementById('statTeamsInaktiv').textContent=rows.filter(r=>r.querySelector('.badge')?.textContent==='Inaktiv').length;
-}
+window.softDelete = function(rowId) { document.getElementById('mactions-'+rowId).innerHTML=`<span class="text-muted small me-2">Ausblenden?</span><button class="btn btn-warning btn-sm" onclick="softDeleteConfirm('${rowId}')"><i class="bi bi-check-lg" style="color:#fff"></i></button><button class="btn btn-outline-secondary btn-sm ms-1" onclick="restoreActions('${rowId}')"><i class="bi bi-x-lg"></i></button>`; };
+window.softDeleteConfirm = function(rowId) { const r=document.getElementById(rowId);r.style.opacity='.45';r.querySelector('input[type=checkbox]').disabled=true;document.getElementById('mstatus-'+rowId).className='badge bg-dark';document.getElementById('mstatus-'+rowId).textContent='Ausgeblendet';document.getElementById('mactions-'+rowId).innerHTML=`<button class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-pencil"></i></button><button class="btn btn-success btn-sm ms-1" onclick="restoreRow('${rowId}')"><i class="bi bi-arrow-counterclockwise"></i></button><button class="btn btn-danger btn-sm ms-1" onclick="hardDelete('${rowId}')"><i class="bi bi-trash-fill"></i></button>`;updateMannschaftStats(); };
+window.restoreRow = function(rowId) { const r=document.getElementById(rowId);r.style.opacity='1';const cb=r.querySelector('input[type=checkbox]');cb.disabled=false;cb.checked=true;document.getElementById('mstatus-'+rowId).className='badge bg-success';document.getElementById('mstatus-'+rowId).textContent='Aktiv';restoreActions(rowId);updateMannschaftStats(); };
+window.hardDelete = function(rowId) { document.getElementById('mactions-'+rowId).innerHTML=`<span class="text-danger small me-2 fw-bold">Unwiderruflich?</span><button class="btn btn-danger btn-sm" onclick="hardDeleteConfirm('${rowId}')"><i class="bi bi-trash-fill"></i> Ja</button><button class="btn btn-outline-secondary btn-sm ms-1" onclick="restoreActions('${rowId}')"><i class="bi bi-x-lg"></i></button>`; };
+window.hardDeleteConfirm = function(rowId) { document.getElementById(rowId).remove();delete mannschaftVerwalter[rowId];updateMannschaftStats(); };
+window.restoreActions = function(rowId) { document.getElementById('mactions-'+rowId).innerHTML=`<button class="btn btn-outline-secondary btn-sm" onclick="openMannschaftModal('${rowId}')"><i class="bi bi-pencil"></i></button><button class="btn btn-warning btn-sm ms-1" onclick="softDelete('${rowId}')"><i class="bi bi-trash" style="color:#fff"></i></button><button class="btn btn-danger btn-sm ms-1" onclick="hardDelete('${rowId}')"><i class="bi bi-trash-fill"></i></button>`; };
+function updateMannschaftStats() { const r=[...document.querySelectorAll('#mannschaftenBody tr')];document.getElementById('statTeams').textContent=r.length;document.getElementById('statTeamsAktiv').textContent=r.filter(x=>x.querySelector('.badge')?.textContent==='Aktiv').length;document.getElementById('statTeamsInaktiv').textContent=r.filter(x=>x.querySelector('.badge')?.textContent==='Inaktiv').length; }
 
 // ══════════════════════════════════════════════════════════════
 // BENUTZER
 // ══════════════════════════════════════════════════════════════
-window.trainerModusChanged = function(name, aktiv) {
-    if (aktiv) trainerModusSet.add(name); else trainerModusSet.delete(name);
-};
-
+window.trainerModusChanged = function(name,aktiv) { if(aktiv)trainerModusSet.add(name);else trainerModusSet.delete(name); };
 window.benutzerSpeichern = function() {
-    const vorname=document.getElementById('buVorname').value.trim();
-    const nachname=document.getElementById('buNachname').value.trim();
-    const email=document.getElementById('buEmail').value.trim();
-    const passwort=document.getElementById('buPasswort').value;
-    const err=document.getElementById('buError');
-    const rollen=[];
-    if(document.getElementById('roleSuperAdmin').checked) rollen.push('<span class="badge bg-danger me-1">SuperAdmin</span>');
-    if(document.getElementById('roleTrainer').checked)    rollen.push('<span class="badge bg-primary me-1">Trainer</span>');
-    if(document.getElementById('roleEltern').checked)     rollen.push('<span class="badge bg-success me-1">Eltern</span>');
-    if(document.getElementById('roleSpieler').checked)    rollen.push('<span class="badge bg-warning text-dark me-1">Spieler</span>');
-    if(!vorname||!nachname){err.classList.remove('d-none');err.textContent='Vor- und Nachname erforderlich.';return;}
-    if(!email){err.classList.remove('d-none');err.textContent='E-Mail erforderlich.';return;}
-    if(passwort.length<6){err.classList.remove('d-none');err.textContent='Passwort min. 6 Zeichen.';return;}
-    if(rollen.length===0){err.classList.remove('d-none');err.textContent='Mindestens eine Rolle wählen.';return;}
-    err.classList.add('d-none');
-    const fullName=`${vorname} ${nachname}`;
-    const trainerModus=document.getElementById('buTrainerModus').checked;
-    const mannschaft=document.getElementById('buMannschaft').value||'—';
-    if(trainerModus) trainerModusSet.add(fullName);
-    document.getElementById('benutzerBody').insertAdjacentHTML('beforeend',`
-        <tr><td>${fullName}</td><td>${email}</td><td>${rollen.join('')}</td>
-        <td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" ${trainerModus?'checked':''} onchange="trainerModusChanged('${fullName}',this.checked)"></div></td>
-        <td>${mannschaft}</td><td><span class="badge bg-success">Aktiv</span></td></tr>`);
-    ['buVorname','buNachname','buEmail','buPasswort'].forEach(id=>document.getElementById(id).value='');
-    ['roleSuperAdmin','roleTrainer','roleEltern','roleSpieler','buTrainerModus'].forEach(id=>document.getElementById(id).checked=false);
-    document.getElementById('buMannschaft').value='';
-    bootstrap.Modal.getInstance(document.getElementById('modalBenutzer')).hide();
+  const vn=document.getElementById('buVorname').value.trim(),nn=document.getElementById('buNachname').value.trim();
+  const em=document.getElementById('buEmail').value.trim(),pw=document.getElementById('buPasswort').value;
+  const err=document.getElementById('buError');
+  const rollen=[];
+  if(document.getElementById('roleSuperAdmin').checked)rollen.push('<span class="badge bg-danger me-1">SuperAdmin</span>');
+  if(document.getElementById('roleTrainer').checked)rollen.push('<span class="badge bg-primary me-1">Trainer</span>');
+  if(document.getElementById('roleEltern').checked)rollen.push('<span class="badge bg-success me-1">Eltern</span>');
+  if(document.getElementById('roleSpieler').checked)rollen.push('<span class="badge bg-warning text-dark me-1">Spieler</span>');
+  if(!vn||!nn){err.classList.remove('d-none');err.textContent='Name erforderlich.';return;}
+  if(!em){err.classList.remove('d-none');err.textContent='E-Mail erforderlich.';return;}
+  if(pw.length<6){err.classList.remove('d-none');err.textContent='Passwort min. 6 Zeichen.';return;}
+  if(rollen.length===0){err.classList.remove('d-none');err.textContent='Mindestens eine Rolle wählen.';return;}
+  err.classList.add('d-none');
+  const fullName=`${vn} ${nn}`;
+  const tm=document.getElementById('buTrainerModus').checked;
+  if(tm)trainerModusSet.add(fullName);
+  document.getElementById('benutzerBody').insertAdjacentHTML('beforeend',`<tr><td>${fullName}</td><td>${em}</td><td>${rollen.join('')}</td><td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" ${tm?'checked':''} onchange="trainerModusChanged('${fullName}',this.checked)"></div></td><td>${document.getElementById('buMannschaft').value||'—'}</td><td><span class="badge bg-success">Aktiv</span></td></tr>`);
+  ['buVorname','buNachname','buEmail','buPasswort'].forEach(id=>document.getElementById(id).value='');
+  ['roleSuperAdmin','roleTrainer','roleEltern','roleSpieler','buTrainerModus'].forEach(id=>document.getElementById(id).checked=false);
+  document.getElementById('buMannschaft').value='';
+  bootstrap.Modal.getInstance(document.getElementById('modalBenutzer')).hide();
 };
 </script>
 
 <!-- Firebase -->
 <script type="module">
-  import { initializeApp }                                            from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  const app  = initializeApp({ apiKey:"AIzaSyDk5nj3fwQSAu6SzSQ1RDJWACD5Rfb2m64", authDomain:"matchflow-997aa.firebaseapp.com", projectId:"matchflow-997aa", storageBucket:"matchflow-997aa.firebasestorage.app", messagingSenderId:"240206981355", appId:"1:240206981355:web:a19432550a530b767b76ae" });
-  const auth = getAuth(app);
-  onAuthStateChanged(auth, user => {
-    document.getElementById('loginScreen').style.display = user ? 'none' : 'flex';
-    document.getElementById('dashboard').style.display   = user ? 'block' : 'none';
-  });
-  window.doLogin = async function() {
-    const err = document.getElementById('loginError');
-    try { await signInWithEmailAndPassword(auth, document.getElementById('loginEmail').value, document.getElementById('loginPassword').value); }
-    catch(e) { err.classList.remove('d-none'); err.textContent='Falsche E-Mail oder falsches Passwort.'; }
-  };
-  window.doLogout = () => signOut(auth);
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+const app  = initializeApp({ apiKey:"AIzaSyDk5nj3fwQSAu6SzSQ1RDJWACD5Rfb2m64", authDomain:"matchflow-997aa.firebaseapp.com", projectId:"matchflow-997aa", storageBucket:"matchflow-997aa.firebasestorage.app", messagingSenderId:"240206981355", appId:"1:240206981355:web:a19432550a530b767b76ae" });
+const auth = getAuth(app);
+onAuthStateChanged(auth, user => {
+  document.getElementById('loginScreen').style.display = user ? 'none' : 'flex';
+  document.getElementById('dashboard').style.display   = user ? 'block' : 'none';
+});
+window.doLogin = async function() {
+  const err = document.getElementById('loginError');
+  try { await signInWithEmailAndPassword(auth, document.getElementById('loginEmail').value, document.getElementById('loginPassword').value); }
+  catch(e) { err.classList.remove('d-none'); err.textContent='Falsche E-Mail oder falsches Passwort.'; }
+};
+window.doLogout = () => signOut(auth);
 </script>
 </body>
 </html>
