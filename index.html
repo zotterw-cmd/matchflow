@@ -96,6 +96,15 @@ body{background:#f5f6fa}
 .ql-toolbar{border-radius:6px 6px 0 0}
 .ql-container{border-radius:0 0 6px 6px}
 
+/* CAMP KARTEN */
+.camp-card-blau{background:linear-gradient(160deg,#0a1628 0%,#1a2e4a 40%,#1a5276 100%);border-color:#2e86c1!important}
+.camp-card-gelb{background:linear-gradient(160deg,#1a1400 0%,#3d2e00 40%,#7d6608 100%);border-color:#d4ac0d!important}
+.camp-card-gruen{background:linear-gradient(160deg,#001a0a 0%,#0d2e1a 40%,#1a5c36 100%);border-color:#27ae60!important}
+.camp-card-pink{background:linear-gradient(160deg,#1a0012 0%,#3d0028 40%,#7d1049 100%);border-color:#e91e8c!important}
+.camp-card-rot{background:linear-gradient(160deg,#1a1a1a 0%,#2c2c2c 40%,#8b0000 100%);border-color:#c0392b!important}
+.camp-stat-input{display:flex;gap:6px;align-items:center}
+.camp-stat-input .form-control{font-size:.85rem;padding:4px 8px}
+.camp-versuch-label{font-size:.7rem;color:#6c757d;min-width:20px;text-align:center}
 /* FOTO */
 .foto-vorschau{width:60px;height:60px;object-fit:cover;border-radius:50%;border:2px solid #c0392b}
 .foto-placeholder-sm{width:60px;height:60px;border-radius:50%;border:2px dashed #ced4da;display:flex;align-items:center;justify-content:center;color:#adb5bd;font-size:1.4rem}
@@ -126,10 +135,7 @@ body{background:#f5f6fa}
         <button id="navMain"          class="btn btn-outline-light menu-btn nav-active" onclick="showView('main')"><i class="bi bi-speedometer2"></i> Dashboard</button>
         <button id="navSpieler"       class="btn btn-outline-light menu-btn" onclick="showView('spieler')"><i class="bi bi-people-fill"></i> Spieler</button>
         <button id="navKarten"        class="btn btn-outline-light menu-btn" onclick="showView('karten')"><i class="bi bi-person-badge-fill"></i> Karten</button>
-        <!-- ALT: Spieler inkl. Skills – versteckt, nicht klickbar -->
-        <button class="btn btn-outline-secondary menu-btn" disabled title="Archiviert" style="opacity:.35;cursor:not-allowed">
-          <i class="bi bi-archive-fill"></i> Spieler inkl. Skills
-        </button>
+        <button id="navCamp" class="btn btn-outline-warning menu-btn" onclick="showView('camp')"><i class="bi bi-trophy-fill"></i> Camp</button>
         <button id="navTraining"      class="btn btn-outline-light menu-btn" onclick="showView('training')"><i class="bi bi-calendar-plus"></i> Neues Spiel/Training</button>
         <button class="btn btn-outline-light menu-btn"><i class="bi bi-file-earmark-pdf"></i> Export</button>
         <button id="navMannschaften"  class="btn btn-outline-info menu-btn" onclick="showView('mannschaften')"><i class="bi bi-diagram-3-fill"></i> Mannschaften</button>
@@ -181,6 +187,58 @@ body{background:#f5f6fa}
     </select>
   </div>
   <div id="kartenGrid" class="karten-grid"></div>
+</div>
+
+<!-- ===== CAMP ===== -->
+<div id="viewCamp" class="container-fluid p-4" style="display:none">
+  <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-2">
+    <div>
+      <h4 class="mb-0"><i class="bi bi-trophy-fill text-warning me-2"></i>Fußballcamp</h4>
+      <p class="text-muted mb-0 mt-1">Camp-Spieler mit Skills-Karten – unabhängig vom Vereinsbetrieb</p>
+    </div>
+    <button class="btn btn-warning fw-bold" onclick="openCampSpielerModal(null)"><i class="bi bi-person-plus-fill me-1"></i>Neuer Camp-Spieler</button>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mt-3 mb-3">
+    <li class="nav-item"><button class="nav-link active" id="campTabSpielerBtn" onclick="showCampTab('spieler')"><i class="bi bi-people-fill me-1"></i>Spieler</button></li>
+    <li class="nav-item"><button class="nav-link" id="campTabKartenBtn" onclick="showCampTab('karten')"><i class="bi bi-person-badge-fill me-1"></i>Karten</button></li>
+  </ul>
+
+  <!-- Spieler-Tab -->
+  <div id="campPanelSpieler">
+    <div class="card shadow-sm p-3">
+      <div class="d-flex gap-2 mb-3 flex-wrap align-items-center">
+        <label class="fw-bold mb-0 me-1">Gruppe:</label>
+        <select id="campFilterGruppe" class="form-select form-select-sm" style="width:auto" onchange="renderCampSpieler()">
+          <option value="">Alle</option>
+          <option value="Blau">Blau</option><option value="Gelb">Gelb</option>
+          <option value="Grün">Grün</option><option value="Pink">Pink</option><option value="Rot">Rot</option>
+        </select>
+      </div>
+      <div class="table-responsive">
+        <table id="campSpielerTable" class="table table-striped align-middle w-100">
+          <thead class="table-dark">
+            <tr><th>Foto</th><th>Name</th><th>Geb.</th><th>Gruppe</th><th>SPEED</th><th>ATTACK</th><th>BONUS</th><th>SHOOT</th><th>SKILL</th><th>PASS</th><th>JUMP</th><th></th></tr>
+          </thead>
+          <tbody id="campSpielerBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Karten-Tab -->
+  <div id="campPanelKarten" style="display:none">
+    <div class="d-flex gap-2 mb-3 flex-wrap align-items-center">
+      <label class="fw-bold mb-0 me-1">Gruppe:</label>
+      <select id="campKartenFilterGruppe" class="form-select form-select-sm" style="width:auto" onchange="renderCampKarten()">
+        <option value="">Alle</option>
+        <option value="Blau">Blau</option><option value="Gelb">Gelb</option>
+        <option value="Grün">Grün</option><option value="Pink">Pink</option><option value="Rot">Rot</option>
+      </select>
+    </div>
+    <div id="campKartenGrid" class="karten-grid"></div>
+  </div>
 </div>
 
 <!-- ===== NEUES SPIEL / TRAINING ===== -->
@@ -369,6 +427,152 @@ body{background:#f5f6fa}
 <!-- ══════════════════════════════════════════════════════════════
      MODALS
 ══════════════════════════════════════════════════════════════ -->
+
+<!-- MODAL: Camp-Spieler -->
+<div class="modal fade" id="modalCampSpieler" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header text-white" style="background:#1a2e4a">
+        <h5 class="modal-title" id="modalCampSpielerTitle"><i class="bi bi-trophy-fill text-warning me-2"></i>Camp-Spieler</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Stammdaten -->
+        <div class="row g-3 mb-3">
+          <div class="col-md-2">
+            <div class="d-flex flex-column align-items-center gap-2">
+              <div class="foto-placeholder-sm" id="cFotoPlaceholder"><i class="bi bi-person"></i></div>
+              <img id="cFotoPreview" class="foto-vorschau d-none" src="" alt="">
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('cFotoInput').click()"><i class="bi bi-camera-fill"></i> Foto</button>
+              <input type="file" id="cFotoInput" accept="image/*" style="display:none" onchange="handleCampFoto(event)">
+            </div>
+          </div>
+          <div class="col-md-10">
+            <div class="row g-2">
+              <div class="col-md-3"><label class="form-label fw-bold">Vorname</label><input type="text" id="cVorname" class="form-control"></div>
+              <div class="col-md-3"><label class="form-label fw-bold">Nachname</label><input type="text" id="cNachname" class="form-control"></div>
+              <div class="col-md-3"><label class="form-label fw-bold">Geburtsdatum</label><input type="date" id="cGeb" class="form-control"></div>
+              <div class="col-md-3">
+                <label class="form-label fw-bold">Gruppe</label>
+                <select id="cGruppe" class="form-select">
+                  <option value="Blau">🔵 Blau</option>
+                  <option value="Gelb">🟡 Gelb</option>
+                  <option value="Grün">🟢 Grün</option>
+                  <option value="Pink">🩷 Pink</option>
+                  <option value="Rot">🔴 Rot</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr>
+        <h6 class="fw-bold mb-3"><i class="bi bi-rulers me-1 text-primary"></i>Messwerte (je 2 Versuche, bestes Ergebnis wird für Karte verwendet)</h6>
+
+        <div class="row g-3">
+          <!-- SPEED -->
+          <div class="col-md-6 col-lg-4">
+            <div class="card p-3 h-100 border-0 bg-light">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge bg-dark fs-6">⚡</span>
+                <div><div class="fw-bold" style="font-size:.85rem">SPEED</div><div class="text-muted" style="font-size:.75rem">Geschwindigkeit 10m Sprint (Sek) – niedriger = besser</div></div>
+              </div>
+              <div class="camp-stat-input">
+                <span class="camp-versuch-label">V1</span><input type="number" step="0.01" id="cSpeed1" class="form-control" placeholder="1.65">
+                <span class="camp-versuch-label">V2</span><input type="number" step="0.01" id="cSpeed2" class="form-control" placeholder="1.71">
+              </div>
+            </div>
+          </div>
+          <!-- ATTACK -->
+          <div class="col-md-6 col-lg-4">
+            <div class="card p-3 h-100 border-0 bg-light">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge bg-danger fs-6">🎯</span>
+                <div><div class="fw-bold" style="font-size:.85rem">ATTACK</div><div class="text-muted" style="font-size:.75rem">Dribbling mit Zielschuss – Pilone umschießen (Punkte 0–6)</div></div>
+              </div>
+              <div class="camp-stat-input">
+                <span class="camp-versuch-label">V1</span><input type="number" min="0" max="6" id="cAttack1" class="form-control" placeholder="4">
+                <span class="camp-versuch-label">V2</span><input type="number" min="0" max="6" id="cAttack2" class="form-control" placeholder="5">
+              </div>
+            </div>
+          </div>
+          <!-- BONUS -->
+          <div class="col-md-6 col-lg-4">
+            <div class="card p-3 h-100 border-0 bg-light">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge bg-warning text-dark fs-6">⭐</span>
+                <div><div class="fw-bold" style="font-size:.85rem">BONUS</div><div class="text-muted" style="font-size:.75rem">Gaberln – 5 Versuche, max. Anzahl als Bonus</div></div>
+              </div>
+              <div class="camp-stat-input">
+                <span class="camp-versuch-label">V1</span><input type="number" min="0" max="6" id="cBonus1" class="form-control" placeholder="5">
+                <span class="camp-versuch-label">V2</span><input type="number" min="0" max="6" id="cBonus2" class="form-control" placeholder="6">
+              </div>
+            </div>
+          </div>
+          <!-- SHOOT -->
+          <div class="col-md-6 col-lg-4">
+            <div class="card p-3 h-100 border-0 bg-light">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge bg-primary fs-6">💥</span>
+                <div><div class="fw-bold" style="font-size:.85rem">SHOOT</div><div class="text-muted" style="font-size:.75rem">Schuss km/h – höher = besser</div></div>
+              </div>
+              <div class="camp-stat-input">
+                <span class="camp-versuch-label">V1</span><input type="number" id="cShoot1" class="form-control" placeholder="50">
+                <span class="camp-versuch-label">V2</span><input type="number" id="cShoot2" class="form-control" placeholder="65">
+              </div>
+            </div>
+          </div>
+          <!-- SKILL -->
+          <div class="col-md-6 col-lg-4">
+            <div class="card p-3 h-100 border-0 bg-light">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge bg-success fs-6">🏃</span>
+                <div><div class="fw-bold" style="font-size:.85rem">SKILL</div><div class="text-muted" style="font-size:.75rem">Dribbling mit Abschluss (Sek) – niedriger = besser</div></div>
+              </div>
+              <div class="camp-stat-input">
+                <span class="camp-versuch-label">V1</span><input type="number" step="0.01" id="cSkill1" class="form-control" placeholder="6.5">
+                <span class="camp-versuch-label">V2</span><input type="number" step="0.01" id="cSkill2" class="form-control" placeholder="5.8">
+              </div>
+            </div>
+          </div>
+          <!-- PASS -->
+          <div class="col-md-6 col-lg-4">
+            <div class="card p-3 h-100 border-0 bg-light">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge" style="background:#8e44ad;font-size:1rem">🎯</span>
+                <div><div class="fw-bold" style="font-size:.85rem">PASS</div><div class="text-muted" style="font-size:.75rem">Passgenauigkeit (Anzahl) – 3 Versuche</div></div>
+              </div>
+              <div class="camp-stat-input">
+                <span class="camp-versuch-label">V1</span><input type="number" id="cPass1" class="form-control" placeholder="10">
+                <span class="camp-versuch-label">V2</span><input type="number" id="cPass2" class="form-control" placeholder="12">
+                <span class="camp-versuch-label">V3</span><input type="number" id="cPass3" class="form-control" placeholder="14">
+              </div>
+            </div>
+          </div>
+          <!-- JUMP -->
+          <div class="col-md-6 col-lg-4">
+            <div class="card p-3 h-100 border-0 bg-light">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge bg-secondary fs-6">📏</span>
+                <div><div class="fw-bold" style="font-size:.85rem">JUMP</div><div class="text-muted" style="font-size:.75rem">Weitsprung beidbeinig aus dem Stand (m) – höher = besser</div></div>
+              </div>
+              <div class="camp-stat-input">
+                <span class="camp-versuch-label">V1</span><input type="number" step="0.01" id="cJump1" class="form-control" placeholder="1.50">
+                <span class="camp-versuch-label">V2</span><input type="number" step="0.01" id="cJump2" class="form-control" placeholder="1.65">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="cError" class="alert alert-danger d-none mt-3"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
+        <button type="button" class="btn btn-warning fw-bold" onclick="campSpielerSpeichern()"><i class="bi bi-save me-1"></i>Speichern</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL: Spieler (vereinfacht) -->
 <div class="modal fade" id="modalSpieler" tabindex="-1">
@@ -756,8 +960,8 @@ let quillTD    = null;
 // ══════════════════════════════════════════════════════════════
 // NAVIGATION
 // ══════════════════════════════════════════════════════════════
-const views  = ['main','spieler','karten','training','mannschaften','users'];
-const navMap = { main:'navMain', spieler:'navSpieler', karten:'navKarten', training:'navTraining', mannschaften:'navMannschaften', users:'navUsers' };
+const views  = ['main','spieler','karten','camp','training','mannschaften','users'];
+const navMap = { main:'navMain', spieler:'navSpieler', karten:'navKarten', camp:'navCamp', training:'navTraining', mannschaften:'navMannschaften', users:'navUsers' };
 let dtSpielerSimple = null;
 let dtTraining      = null;
 
@@ -770,6 +974,7 @@ window.showView = function(view) {
   Object.entries(navMap).forEach(([v,id]) => document.getElementById(id)?.classList.toggle('nav-active', v === view));
   if (view === 'spieler')  { renderSpielerSimple(); renderNotizKatChips(); }
   if (view === 'karten')   renderAlleKarten();
+  if (view === 'camp')     initCampPage();
   if (view === 'training') { initTrainingPage(); }
 };
 
@@ -999,6 +1204,270 @@ window.renderAlleKarten = function() {
   const f = document.getElementById('kartenFilterTeam')?.value||'';
   const d = f ? spielerData.filter(s=>s.team===f) : spielerData;
   document.getElementById('kartenGrid').innerHTML = d.map(buildKarte).join('') || '<p class="text-muted">Keine Spieler.</p>';
+};
+
+// ══════════════════════════════════════════════════════════════
+// CAMP – DATEN
+// ══════════════════════════════════════════════════════════════
+const GRUPPE_STYLE = {
+  'Blau': { cls:'camp-card-blau', footer:'#2e86c1',  badge:'bg-primary' },
+  'Gelb': { cls:'camp-card-gelb', footer:'#d4ac0d',  badge:'bg-warning text-dark' },
+  'Grün': { cls:'camp-card-gruen',footer:'#27ae60',  badge:'bg-success' },
+  'Pink': { cls:'camp-card-pink', footer:'#e91e8c',  badge:'bg-danger' },
+  'Rot':  { cls:'camp-card-rot',  footer:'#c0392b',  badge:'bg-danger' },
+};
+
+let campSpielerData = [
+  { id:'c01', vorname:'Philipp',  nachname:'Flecker',   gruppe:'Blau', geb:'2012-12-05', foto:'', speed:[1.63,1.71], attack:[4,0],   bonus:[5,6],   shoot:[50,109],  skill:[7.08,5.20], pass:[13,13,15], jump:[1.53,1.65] },
+  { id:'c02', vorname:'Moritz',   nachname:'Scherz',    gruppe:'Blau', geb:'2012-03-03', foto:'', speed:[1.81,1.87], attack:[0,6],   bonus:[6,6],   shoot:[49,79],   skill:[8.05,5.95], pass:[3,3,7],    jump:[1.34,1.45] },
+  { id:'c03', vorname:'Heinrich', nachname:'Zotter',    gruppe:'Blau', geb:'2012-12-20', foto:'', speed:[1.66,1.68], attack:[4,0],   bonus:[6,0],   shoot:[99,52],   skill:[4.82,4.67], pass:[13,20,19], jump:[1.75,1.85] },
+  { id:'c04', vorname:'Julian',   nachname:'Großschädl',gruppe:'Blau', geb:'2012-05-14', foto:'', speed:[1.83,1.77], attack:[4,3],   bonus:[5,5],   shoot:[65,50],   skill:[5.92,5.35], pass:[7,8,3],    jump:[1.40,1.50] },
+  { id:'c05', vorname:'Noah',     nachname:'Fuchs',     gruppe:'Gelb', geb:'2018-07-28', foto:'', speed:[2.07,null], attack:[],      bonus:[],      shoot:[],        skill:[null,10.53],pass:[5,4,2],    jump:[] },
+  { id:'c06', vorname:'Tobias',   nachname:'Winterleitner',gruppe:'Gelb',geb:'2018-02-22',foto:'',speed:[2.03,null],attack:[],      bonus:[],      shoot:[],        skill:[7.72,6.86], pass:[4,5,6],    jump:[] },
+  { id:'c07', vorname:'Leon',     nachname:'Hirschböck',gruppe:'Grün', geb:'2016-04-07', foto:'', speed:[2.03,2.04], attack:[],     bonus:[],      shoot:[],        skill:[7.77,6.43], pass:[3,4,1],    jump:[1.46,1.60] },
+  { id:'c08', vorname:'Finn',     nachname:'Hösele',    gruppe:'Grün', geb:'2017-01-23', foto:'', speed:[1.95,1.89], attack:[],     bonus:[],      shoot:[],        skill:[5.41,6.73], pass:[7,7,8],    jump:[1.40,1.58] },
+  { id:'c09', vorname:'Emma',     nachname:'Grabar',    gruppe:'Pink', geb:'2012-09-17', foto:'', speed:[1.62,1.59], attack:[],     bonus:[],      shoot:[],        skill:[5.26,6.30], pass:[2,4,26],   jump:[] },
+  { id:'c10', vorname:'Ferdinand',nachname:'Zotter',    gruppe:'Rot',  geb:'2014-10-01', foto:'', speed:[1.75,1.80], attack:[4,4],  bonus:[0,5],   shoot:[81,89],   skill:[4.94,3.89], pass:[8,3,7],    jump:[1.70,1.73] },
+  { id:'c11', vorname:'Simon',    nachname:'Schriebl',  gruppe:'Rot',  geb:'2014-09-26', foto:'', speed:[1.67,1.71], attack:[4,0],  bonus:[0,0],   shoot:[49,40],   skill:[3.70,4.64], pass:[2,6,5],    jump:[1.68,1.70] },
+  { id:'c12', vorname:'Lukas',    nachname:'Riedl',     gruppe:'Rot',  geb:'2014-09-24', foto:'', speed:[1.89,1.89], attack:[4,0],  bonus:[0,4],   shoot:[100,83],  skill:[6.24,4.90], pass:[6,9,4],    jump:[1.59,1.50] },
+];
+let campCounter = campSpielerData.length;
+let editingCampID = null;
+let campPendingFoto = null;
+let dtCampSpieler = null;
+
+// ══════════════════════════════════════════════════════════════
+// CAMP – SCORING
+// ══════════════════════════════════════════════════════════════
+function campScore(type, values) {
+  const vals = (values||[]).filter(v => v != null && v !== '' && !isNaN(Number(v))).map(Number);
+  if (!vals.length) return 0;
+  let raw;
+  switch (type) {
+    case 'speed':  raw = Math.min(...vals); return Math.round(Math.max(0, Math.min(100, (3.0  - raw) / (3.0 - 1.5)   * 100)));
+    case 'attack': raw = Math.max(...vals); return Math.round(Math.max(0, Math.min(100,  raw / 6 * 100)));
+    case 'bonus':  raw = Math.max(...vals); return Math.round(Math.max(0, Math.min(100,  raw / 6 * 100)));
+    case 'shoot':  raw = Math.max(...vals); return Math.round(Math.max(0, Math.min(100, (raw - 30) / (130 - 30) * 100)));
+    case 'skill':  raw = Math.min(...vals); return Math.round(Math.max(0, Math.min(100, (10   - raw) / (10 - 3.5)    * 100)));
+    case 'pass':   raw = Math.max(...vals); return Math.round(Math.max(0, Math.min(100,  raw / 20 * 100)));
+    case 'jump':   raw = Math.max(...vals); return Math.round(Math.max(0, Math.min(100, (raw - 1.0) / (2.5 - 1.0)   * 100)));
+    default: return 0;
+  }
+}
+
+function campSLV(s) {
+  const scores = [
+    campScore('speed',  s.speed),
+    campScore('attack', s.attack),
+    campScore('bonus',  s.bonus),
+    campScore('shoot',  s.shoot),
+    campScore('skill',  s.skill),
+    campScore('pass',   s.pass),
+  ].filter(v => v > 0);
+  return scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
+}
+
+// ══════════════════════════════════════════════════════════════
+// CAMP – KARTE BAUEN
+// ══════════════════════════════════════════════════════════════
+function buildCampKarte(s) {
+  const gs    = GRUPPE_STYLE[s.gruppe] || GRUPPE_STYLE['Rot'];
+  const slv   = campSLV(s);
+  const foto  = s.foto
+    ? `<img src="${s.foto}" style="width:100%;height:120px;object-fit:cover;object-position:top">`
+    : `<div style="width:100%;height:120px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#333,#555);font-size:2.5rem;color:#888"><i class="bi bi-person"></i></div>`;
+
+  const stats = [
+    { label:'SPEED',  val: campScore('speed',  s.speed)  },
+    { label:'ATTACK', val: campScore('attack', s.attack) },
+    { label:'BONUS',  val: campScore('bonus',  s.bonus)  },
+    { label:'SHOOT',  val: campScore('shoot',  s.shoot)  },
+    { label:'SKILL',  val: campScore('skill',  s.skill)  },
+    { label:'PASS',   val: campScore('pass',   s.pass)   },
+  ];
+
+  const bars = stats.map(({label, val}) => {
+    const color = val >= 70 ? '#27ae60' : val >= 45 ? '#d4ac0d' : '#c0392b';
+    return `<div class="ma-skill-row">
+      <span class="ma-skill-label">${label}</span>
+      <div class="ma-skill-bar-wrap"><div class="ma-skill-bar" style="width:${val}%;background:${color}"></div></div>
+      <span class="ma-skill-val">${val||'—'}</span>
+    </div>`;
+  }).join('');
+
+  const jumpVal = campScore('jump', s.jump);
+  const datumStr = s.geb ? new Date(s.geb+'T12:00').toLocaleDateString('de-AT') : '—';
+
+  return `<div class="ma-card ${gs.cls}" style="border-color:${gs.footer}!important;cursor:pointer" onclick="openCampSpielerModal('${s.id}')">
+    <div class="ma-card-header">
+      <div class="ma-name-col" style="color:${gs.footer}">${s.nachname.toUpperCase()}</div>
+      <div class="ma-photo-wrap">${foto}</div>
+      <div class="ma-slv-badge" style="background:${gs.footer}">${slv}</div>
+      <div class="ma-pos-badge">${s.gruppe}</div>
+    </div>
+    <div style="padding:3px 7px 2px;background:rgba(0,0,0,.5)"><span style="font-size:.62rem;font-weight:700;color:${gs.footer};letter-spacing:1px;text-transform:uppercase">${s.vorname} ${s.nachname}</span></div>
+    <div class="ma-skills">${bars}</div>
+    <div class="ma-footer" style="background:${gs.footer}">
+      <div class="ma-footer-stat"><div class="label">JUMP</div><div class="value" style="font-size:.85rem">${jumpVal||'—'}</div></div>
+      <div class="ma-team-badge" style="font-size:.55rem;font-weight:800">${s.gruppe}</div>
+      <div class="ma-footer-stat"><div class="label">SLV</div><div class="value">${slv}</div></div>
+    </div>
+    <div class="ma-bottom-strip">FUSSBALLCAMP · ${s.gruppe} · ${datumStr}</div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// CAMP – SEITE
+// ══════════════════════════════════════════════════════════════
+function initCampPage() {
+  showCampTab('spieler');
+  renderCampSpieler();
+}
+
+window.showCampTab = function(tab) {
+  document.getElementById('campPanelSpieler').style.display = tab === 'spieler' ? 'block' : 'none';
+  document.getElementById('campPanelKarten').style.display  = tab === 'karten'  ? 'block' : 'none';
+  document.getElementById('campTabSpielerBtn').className = 'nav-link' + (tab === 'spieler' ? ' active' : '');
+  document.getElementById('campTabKartenBtn').className  = 'nav-link' + (tab === 'karten'  ? ' active' : '');
+  if (tab === 'karten') renderCampKarten();
+};
+
+window.renderCampSpieler = function() {
+  const f = document.getElementById('campFilterGruppe')?.value || '';
+  const data = f ? campSpielerData.filter(s => s.gruppe === f) : campSpielerData;
+
+  function best(arr, lower) {
+    const vals = (arr||[]).filter(v => v != null && !isNaN(Number(v))).map(Number);
+    if (!vals.length) return '—';
+    const b = lower ? Math.min(...vals) : Math.max(...vals);
+    return b % 1 === 0 ? b : b.toFixed(2);
+  }
+
+  document.getElementById('campSpielerBody').innerHTML = data.map(s => {
+    const gs = GRUPPE_STYLE[s.gruppe] || GRUPPE_STYLE['Rot'];
+    const foto = s.foto
+      ? `<img src="${s.foto}" style="width:32px;height:32px;object-fit:cover;border-radius:50%;border:2px solid #ccc">`
+      : `<div style="width:32px;height:32px;border-radius:50%;border:2px dashed #ced4da;display:flex;align-items:center;justify-content:center;color:#adb5bd"><i class="bi bi-person" style="font-size:.8rem"></i></div>`;
+    return `<tr>
+      <td>${foto}</td>
+      <td><strong>${s.nachname}</strong> ${s.vorname}</td>
+      <td>${s.geb ? new Date(s.geb+'T12:00').toLocaleDateString('de-AT') : '—'}</td>
+      <td><span class="badge ${gs.badge}">${s.gruppe}</span></td>
+      <td>${best(s.speed,true)}</td>
+      <td>${best(s.attack,false)}</td>
+      <td>${best(s.bonus,false)}</td>
+      <td>${best(s.shoot,false)}</td>
+      <td>${best(s.skill,true)}</td>
+      <td>${best(s.pass,false)}</td>
+      <td>${best(s.jump,false)}</td>
+      <td>
+        <button class="btn btn-outline-secondary btn-sm" onclick="openCampSpielerModal('${s.id}')"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-outline-danger btn-sm ms-1" onclick="campLoeschen('${s.id}')"><i class="bi bi-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="12" class="text-center text-muted">Keine Spieler.</td></tr>';
+
+  if (dtCampSpieler) { dtCampSpieler.destroy(); dtCampSpieler = null; }
+  dtCampSpieler = $('#campSpielerTable').DataTable({
+    responsive: true, autoWidth: false,
+    language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/de-DE.json' },
+    columnDefs: [{ orderable: false, targets: -1 }]
+  });
+};
+
+window.renderCampKarten = function() {
+  const f = document.getElementById('campKartenFilterGruppe')?.value || '';
+  const data = f ? campSpielerData.filter(s => s.gruppe === f) : campSpielerData;
+  document.getElementById('campKartenGrid').innerHTML = data.map(buildCampKarte).join('') || '<p class="text-muted">Keine Spieler.</p>';
+};
+
+// ── Modal öffnen / speichern ─────────────────────────────────
+window.openCampSpielerModal = function(id) {
+  editingCampID   = id;
+  campPendingFoto = null;
+  const s = id ? campSpielerData.find(x => x.id === id) : null;
+  document.getElementById('modalCampSpielerTitle').innerHTML =
+    `<i class="bi bi-trophy-fill text-warning me-2"></i>${s ? s.vorname+' '+s.nachname+' bearbeiten' : 'Neuer Camp-Spieler'}`;
+
+  // Foto
+  document.getElementById('cFotoPreview').classList.add('d-none');
+  document.getElementById('cFotoPlaceholder').classList.remove('d-none');
+  if (s?.foto) {
+    document.getElementById('cFotoPreview').src = s.foto;
+    document.getElementById('cFotoPreview').classList.remove('d-none');
+    document.getElementById('cFotoPlaceholder').classList.add('d-none');
+  }
+  // Stammdaten
+  document.getElementById('cVorname').value = s?.vorname  || '';
+  document.getElementById('cNachname').value= s?.nachname || '';
+  document.getElementById('cGeb').value     = s?.geb      || '';
+  document.getElementById('cGruppe').value  = s?.gruppe   || 'Blau';
+  document.getElementById('cError').classList.add('d-none');
+
+  // Messwerte
+  const fill = (id, arr, idx) => { document.getElementById(id).value = arr?.[idx] ?? ''; };
+  fill('cSpeed1',  s?.speed,  0); fill('cSpeed2',  s?.speed,  1);
+  fill('cAttack1', s?.attack, 0); fill('cAttack2', s?.attack, 1);
+  fill('cBonus1',  s?.bonus,  0); fill('cBonus2',  s?.bonus,  1);
+  fill('cShoot1',  s?.shoot,  0); fill('cShoot2',  s?.shoot,  1);
+  fill('cSkill1',  s?.skill,  0); fill('cSkill2',  s?.skill,  1);
+  fill('cPass1',   s?.pass,   0); fill('cPass2',   s?.pass,   1); fill('cPass3', s?.pass, 2);
+  fill('cJump1',   s?.jump,   0); fill('cJump2',   s?.jump,   1);
+
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCampSpieler')).show();
+};
+
+window.campSpielerSpeichern = function() {
+  const vn = document.getElementById('cVorname').value.trim();
+  const nn = document.getElementById('cNachname').value.trim();
+  const err = document.getElementById('cError');
+  if (!vn || !nn) { err.classList.remove('d-none'); err.textContent = 'Vor- und Nachname erforderlich.'; return; }
+  err.classList.add('d-none');
+
+  const toNum = id => { const v = document.getElementById(id).value; return v !== '' && !isNaN(v) ? Number(v) : null; };
+
+  const obj = {
+    id:       editingCampID || ('c' + String(++campCounter).padStart(2,'0')),
+    vorname:  vn, nachname: nn,
+    geb:      document.getElementById('cGeb').value,
+    gruppe:   document.getElementById('cGruppe').value,
+    foto:     campPendingFoto ?? (editingCampID ? (campSpielerData.find(x=>x.id===editingCampID)?.foto||'') : ''),
+    speed:    [toNum('cSpeed1'),  toNum('cSpeed2')],
+    attack:   [toNum('cAttack1'), toNum('cAttack2')],
+    bonus:    [toNum('cBonus1'),  toNum('cBonus2')],
+    shoot:    [toNum('cShoot1'),  toNum('cShoot2')],
+    skill:    [toNum('cSkill1'),  toNum('cSkill2')],
+    pass:     [toNum('cPass1'),   toNum('cPass2'),  toNum('cPass3')],
+    jump:     [toNum('cJump1'),   toNum('cJump2')],
+  };
+  if (editingCampID) {
+    const idx = campSpielerData.findIndex(x => x.id === editingCampID);
+    if (idx !== -1) campSpielerData[idx] = obj;
+  } else {
+    campSpielerData.push(obj);
+  }
+  bootstrap.Modal.getInstance(document.getElementById('modalCampSpieler')).hide();
+  renderCampSpieler();
+};
+
+window.campLoeschen = function(id) {
+  if (!confirm('Camp-Spieler löschen?')) return;
+  campSpielerData = campSpielerData.filter(s => s.id !== id);
+  renderCampSpieler();
+};
+
+window.handleCampFoto = function(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    campPendingFoto = e.target.result;
+    document.getElementById('cFotoPreview').src = e.target.result;
+    document.getElementById('cFotoPreview').classList.remove('d-none');
+    document.getElementById('cFotoPlaceholder').classList.add('d-none');
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
 };
 
 // ══════════════════════════════════════════════════════════════
