@@ -5,12 +5,8 @@
     <meta charset="UTF-8">
     <title>⚽ MatchFlow v1.2 – Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- DataTables + Bootstrap 5 + Responsive -->
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
 
@@ -21,30 +17,21 @@
         .logo-small { font-size: 0.8rem; color: #ccc; }
         .menu-btn { margin-right: 6px; }
         .dataTables_wrapper .dataTables_filter input {
-            border-radius: 6px;
-            border: 1px solid #ced4da;
-            padding: 4px 8px;
+            border-radius: 6px; border: 1px solid #ced4da; padding: 4px 8px;
         }
         .nav-active {
             background-color: rgba(255,255,255,0.15) !important;
             border-color: rgba(255,255,255,0.6) !important;
         }
-        /* Rollenkarten */
         .role-card { border-left: 5px solid; border-radius: 12px; }
         .role-superadmin { border-color: #dc3545; }
         .role-trainer    { border-color: #0d6efd; }
         .role-eltern     { border-color: #198754; }
         .role-spieler    { border-color: #fd7e14; }
-
-        .perm-check  { color: #198754; font-size: 1.1rem; }
-        .perm-cross  { color: #dc3545; font-size: 1.1rem; }
-        .perm-eye    { color: #0d6efd; font-size: 1.1rem; }
-
-        .overlap-box {
-            background: #fff8e1;
-            border: 2px dashed #ffc107;
-            border-radius: 12px;
-        }
+        .perm-check { color: #198754; font-size: 1.1rem; }
+        .perm-cross { color: #dc3545; font-size: 1.1rem; }
+        .perm-eye   { color: #0d6efd; font-size: 1.1rem; }
+        .overlap-box { background: #fff8e1; border: 2px dashed #ffc107; border-radius: 12px; }
     </style>
 </head>
 
@@ -67,48 +54,43 @@
     </div>
 </div>
 
-<!-- DASHBOARD (versteckt bis eingeloggt) -->
+<!-- DASHBOARD -->
 <div id="dashboard" style="display:none;">
 
-<!-- TOP NAVBAR -->
+<!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow">
     <div class="container-fluid">
-
-        <a class="navbar-brand" href="#">
-            ⚽ MatchFlow <span class="logo-small">v1.2</span>
-        </a>
-
+        <a class="navbar-brand" href="#">⚽ MatchFlow <span class="logo-small">v1.2</span></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
-
         <div class="collapse navbar-collapse" id="navbarNav">
             <div class="ms-auto d-flex flex-wrap gap-1 align-items-center">
 
+                <button id="navMain" class="btn btn-outline-light menu-btn nav-active" onclick="showView('main')">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </button>
                 <button class="btn btn-outline-light menu-btn" onclick="showView('main')">
                     <i class="bi bi-trophy-fill"></i> Spieler
                 </button>
-
                 <button class="btn btn-outline-light menu-btn" onclick="showView('main')">
                     <i class="bi bi-calendar-plus"></i> Neuer Spiel/Trainingstag
                 </button>
-
                 <button class="btn btn-outline-light menu-btn" onclick="showView('main')">
                     <i class="bi bi-plus-circle"></i> Neues Spiel
                 </button>
-
                 <button class="btn btn-outline-light menu-btn" onclick="showView('main')">
                     <i class="bi bi-list-ul"></i> Alle Spiele
                 </button>
-
                 <button class="btn btn-outline-light menu-btn" onclick="showView('main')">
                     <i class="bi bi-file-earmark-pdf"></i> Export
                 </button>
-
-                <button id="navBenutzerverwaltung" class="btn btn-outline-warning menu-btn" onclick="showView('users')">
+                <button id="navMannschaften" class="btn btn-outline-info menu-btn" onclick="showView('mannschaften')">
+                    <i class="bi bi-diagram-3-fill"></i> Mannschaften
+                </button>
+                <button id="navUsers" class="btn btn-outline-warning menu-btn" onclick="showView('users')">
                     <i class="bi bi-shield-lock-fill"></i> Benutzerverwaltung
                 </button>
-
                 <button class="btn btn-outline-danger" onclick="doLogout()">
                     <i class="bi bi-box-arrow-right"></i> Logout
                 </button>
@@ -122,26 +104,10 @@
 <div id="viewMain" class="container-fluid p-4">
 
     <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="card p-3 shadow-sm">
-                <h6>Spieler gesamt</h6><h3>19</h3>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card p-3 shadow-sm">
-                <h6>Im Kader</h6><h3>12</h3>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card p-3 shadow-sm">
-                <h6>Spiele</h6><h3>5</h3>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card p-3 shadow-sm">
-                <h6>Tore gesamt</h6><h3>18</h3>
-            </div>
-        </div>
+        <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Spieler gesamt</h6><h3>19</h3></div></div>
+        <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Im Kader</h6><h3>12</h3></div></div>
+        <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Spiele</h6><h3>5</h3></div></div>
+        <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Tore gesamt</h6><h3>18</h3></div></div>
     </div>
 
     <div class="card shadow-sm p-3">
@@ -149,43 +115,14 @@
         <div class="table-responsive">
             <table id="spielerTable" class="table table-striped align-middle nowrap w-100">
                 <thead class="table-dark">
-                <tr>
-                    <th>Kap</th><th>Start</th><th>Ers</th><th>Kader</th>
-                    <th>RNr</th><th>Position</th><th>Name</th><th>Geb. Datum</th>
-                    <th>Gesp</th><th>Pässe</th><th>Tore</th><th>Fouls</th>
-                </tr>
+                <tr><th>Kap</th><th>Start</th><th>Ers</th><th>Kader</th><th>RNr</th><th>Position</th><th>Name</th><th>Geb. Datum</th><th>Gesp</th><th>Pässe</th><th>Tore</th><th>Fouls</th></tr>
                 </thead>
                 <tbody>
-                <tr>
-                    <td><input type="checkbox"></td><td><input type="checkbox"></td>
-                    <td><input type="checkbox"></td><td><input type="checkbox"></td>
-                    <td>7</td><td>MF</td><td>Schmid Ben</td><td>06.07.2014</td>
-                    <td>5</td><td>22</td><td>4</td><td>2</td>
-                </tr>
-                <tr>
-                    <td><input type="checkbox"></td><td><input type="checkbox"></td>
-                    <td><input type="checkbox"></td><td><input type="checkbox"></td>
-                    <td>10</td><td>ST</td><td>Riedl Lukas</td><td>24.09.2014</td>
-                    <td>5</td><td>18</td><td>6</td><td>1</td>
-                </tr>
-                <tr>
-                    <td><input type="checkbox"></td><td><input type="checkbox"></td>
-                    <td><input type="checkbox"></td><td><input type="checkbox"></td>
-                    <td>5</td><td>DF</td><td>Pagger Theo</td><td>26.07.2014</td>
-                    <td>4</td><td>15</td><td>1</td><td>3</td>
-                </tr>
-                <tr>
-                    <td><input type="checkbox"></td><td><input type="checkbox"></td>
-                    <td><input type="checkbox"></td><td><input type="checkbox"></td>
-                    <td>3</td><td>GK</td><td>Hofer Nico</td><td>12.03.2015</td>
-                    <td>5</td><td>8</td><td>0</td><td>0</td>
-                </tr>
-                <tr>
-                    <td><input type="checkbox"></td><td><input type="checkbox"></td>
-                    <td><input type="checkbox"></td><td><input type="checkbox"></td>
-                    <td>9</td><td>ST</td><td>Maier Jonas</td><td>03.05.2014</td>
-                    <td>3</td><td>11</td><td>3</td><td>4</td>
-                </tr>
+                <tr><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td>7</td><td>MF</td><td>Schmid Ben</td><td>06.07.2014</td><td>5</td><td>22</td><td>4</td><td>2</td></tr>
+                <tr><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td>10</td><td>ST</td><td>Riedl Lukas</td><td>24.09.2014</td><td>5</td><td>18</td><td>6</td><td>1</td></tr>
+                <tr><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td>5</td><td>DF</td><td>Pagger Theo</td><td>26.07.2014</td><td>4</td><td>15</td><td>1</td><td>3</td></tr>
+                <tr><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td>3</td><td>GK</td><td>Hofer Nico</td><td>12.03.2015</td><td>5</td><td>8</td><td>0</td><td>0</td></tr>
+                <tr><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td>9</td><td>ST</td><td>Maier Jonas</td><td>03.05.2014</td><td>3</td><td>11</td><td>3</td><td>4</td></tr>
                 </tbody>
             </table>
         </div>
@@ -198,14 +135,8 @@
             <tr><th>Spiel</th><th>Datum</th><th>Spielform</th><th>Status</th></tr>
             </thead>
             <tbody>
-            <tr>
-                <td>ATUS Bärnbach vs Team X</td><td>20.06.2026</td><td>6+1</td>
-                <td><span class="badge bg-success">Beendet</span></td>
-            </tr>
-            <tr>
-                <td>ATUS Bärnbach vs Team Y</td><td>25.06.2026</td><td>5+1</td>
-                <td><span class="badge bg-warning text-dark">Geplant</span></td>
-            </tr>
+            <tr><td>ATUS Bärnbach vs Team X</td><td>20.06.2026</td><td>6+1</td><td><span class="badge bg-success">Beendet</span></td></tr>
+            <tr><td>ATUS Bärnbach vs Team Y</td><td>25.06.2026</td><td>5+1</td><td><span class="badge bg-warning text-dark">Geplant</span></td></tr>
             </tbody>
         </table>
     </div>
@@ -213,9 +144,63 @@
     <div class="card shadow-sm p-3 mt-4">
         <h5>Export</h5>
         <p>Spielerstatistiken als PDF exportieren</p>
-        <button class="btn btn-dark">
-            <i class="bi bi-file-earmark-pdf"></i> PDF erstellen
+        <button class="btn btn-dark"><i class="bi bi-file-earmark-pdf"></i> PDF erstellen</button>
+    </div>
+
+</div>
+
+<!-- ===== MANNSCHAFTEN VIEW ===== -->
+<div id="viewMannschaften" class="container-fluid p-4" style="display:none;">
+
+    <div class="d-flex justify-content-between align-items-center mb-1">
+        <h4 class="mb-0"><i class="bi bi-diagram-3-fill text-info"></i> Mannschaften</h4>
+        <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#modalMannschaft">
+            <i class="bi bi-plus-circle-fill"></i> Neue Mannschaft
         </button>
+    </div>
+    <p class="text-muted mb-4">Mannschaften verwalten und Verwalter zuweisen</p>
+
+    <!-- Statistik -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Mannschaften gesamt</h6><h3 id="statTeams">2</h3></div></div>
+        <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Aktiv</h6><h3 id="statTeamsAktiv">2</h3></div></div>
+        <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Inaktiv</h6><h3 id="statTeamsInaktiv">0</h3></div></div>
+    </div>
+
+    <div class="card shadow-sm p-3">
+        <h5 class="mb-3">Mannschaftsübersicht</h5>
+        <div class="table-responsive">
+            <table class="table table-striped align-middle" id="mannschaftenTable">
+                <thead class="table-dark">
+                <tr>
+                    <th>Mannschaftsbezeichnung</th>
+                    <th>Status</th>
+                    <th>Verwalter</th>
+                    <th>Aktionen</th>
+                </tr>
+                </thead>
+                <tbody id="mannschaftenBody">
+                <tr>
+                    <td><strong>U10</strong></td>
+                    <td><span class="badge bg-success">Aktiv</span></td>
+                    <td><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>Muster Maria</td>
+                    <td>
+                        <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-outline-danger btn-sm ms-1"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>U12</strong></td>
+                    <td><span class="badge bg-success">Aktiv</span></td>
+                    <td><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>Huber Karl</td>
+                    <td>
+                        <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-outline-danger btn-sm ms-1"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
 </div>
@@ -228,14 +213,13 @@
 
     <!-- Rollenkarten -->
     <div class="row mb-4">
-
         <div class="col-md-3 mb-3">
             <div class="card p-3 shadow-sm role-card role-superadmin">
                 <div class="d-flex align-items-center mb-2">
                     <i class="bi bi-patch-check-fill text-danger fs-4 me-2"></i>
                     <h6 class="mb-0 fw-bold">SuperAdmin</h6>
                 </div>
-                <small class="text-muted">Gleiche Rechte wie der Hauptadmin. Voller Zugriff auf alle Bereiche und Einstellungen.</small>
+                <small class="text-muted">Gleiche Rechte wie der Hauptadmin. Voller Zugriff auf alle Bereiche.</small>
                 <hr class="my-2">
                 <div><i class="bi bi-check-circle-fill perm-check"></i> Alles verwalten</div>
                 <div><i class="bi bi-check-circle-fill perm-check"></i> Benutzer anlegen</div>
@@ -243,14 +227,13 @@
                 <div><i class="bi bi-check-circle-fill perm-check"></i> Alle Menüpunkte</div>
             </div>
         </div>
-
         <div class="col-md-3 mb-3">
             <div class="card p-3 shadow-sm role-card role-trainer">
                 <div class="d-flex align-items-center mb-2">
                     <i class="bi bi-clipboard2-check-fill text-primary fs-4 me-2"></i>
                     <h6 class="mb-0 fw-bold">Trainer</h6>
                 </div>
-                <small class="text-muted">Kann Inhalte in freigeschalteten Menüpunkten verwalten und bearbeiten.</small>
+                <small class="text-muted">Kann Inhalte in freigeschalteten Menüpunkten verwalten.</small>
                 <hr class="my-2">
                 <div><i class="bi bi-check-circle-fill perm-check"></i> Freigesch. Menüpunkte verwalten</div>
                 <div><i class="bi bi-eye-fill perm-eye"></i> Freigesch. Menüpunkte ansehen</div>
@@ -258,14 +241,13 @@
                 <div><i class="bi bi-x-circle-fill perm-cross"></i> Systemeinstellungen</div>
             </div>
         </div>
-
         <div class="col-md-3 mb-3">
             <div class="card p-3 shadow-sm role-card role-eltern">
                 <div class="d-flex align-items-center mb-2">
                     <i class="bi bi-house-heart-fill text-success fs-4 me-2"></i>
                     <h6 class="mb-0 fw-bold">Eltern</h6>
                 </div>
-                <small class="text-muted">Kann freigeschaltete Inhalte nur ansehen, aber nicht bearbeiten.</small>
+                <small class="text-muted">Kann freigeschaltete Inhalte nur ansehen, nicht bearbeiten.</small>
                 <hr class="my-2">
                 <div><i class="bi bi-x-circle-fill perm-cross"></i> Inhalte verwalten</div>
                 <div><i class="bi bi-eye-fill perm-eye"></i> Freigesch. Menüpunkte ansehen</div>
@@ -273,14 +255,13 @@
                 <div><i class="bi bi-x-circle-fill perm-cross"></i> Systemeinstellungen</div>
             </div>
         </div>
-
         <div class="col-md-3 mb-3">
             <div class="card p-3 shadow-sm role-card role-spieler">
                 <div class="d-flex align-items-center mb-2">
                     <i class="bi bi-trophy-fill text-warning fs-4 me-2"></i>
                     <h6 class="mb-0 fw-bold">Spieler</h6>
                 </div>
-                <small class="text-muted">Kann freigeschaltete Inhalte nur ansehen, aber nicht bearbeiten.</small>
+                <small class="text-muted">Kann freigeschaltete Inhalte nur ansehen, nicht bearbeiten.</small>
                 <hr class="my-2">
                 <div><i class="bi bi-x-circle-fill perm-cross"></i> Inhalte verwalten</div>
                 <div><i class="bi bi-eye-fill perm-eye"></i> Freigesch. Menüpunkte ansehen</div>
@@ -288,23 +269,22 @@
                 <div><i class="bi bi-x-circle-fill perm-cross"></i> Systemeinstellungen</div>
             </div>
         </div>
-
     </div>
 
-    <!-- Trainer+Eltern Überschneidung -->
+    <!-- Trainer+Eltern Sonderfall -->
     <div class="overlap-box p-4 mb-4">
         <h6 class="fw-bold mb-3"><i class="bi bi-arrow-left-right text-warning me-2"></i>Sonderfall: Trainer ist gleichzeitig Elternteil</h6>
         <div class="row align-items-center">
             <div class="col-md-7">
-                <p class="mb-2">Ein Benutzer kann sowohl Trainer als auch Elternteil sein. Je nach Situation gelten unterschiedliche Regeln:</p>
+                <p class="mb-2">Ein Benutzer kann sowohl Trainer als auch Elternteil sein:</p>
                 <div class="d-flex gap-4 flex-wrap">
                     <div class="card p-3 border-primary" style="min-width:200px;">
                         <div class="fw-bold text-primary mb-1"><i class="bi bi-toggle-on me-1"></i> Trainer-Modus aktiv</div>
-                        <small>Benutzer coacht die Mannschaft → hat Trainer-Rechte (verwalten)</small>
+                        <small>Coacht die Mannschaft → Trainer-Rechte (verwalten)</small>
                     </div>
                     <div class="card p-3 border-success" style="min-width:200px;">
                         <div class="fw-bold text-success mb-1"><i class="bi bi-toggle-off me-1"></i> Nur Elternteil</div>
-                        <small>Benutzer ist Elternteil, coacht aber nicht → nur Eltern-Rechte (ansehen)</small>
+                        <small>Coacht nicht → nur Eltern-Rechte (ansehen)</small>
                     </div>
                 </div>
             </div>
@@ -317,9 +297,7 @@
                     </div>
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="trainerModeDemo" checked onchange="updateTrainerDemo(this)">
-                        <label class="form-check-label" for="trainerModeDemo" id="trainerDemoLabel">
-                            Trainer-Modus aktiv → darf verwalten
-                        </label>
+                        <label class="form-check-label" for="trainerModeDemo" id="trainerDemoLabel">Trainer-Modus aktiv → darf verwalten</label>
                     </div>
                     <div id="trainerDemoInfo" class="mt-2 p-2 rounded small bg-primary bg-opacity-10 text-primary">
                         <i class="bi bi-clipboard2-check-fill me-1"></i> Aktive Rolle: <strong>Trainer</strong> – kann Inhalte verwalten
@@ -333,91 +311,198 @@
     <div class="card shadow-sm p-3">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0">Benutzer</h5>
-            <button class="btn btn-dark btn-sm" disabled>
+            <button class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#modalBenutzer">
                 <i class="bi bi-person-plus-fill"></i> Benutzer hinzufügen
-                <span class="badge bg-secondary ms-1">bald</span>
             </button>
         </div>
         <div class="table-responsive">
-            <table class="table table-striped align-middle">
+            <table class="table table-striped align-middle" id="benutzerTable">
                 <thead class="table-dark">
-                <tr>
-                    <th>Name</th>
-                    <th>E-Mail</th>
-                    <th>Rolle(n)</th>
-                    <th>Trainer-Modus</th>
-                    <th>Mannschaft</th>
-                    <th>Status</th>
-                </tr>
+                <tr><th>Name</th><th>E-Mail</th><th>Rolle(n)</th><th>Trainer-Modus</th><th>Mannschaft</th><th>Status</th></tr>
                 </thead>
-                <tbody>
+                <tbody id="benutzerBody">
                 <tr>
                     <td><i class="bi bi-patch-check-fill text-danger me-1"></i> Wolfgang Z.</td>
                     <td>zotter.w@gmail.com</td>
                     <td><span class="badge bg-danger">SuperAdmin</span></td>
-                    <td>—</td>
-                    <td>Alle</td>
+                    <td>—</td><td>Alle</td>
                     <td><span class="badge bg-success">Aktiv</span></td>
                 </tr>
                 <tr>
-                    <td>Muster Maria</td>
-                    <td>maria@beispiel.at</td>
-                    <td>
-                        <span class="badge bg-primary me-1">Trainer</span>
-                        <span class="badge bg-success">Eltern</span>
-                    </td>
-                    <td>
-                        <div class="form-check form-switch mb-0">
-                            <input class="form-check-input" type="checkbox" checked title="Trainer-Modus">
-                        </div>
-                    </td>
-                    <td>U10</td>
-                    <td><span class="badge bg-success">Aktiv</span></td>
+                    <td>Muster Maria</td><td>maria@beispiel.at</td>
+                    <td><span class="badge bg-primary me-1">Trainer</span><span class="badge bg-success">Eltern</span></td>
+                    <td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked></div></td>
+                    <td>U10</td><td><span class="badge bg-success">Aktiv</span></td>
                 </tr>
                 <tr>
-                    <td>Huber Karl</td>
-                    <td>huber@beispiel.at</td>
+                    <td>Huber Karl</td><td>huber@beispiel.at</td>
                     <td><span class="badge bg-primary">Trainer</span></td>
-                    <td>
-                        <div class="form-check form-switch mb-0">
-                            <input class="form-check-input" type="checkbox" checked title="Trainer-Modus">
-                        </div>
-                    </td>
-                    <td>U12</td>
-                    <td><span class="badge bg-success">Aktiv</span></td>
+                    <td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked></div></td>
+                    <td>U12</td><td><span class="badge bg-success">Aktiv</span></td>
                 </tr>
                 <tr>
-                    <td>Schmid Anna</td>
-                    <td>schmid@beispiel.at</td>
+                    <td>Schmid Anna</td><td>schmid@beispiel.at</td>
                     <td><span class="badge bg-success">Eltern</span></td>
-                    <td>—</td>
-                    <td>U10</td>
-                    <td><span class="badge bg-success">Aktiv</span></td>
+                    <td>—</td><td>U10</td><td><span class="badge bg-success">Aktiv</span></td>
                 </tr>
                 <tr>
-                    <td>Riedl Ben</td>
-                    <td>ben@beispiel.at</td>
+                    <td>Riedl Ben</td><td>ben@beispiel.at</td>
                     <td><span class="badge bg-warning text-dark">Spieler</span></td>
-                    <td>—</td>
-                    <td>U10</td>
-                    <td><span class="badge bg-success">Aktiv</span></td>
+                    <td>—</td><td>U10</td><td><span class="badge bg-success">Aktiv</span></td>
                 </tr>
                 </tbody>
             </table>
         </div>
-        <small class="text-muted mt-2"><i class="bi bi-info-circle me-1"></i>Benutzer anlegen und Rechte vergeben folgt im nächsten Schritt.</small>
     </div>
 
 </div>
-<!-- Ende Benutzerverwaltung -->
 
 </div> <!-- Ende Dashboard -->
 
-<!-- Bootstrap JS -->
+<!-- ===== MODAL: NEUE MANNSCHAFT ===== -->
+<div class="modal fade" id="modalMannschaft" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title"><i class="bi bi-diagram-3-fill me-2"></i>Neue Mannschaft anlegen</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Mannschaftsbezeichnung</label>
+                    <input type="text" id="mfName" class="form-control" placeholder="z. B. U10, U12, Herren 1b …">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Status</label>
+                    <select id="mfStatus" class="form-select">
+                        <option value="Aktiv">Aktiv</option>
+                        <option value="Inaktiv">Inaktiv</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Verwalter (Trainer)</label>
+                    <select id="mfVerwalter" class="form-select">
+                        <option value="">— Kein Verwalter —</option>
+                        <option value="Muster Maria">Muster Maria</option>
+                        <option value="Huber Karl">Huber Karl</option>
+                    </select>
+                    <div class="form-text">Nur Benutzer mit Trainer-Rolle werden angezeigt.</div>
+                </div>
+                <div id="mfError" class="alert alert-danger d-none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <button type="button" class="btn btn-dark" onclick="mannschaftSpeichern()">
+                    <i class="bi bi-save"></i> Speichern
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL: BENUTZER ANLEGEN ===== -->
+<div class="modal fade" id="modalBenutzer" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title"><i class="bi bi-person-plus-fill me-2"></i>Neuen Benutzer anlegen</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Vorname</label>
+                        <input type="text" id="buVorname" class="form-control" placeholder="Vorname">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Nachname</label>
+                        <input type="text" id="buNachname" class="form-control" placeholder="Nachname">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">E-Mail</label>
+                    <input type="email" id="buEmail" class="form-control" placeholder="email@beispiel.at">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Passwort</label>
+                    <input type="password" id="buPasswort" class="form-control" placeholder="Mindestens 6 Zeichen">
+                </div>
+
+                <hr>
+                <label class="form-label fw-bold">Rolle(n)</label>
+                <div class="row mb-2">
+                    <div class="col-6 col-md-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="roleSuperAdmin" onchange="rollenUpdate()">
+                            <label class="form-check-label" for="roleSuperAdmin">
+                                <span class="badge bg-danger">SuperAdmin</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="roleTrainer" onchange="rollenUpdate()">
+                            <label class="form-check-label" for="roleTrainer">
+                                <span class="badge bg-primary">Trainer</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="roleEltern" onchange="rollenUpdate()">
+                            <label class="form-check-label" for="roleEltern">
+                                <span class="badge bg-success">Eltern</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="roleSpieler" onchange="rollenUpdate()">
+                            <label class="form-check-label" for="roleSpieler">
+                                <span class="badge bg-warning text-dark">Spieler</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trainer-Modus (nur sichtbar wenn Trainer + Eltern beide gewählt) -->
+                <div id="trainerModusBlock" class="overlap-box p-3 mb-3" style="display:none;">
+                    <div class="fw-bold mb-1"><i class="bi bi-arrow-left-right text-warning me-1"></i> Sonderfall: Trainer + Elternteil</div>
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" id="buTrainerModus" checked onchange="trainerModusUpdate()">
+                        <label class="form-check-label" id="buTrainerModusLabel" for="buTrainerModus">
+                            Trainer-Modus aktiv → darf Inhalte verwalten
+                        </label>
+                    </div>
+                    <div id="buTrainerModusInfo" class="mt-2 p-2 rounded small bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-clipboard2-check-fill me-1"></i> Aktive Rolle: <strong>Trainer</strong> – kann Inhalte verwalten
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Mannschaft zuweisen</label>
+                    <select id="buMannschaft" class="form-select">
+                        <option value="">— Keine —</option>
+                        <option value="U10">U10</option>
+                        <option value="U12">U12</option>
+                    </select>
+                </div>
+
+                <div id="buError" class="alert alert-danger d-none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                <button type="button" class="btn btn-dark" onclick="benutzerSpeichern()">
+                    <i class="bi bi-person-check-fill"></i> Benutzer anlegen
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<!-- DataTables -->
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
@@ -432,10 +517,16 @@
         });
     });
 
+    const views = ['main', 'mannschaften', 'users'];
+    const navMap = { main: 'navMain', mannschaften: 'navMannschaften', users: 'navUsers' };
+
     window.showView = function(view) {
-        document.getElementById('viewMain').style.display  = view === 'main'  ? 'block' : 'none';
-        document.getElementById('viewUsers').style.display = view === 'users' ? 'block' : 'none';
-        document.getElementById('navBenutzerverwaltung').classList.toggle('nav-active', view === 'users');
+        views.forEach(v => {
+            document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1)).style.display = v === view ? 'block' : 'none';
+        });
+        Object.entries(navMap).forEach(([v, id]) => {
+            document.getElementById(id)?.classList.toggle('nav-active', v === view);
+        });
     };
 
     window.updateTrainerDemo = function(checkbox) {
@@ -450,6 +541,133 @@
             info.className = 'mt-2 p-2 rounded small bg-success bg-opacity-10 text-success';
             info.innerHTML = '<i class="bi bi-house-heart-fill me-1"></i> Aktive Rolle: <strong>Elternteil</strong> – kann Inhalte nur ansehen';
         }
+    };
+
+    window.rollenUpdate = function() {
+        const trainer = document.getElementById('roleTrainer').checked;
+        const eltern  = document.getElementById('roleEltern').checked;
+        document.getElementById('trainerModusBlock').style.display = (trainer && eltern) ? 'block' : 'none';
+    };
+
+    window.trainerModusUpdate = function() {
+        const cb    = document.getElementById('buTrainerModus');
+        const label = document.getElementById('buTrainerModusLabel');
+        const info  = document.getElementById('buTrainerModusInfo');
+        if (cb.checked) {
+            label.textContent = 'Trainer-Modus aktiv → darf Inhalte verwalten';
+            info.className = 'mt-2 p-2 rounded small bg-primary bg-opacity-10 text-primary';
+            info.innerHTML = '<i class="bi bi-clipboard2-check-fill me-1"></i> Aktive Rolle: <strong>Trainer</strong> – kann Inhalte verwalten';
+        } else {
+            label.textContent = 'Trainer-Modus deaktiviert → nur Eltern-Ansicht';
+            info.className = 'mt-2 p-2 rounded small bg-success bg-opacity-10 text-success';
+            info.innerHTML = '<i class="bi bi-house-heart-fill me-1"></i> Aktive Rolle: <strong>Elternteil</strong> – kann Inhalte nur ansehen';
+        }
+    };
+
+    window.mannschaftSpeichern = function() {
+        const name      = document.getElementById('mfName').value.trim();
+        const status    = document.getElementById('mfStatus').value;
+        const verwalter = document.getElementById('mfVerwalter').value;
+        const errorDiv  = document.getElementById('mfError');
+
+        if (!name) {
+            errorDiv.classList.remove('d-none');
+            errorDiv.textContent = 'Bitte eine Mannschaftsbezeichnung eingeben.';
+            return;
+        }
+        errorDiv.classList.add('d-none');
+
+        const tbody = document.getElementById('mannschaftenBody');
+        const statusBadge = status === 'Aktiv' ? 'bg-success' : 'bg-secondary';
+        const verwalterText = verwalter
+            ? `<i class="bi bi-clipboard2-check-fill text-primary me-1"></i>${verwalter}`
+            : '<span class="text-muted">—</span>';
+
+        tbody.insertAdjacentHTML('beforeend', `
+            <tr>
+                <td><strong>${name}</strong></td>
+                <td><span class="badge ${statusBadge}">${status}</span></td>
+                <td>${verwalterText}</td>
+                <td>
+                    <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-outline-danger btn-sm ms-1"><i class="bi bi-trash"></i></button>
+                </td>
+            </tr>
+        `);
+
+        // Statistik aktualisieren
+        const rows = tbody.querySelectorAll('tr');
+        document.getElementById('statTeams').textContent = rows.length;
+        document.getElementById('statTeamsAktiv').textContent = [...rows].filter(r => r.querySelector('.bg-success')).length;
+        document.getElementById('statTeamsInaktiv').textContent = [...rows].filter(r => r.querySelector('.bg-secondary')).length;
+
+        // Dropdown in Benutzer-Modal aktualisieren
+        const buSelect = document.getElementById('buMannschaft');
+        const exists = [...buSelect.options].some(o => o.value === name);
+        if (!exists) buSelect.insertAdjacentHTML('beforeend', `<option value="${name}">${name}</option>`);
+
+        // Verwalter-Dropdown in Mannschafts-Modal aktualisieren
+        document.getElementById('mfVerwalter').value = '';
+
+        document.getElementById('mfName').value = '';
+        bootstrap.Modal.getInstance(document.getElementById('modalMannschaft')).hide();
+    };
+
+    window.benutzerSpeichern = function() {
+        const vorname  = document.getElementById('buVorname').value.trim();
+        const nachname = document.getElementById('buNachname').value.trim();
+        const email    = document.getElementById('buEmail').value.trim();
+        const passwort = document.getElementById('buPasswort').value;
+        const errorDiv = document.getElementById('buError');
+
+        const rollen = [];
+        if (document.getElementById('roleSuperAdmin').checked) rollen.push('<span class="badge bg-danger me-1">SuperAdmin</span>');
+        if (document.getElementById('roleTrainer').checked)    rollen.push('<span class="badge bg-primary me-1">Trainer</span>');
+        if (document.getElementById('roleEltern').checked)     rollen.push('<span class="badge bg-success me-1">Eltern</span>');
+        if (document.getElementById('roleSpieler').checked)    rollen.push('<span class="badge bg-warning text-dark me-1">Spieler</span>');
+
+        if (!vorname || !nachname) { errorDiv.classList.remove('d-none'); errorDiv.textContent = 'Bitte Vor- und Nachname eingeben.'; return; }
+        if (!email)    { errorDiv.classList.remove('d-none'); errorDiv.textContent = 'Bitte eine E-Mail-Adresse eingeben.'; return; }
+        if (passwort.length < 6) { errorDiv.classList.remove('d-none'); errorDiv.textContent = 'Passwort muss mindestens 6 Zeichen haben.'; return; }
+        if (rollen.length === 0) { errorDiv.classList.remove('d-none'); errorDiv.textContent = 'Bitte mindestens eine Rolle auswählen.'; return; }
+        errorDiv.classList.add('d-none');
+
+        const trainer = document.getElementById('roleTrainer').checked;
+        const eltern  = document.getElementById('roleEltern').checked;
+        const trainerModus = (trainer && eltern) ? document.getElementById('buTrainerModus').checked : null;
+        const mannschaft = document.getElementById('buMannschaft').value || '—';
+
+        let trainerModusHtml = '—';
+        if (trainer && !eltern) trainerModusHtml = '<div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked></div>';
+        if (trainer && eltern)  trainerModusHtml = `<div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" ${trainerModus ? 'checked' : ''}></div>`;
+
+        document.getElementById('benutzerBody').insertAdjacentHTML('beforeend', `
+            <tr>
+                <td>${vorname} ${nachname}</td>
+                <td>${email}</td>
+                <td>${rollen.join('')}</td>
+                <td>${trainerModusHtml}</td>
+                <td>${mannschaft}</td>
+                <td><span class="badge bg-success">Aktiv</span></td>
+            </tr>
+        `);
+
+        // Wenn Trainer → in Mannschaften-Verwalter-Dropdown eintragen
+        if (trainer) {
+            const vSelect = document.getElementById('mfVerwalter');
+            const name = `${vorname} ${nachname}`;
+            if (![...vSelect.options].some(o => o.value === name)) {
+                vSelect.insertAdjacentHTML('beforeend', `<option value="${name}">${name}</option>`);
+            }
+        }
+
+        // Formular zurücksetzen
+        ['buVorname','buNachname','buEmail','buPasswort'].forEach(id => document.getElementById(id).value = '');
+        ['roleSuperAdmin','roleTrainer','roleEltern','roleSpieler','buTrainerModus'].forEach(id => document.getElementById(id).checked = false);
+        document.getElementById('trainerModusBlock').style.display = 'none';
+        document.getElementById('buMannschaft').value = '';
+
+        bootstrap.Modal.getInstance(document.getElementById('modalBenutzer')).hide();
     };
 </script>
 
@@ -483,7 +701,7 @@
   });
 
   window.doLogin = async function() {
-    const email = document.getElementById('loginEmail').value;
+    const email    = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
     const errorDiv = document.getElementById('loginError');
     try {
