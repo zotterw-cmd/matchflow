@@ -80,6 +80,16 @@ body{background:#f5f6fa}
 .ma-bottom-strip{background:#111;padding:2px 7px;text-align:center;font-size:.48rem;color:#888;letter-spacing:.5px;text-transform:uppercase}
 .karten-grid{display:flex;flex-wrap:wrap;gap:18px;padding:8px 0}
 
+/* TRAINING LISTE & ANZEIGE */
+.tra-hero{background:linear-gradient(135deg,#1a1a2e 0%,#c0392b 100%);color:#fff;padding:28px 24px}
+.tra-info-bar{background:#f8f9fa;border-bottom:2px solid #dee2e6;padding:14px 24px;font-size:1.15rem;font-weight:700}
+.tra-section-title{background:#1a1a2e;color:#fff;border-radius:8px;padding:10px 16px;margin:24px 0 12px;font-size:1.05rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.tra-uebung-card{border-left:5px solid #c0392b;border-radius:0 10px 10px 0;padding:18px 20px;margin-bottom:14px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.09)}
+.tra-uebung-title{font-size:1.15rem;font-weight:800;color:#1a1a2e;margin-bottom:6px}
+.tra-dauer{background:#c0392b;color:#fff;border-radius:20px;padding:3px 12px;font-size:.8rem;font-weight:700;display:inline-block;margin-bottom:10px}
+.tra-beschreibung{font-size:1rem;color:#444;line-height:1.7;margin-top:8px}
+.tra-thumb{width:100%;max-width:340px;border-radius:8px;margin-top:10px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.tra-link-item{display:inline-flex;align-items:center;gap:5px;background:#e3f2fd;border-radius:5px;padding:4px 10px;font-size:.85rem;text-decoration:none;color:#1565c0;margin:3px;border:1px solid #bbdefb}
 /* NOTIZ */
 .notiz-row-inhalt{max-height:60px;overflow:hidden;font-size:.85rem}
 .ql-container{min-height:120px}
@@ -175,103 +185,135 @@ body{background:#f5f6fa}
 
 <!-- ===== NEUES SPIEL / TRAINING ===== -->
 <div id="viewTraining" class="container-fluid p-4" style="display:none">
-  <h4 class="mb-1"><i class="bi bi-calendar-plus text-success me-2"></i>Neues Spiel / Training</h4>
-  <p class="text-muted mb-4">Trainingstag oder Spiel erfassen und Übungen planen</p>
 
-  <!-- Kopf-Formular -->
-  <div class="card shadow-sm p-4 mb-4">
-    <div class="row g-3">
-      <div class="col-md-3">
-        <label class="form-label fw-bold">Datum</label>
-        <input type="date" id="trDatum" class="form-control" oninput="updateTrainingsName()">
+  <!-- ── PANEL A: Übersicht ── -->
+  <div id="trPanelListe">
+    <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-2">
+      <div>
+        <h4 class="mb-0"><i class="bi bi-calendar-check text-success me-2"></i>Trainings &amp; Spiele</h4>
+        <p class="text-muted mb-0 mt-1">Übersicht aller erfassten Einheiten</p>
       </div>
-      <div class="col-md-3">
-        <label class="form-label fw-bold">Kategorie</label>
-        <div class="d-flex gap-2 mt-1">
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="trKat" id="trKatTraining" value="Training" checked onchange="katChanged()">
-            <label class="form-check-label" for="trKatTraining">Training</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="trKat" id="trKatSpiel" value="Spiel" onchange="katChanged()">
-            <label class="form-check-label" for="trKatSpiel">Spiel</label>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <label class="form-label fw-bold">Name</label>
-        <input type="text" id="trName" class="form-control" placeholder="2026-06-17: Mittwoch">
-      </div>
-
-      <!-- Spiel-Bereich (conditional) -->
-      <div id="spielBlock" class="col-12 d-none">
-        <div class="card bg-light p-3">
-          <div class="row g-3 align-items-center">
-            <div class="col-auto">
-              <label class="form-label fw-bold mb-0">Spielform</label>
-              <div class="d-flex gap-2 mt-1 heim-auswarts-toggle">
-                <button type="button" class="btn btn-danger btn-sm active" id="btnHeim" onclick="setHeimAuswaerts('heim')">Heim</button>
-                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnAusw" onclick="setHeimAuswaerts('auswaerts')">Auswärts</button>
-              </div>
-            </div>
-            <div class="col">
-              <div class="d-flex align-items-center gap-2 matchup-display flex-wrap">
-                <input type="text" id="trHeimTeam" class="form-control fw-bold text-center" style="max-width:180px" value="ATUS Bärnbach">
-                <span class="matchup-vs">vs</span>
-                <input type="text" id="trGastTeam" class="form-control fw-bold text-center" style="max-width:180px" placeholder="Gegner">
-              </div>
-              <small class="text-muted">Beide Felder sind frei editierbar (z. B. für Testspiele)</small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Uhrzeiten -->
-      <div class="col-md-3">
-        <label class="form-label fw-bold"><i class="bi bi-clock-fill text-success me-1"></i>Beginn</label>
-        <div class="time-input-group"><i class="bi bi-play-fill"></i><input type="text" id="trBeginn" class="form-control" placeholder="18:00"></div>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label fw-bold"><i class="bi bi-clock-fill text-danger me-1"></i>Ende</label>
-        <div class="time-input-group"><i class="bi bi-stop-fill"></i><input type="text" id="trEnde" class="form-control" placeholder="20:00"></div>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label fw-bold"><i class="bi bi-geo-alt-fill text-warning me-1"></i>Treffpunkt</label>
-        <div class="time-input-group"><i class="bi bi-people-fill"></i><input type="text" id="trTreffpunkt" class="form-control" placeholder="17:45"></div>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label fw-bold"><i class="bi bi-hourglass-split text-secondary me-1"></i>Voraussichtl. Ende</label>
-        <div class="time-input-group"><i class="bi bi-flag-fill"></i><input type="text" id="trVorEnde" class="form-control" placeholder="20:30"></div>
-      </div>
-      <div class="col-12">
-        <label class="form-label fw-bold">Notiz zum Training</label>
-        <textarea id="trNotiz" class="form-control" rows="2" placeholder="Allgemeine Notizen, Besonderheiten …"></textarea>
-      </div>
-      <div class="col-12">
-        <button class="btn btn-dark" onclick="trainingKopfSpeichern()"><i class="bi bi-save me-1"></i>Speichern</button>
-        <button class="btn btn-outline-secondary ms-2" onclick="trainingKopfReset()"><i class="bi bi-x-circle me-1"></i>Zurücksetzen</button>
+      <button class="btn btn-dark" onclick="neuesTrainingErstellen()"><i class="bi bi-plus-circle-fill me-1"></i>Neues Training / Spiel</button>
+    </div>
+    <div class="card shadow-sm p-3 mt-3">
+      <div class="table-responsive">
+        <table id="trainingsListeTable" class="table table-striped align-middle w-100">
+          <thead class="table-dark">
+            <tr><th>ID</th><th>Typ</th><th>Name</th><th>Datum</th><th>Beginn</th><th>Übungen</th><th></th></tr>
+          </thead>
+          <tbody id="trainingsListeBody"></tbody>
+        </table>
       </div>
     </div>
   </div>
 
-  <!-- Trainings-Details -->
-  <div class="card shadow-sm p-3">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-      <h5 class="mb-0"><i class="bi bi-list-check me-2 text-primary"></i>Trainings-Details / Übungen</h5>
-      <div class="d-flex gap-2 flex-wrap">
-        <button class="btn btn-outline-secondary btn-sm" onclick="openAbschnittModal()"><i class="bi bi-plus-circle"></i> Abschnitt</button>
-        <button class="btn btn-dark btn-sm" onclick="openTrainingDetailModal(null)"><i class="bi bi-plus-circle-fill"></i> Neue Übung</button>
+  <!-- ── PANEL B: Formular (create/edit) ── -->
+  <div id="trPanelForm" style="display:none">
+    <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+      <button class="btn btn-outline-secondary btn-sm" onclick="zurueckZurListe()"><i class="bi bi-arrow-left me-1"></i>Zurück</button>
+      <h4 class="mb-0" id="trFormTitle"><i class="bi bi-calendar-plus text-success me-2"></i>Neues Training / Spiel</h4>
+    </div>
+
+    <div class="card shadow-sm p-4 mb-4">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label fw-bold">Datum</label>
+          <input type="date" id="trDatum" class="form-control" oninput="updateTrainingsName()">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold">Kategorie</label>
+          <div class="d-flex gap-2 mt-1">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="trKat" id="trKatTraining" value="Training" checked onchange="katChanged()">
+              <label class="form-check-label" for="trKatTraining">Training</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="trKat" id="trKatSpiel" value="Spiel" onchange="katChanged()">
+              <label class="form-check-label" for="trKatSpiel">Spiel</label>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Name</label>
+          <input type="text" id="trName" class="form-control" placeholder="Training – Mi, 17.06.2026">
+        </div>
+
+        <div id="spielBlock" class="col-12 d-none">
+          <div class="card bg-light p-3">
+            <div class="row g-3 align-items-center">
+              <div class="col-auto">
+                <label class="form-label fw-bold mb-0">Spielform</label>
+                <div class="d-flex gap-2 mt-1 heim-auswarts-toggle">
+                  <button type="button" class="btn btn-danger btn-sm" id="btnHeim" onclick="setHeimAuswaerts('heim')">Heim</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm" id="btnAusw" onclick="setHeimAuswaerts('auswaerts')">Auswärts</button>
+                </div>
+              </div>
+              <div class="col">
+                <div class="d-flex align-items-center gap-2 matchup-display flex-wrap">
+                  <input type="text" id="trHeimTeam" class="form-control fw-bold text-center" style="max-width:180px" value="ATUS Bärnbach">
+                  <span class="matchup-vs">vs</span>
+                  <input type="text" id="trGastTeam" class="form-control fw-bold text-center" style="max-width:180px" placeholder="Gegner">
+                </div>
+                <small class="text-muted">Beide Felder sind frei editierbar (z.B. für Testspiele)</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-bold"><i class="bi bi-clock-fill text-success me-1"></i>Beginn</label>
+          <div class="time-input-group"><i class="bi bi-play-fill"></i><input type="text" id="trBeginn" class="form-control" placeholder="18:00"></div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold"><i class="bi bi-clock-fill text-danger me-1"></i>Ende</label>
+          <div class="time-input-group"><i class="bi bi-stop-fill"></i><input type="text" id="trEnde" class="form-control" placeholder="20:00"></div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold"><i class="bi bi-geo-alt-fill text-warning me-1"></i>Treffpunkt</label>
+          <div class="time-input-group"><i class="bi bi-people-fill"></i><input type="text" id="trTreffpunkt" class="form-control" placeholder="17:45"></div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold"><i class="bi bi-hourglass-split text-secondary me-1"></i>Voraussichtl. Ende</label>
+          <div class="time-input-group"><i class="bi bi-flag-fill"></i><input type="text" id="trVorEnde" class="form-control" placeholder="20:30"></div>
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-bold">Notiz zum Training</label>
+          <textarea id="trNotiz" class="form-control" rows="2" placeholder="Allgemeine Notizen, Besonderheiten …"></textarea>
+        </div>
+        <div class="col-12">
+          <button class="btn btn-dark" onclick="trainingSpeichern()"><i class="bi bi-save me-1"></i>Speichern</button>
+          <button class="btn btn-outline-secondary ms-2" onclick="zurueckZurListe()"><i class="bi bi-x-circle me-1"></i>Abbrechen</button>
+        </div>
       </div>
     </div>
-    <!-- Abschnitte anzeigen -->
-    <div id="abschnitteChips" class="mb-3 d-flex flex-wrap gap-1"></div>
-    <div class="table-responsive">
-      <table id="trainingDetailTable" class="table table-striped align-middle w-100">
-        <thead class="table-dark">
-          <tr><th>#</th><th>Abschnitt</th><th>Übungsname</th><th>Dauer</th><th>YouTube</th><th>Links</th><th>Datei</th><th></th></tr>
-        </thead>
-        <tbody id="trainingDetailBody"></tbody>
-      </table>
+
+    <!-- Trainings-Details -->
+    <div class="card shadow-sm p-3">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h5 class="mb-0"><i class="bi bi-list-check me-2 text-primary"></i>Trainings-Details / Übungen</h5>
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-outline-secondary btn-sm" onclick="openAbschnittModal()"><i class="bi bi-plus-circle"></i> Abschnitt</button>
+          <button class="btn btn-dark btn-sm" onclick="openTrainingDetailModal(null)"><i class="bi bi-plus-circle-fill"></i> Neue Übung</button>
+        </div>
+      </div>
+      <div id="abschnitteChips" class="mb-3 d-flex flex-wrap gap-1"></div>
+      <div class="table-responsive">
+        <table id="trainingDetailTable" class="table table-striped align-middle w-100">
+          <thead class="table-dark">
+            <tr><th>#</th><th>Abschnitt</th><th>Übungsname</th><th>Dauer</th><th>YouTube</th><th>Links</th><th>Datei</th><th></th></tr>
+          </thead>
+          <tbody id="trainingDetailBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Training Anzeige (Fullscreen) -->
+<div class="modal fade" id="modalTrainingAnzeige" tabindex="-1">
+  <div class="modal-dialog modal-fullscreen">
+    <div class="modal-content" style="background:#f5f6fa;overflow-y:auto">
+      <div id="traAnzContent"></div>
     </div>
   </div>
 </div>
@@ -644,6 +686,7 @@ body{background:#f5f6fa}
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/de.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js"></script>
 
 <script>
 // ══════════════════════════════════════════════════════════════
@@ -668,13 +711,35 @@ let notizCounter    = 0;
 let editingNotizSpielerID = null;
 
 let trainingsAbschnitte = ['Einleitung','Hauptteil (1)','Technik','Hauptteil (2)','Ende'];
-let trainingDetails = [
-  { id:'td1', abschnitt:'Einleitung',    name:'Aufwärmen – Kreisspiel',   dauer:10, youtubeUrl:'', beschreibung:'<p>Kreisspiel mit 1-2 Kontakten. Alle Spieler im Kreis, ein Ball.</p>', links:[], fileBlobUrl:null, fileName:null },
-  { id:'td2', abschnitt:'Hauptteil (1)', name:'Passen in Dreiecken',      dauer:15, youtubeUrl:'', beschreibung:'', links:['https://training.advance.football/programs/wettrennen-auf-2-gegen-1'], fileBlobUrl:null, fileName:null },
-  { id:'td3', abschnitt:'Technik',       name:'Dribbling mit Hütchen',    dauer:20, youtubeUrl:'https://www.youtube.com/watch?v=dQw4w9WgXcQ', beschreibung:'<p>Parcours mit 6 Hütchen, Slalom, dann Abschluss.</p>', links:[], fileBlobUrl:null, fileName:null },
-  { id:'td4', abschnitt:'Ende',          name:'Abschluss-Spiel 4 vs 4',   dauer:15, youtubeUrl:'', beschreibung:'', links:[], fileBlobUrl:null, fileName:null },
+
+let trainingsListe = [
+  {
+    id:'tr01', name:'Training – Mi, 11.06.2026', typ:'Training', datum:'2026-06-11',
+    beginn:'18:00', ende:'19:30', treffpunkt:'17:45', vorEnde:'19:25',
+    heimMode:true, heimName:'ATUS Bärnbach', gastName:'',
+    notiz:'Fokus auf Passgenauigkeit und Gegenpressing.',
+    details:[
+      { id:'td1', abschnitt:'Einleitung',    name:'Aufwärmen – Kreisspiel',   dauer:10, youtubeUrl:'', beschreibung:'<p>Kreisspiel mit 1-2 Kontakten. Alle Spieler im Kreis, ein Ball. Variation: 3 Kontakte erlaubt.</p>', links:[], fileBlobUrl:null, fileName:null, tkItems:[] },
+      { id:'td2', abschnitt:'Hauptteil (1)', name:'Passen in Dreiecken',      dauer:15, youtubeUrl:'', beschreibung:'', links:['https://training.advance.football/programs/wettrennen-auf-2-gegen-1'], fileBlobUrl:null, fileName:null, tkItems:[] },
+      { id:'td3', abschnitt:'Technik',       name:'Dribbling mit Hütchen',    dauer:20, youtubeUrl:'https://www.youtube.com/watch?v=dQw4w9WgXcQ', beschreibung:'<p>Parcours mit 6 Hütchen, Slalom, dann Abschluss auf Tor.</p>', links:[], fileBlobUrl:null, fileName:null, tkItems:[] },
+      { id:'td4', abschnitt:'Ende',          name:'Abschluss-Spiel 4 vs 4',   dauer:15, youtubeUrl:'', beschreibung:'<p>Freies Spiel auf zwei Minitore. Fokus auf schnelles Umschalten.</p>', links:[], fileBlobUrl:null, fileName:null, tkItems:[] },
+    ]
+  },
+  {
+    id:'tr02', name:'Spiel – Sa, 14.06.2026', typ:'Spiel', datum:'2026-06-14',
+    beginn:'14:00', ende:'16:00', treffpunkt:'13:15', vorEnde:'16:30',
+    heimMode:true, heimName:'ATUS Bärnbach', gastName:'SV Voitsberg',
+    notiz:'Pflichtspiel U10 Meisterschaft. Bitte pünktlich erscheinen!',
+    details:[]
+  },
 ];
-let tdCounter = trainingDetails.length;
+let trainingsCounter  = trainingsListe.length;
+let editingTrainingID = null;
+let dtTrainingListe   = null;
+
+// Arbeitskopie für aktives Training (wird beim Bearbeiten befüllt)
+let trainingDetails = [];
+let tdCounter = 0;
 let editingTDID = null;
 
 let tdFileBlobUrl = null;
@@ -705,7 +770,7 @@ window.showView = function(view) {
   Object.entries(navMap).forEach(([v,id]) => document.getElementById(id)?.classList.toggle('nav-active', v === view));
   if (view === 'spieler')  { renderSpielerSimple(); renderNotizKatChips(); }
   if (view === 'karten')   renderAlleKarten();
-  if (view === 'training') { initTrainingPage(); renderTrainingDetails(); }
+  if (view === 'training') { initTrainingPage(); }
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -942,21 +1007,17 @@ window.renderAlleKarten = function() {
 window.updateTrainingsName = function() {
   const dv = document.getElementById('trDatum').value;
   if (!dv) return;
-  const d   = new Date(dv+'T12:00:00');
-  const tage = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-  document.getElementById('trName').value = `${dv}: ${tage[d.getDay()]}`;
+  const d    = new Date(dv + 'T12:00:00');
+  const kurz = ['So','Mo','Di','Mi','Do','Fr','Sa'][d.getDay()];
+  const datum = d.toLocaleDateString('de-AT', { day:'2-digit', month:'2-digit', year:'numeric' });
+  const typ   = document.getElementById('trKatSpiel')?.checked ? 'Spiel' : 'Training';
+  document.getElementById('trName').value = `${typ} – ${kurz}, ${datum}`;
 };
 
 window.katChanged = function() {
   const isSpiel = document.getElementById('trKatSpiel').checked;
   document.getElementById('spielBlock').classList.toggle('d-none', !isSpiel);
-  if (isSpiel) {
-    const dv = document.getElementById('trDatum').value;
-    const d  = dv ? new Date(dv+'T12:00:00') : new Date();
-    document.getElementById('trName').value = `Spiel: ${d.toLocaleDateString('de-AT')}`;
-  } else {
-    updateTrainingsName();
-  }
+  updateTrainingsName();
 };
 
 window.setHeimAuswaerts = function(mode) {
@@ -976,21 +1037,247 @@ window.setHeimAuswaerts = function(mode) {
   }
 };
 
-window.trainingKopfSpeichern = function() {
-  alert('Training gespeichert! (Firestore-Anbindung folgt in einem späteren Schritt)');
-};
-window.trainingKopfReset = function() {
+// ══════════════════════════════════════════════════════════════
+// TRAINING – LISTE & FORMULAR
+// ══════════════════════════════════════════════════════════════
+function initTrainingPage() {
+  document.getElementById('trPanelListe').style.display = 'block';
+  document.getElementById('trPanelForm').style.display  = 'none';
+  renderTrainingsListe();
+}
+
+function renderTrainingsListe() {
+  document.getElementById('trainingsListeBody').innerHTML = trainingsListe.map(tr => {
+    const typBadge  = tr.typ === 'Spiel'
+      ? '<span class="badge bg-danger">Spiel</span>'
+      : '<span class="badge bg-success">Training</span>';
+    const datumStr  = tr.datum
+      ? new Date(tr.datum + 'T12:00').toLocaleDateString('de-AT', {weekday:'short', day:'2-digit', month:'2-digit', year:'numeric'})
+      : '—';
+    const anzahl = tr.details?.length || 0;
+    return `<tr>
+      <td><code>${tr.id}</code></td>
+      <td>${typBadge}</td>
+      <td><strong>${tr.name}</strong></td>
+      <td>${datumStr}</td>
+      <td>${tr.beginn || '—'}</td>
+      <td><span class="badge bg-secondary">${anzahl} Übung${anzahl !== 1 ? 'en' : ''}</span></td>
+      <td>
+        <button class="btn btn-outline-primary btn-sm me-1" onclick="trainingAnzeigen('${tr.id}')" title="Anzeigen"><i class="bi bi-eye-fill"></i></button>
+        <button class="btn btn-outline-secondary btn-sm me-1" onclick="trainingBearbeiten('${tr.id}')" title="Bearbeiten"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-outline-success btn-sm me-1" onclick="trainingWordExport('${tr.id}')" title="Word Export"><i class="bi bi-file-word-fill"></i></button>
+        <button class="btn btn-outline-danger btn-sm" onclick="trainingLoeschen('${tr.id}')" title="Löschen"><i class="bi bi-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" class="text-center text-muted py-3">Noch keine Trainings erfasst.</td></tr>';
+
+  if (dtTrainingListe) { dtTrainingListe.destroy(); dtTrainingListe = null; }
+  dtTrainingListe = $('#trainingsListeTable').DataTable({
+    responsive: true, autoWidth: false,
+    language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/de-DE.json' },
+    columnDefs: [{ orderable: false, targets: -1 }]
+  });
+}
+
+window.neuesTrainingErstellen = function() {
+  editingTrainingID = null;
+  document.getElementById('trFormTitle').innerHTML = '<i class="bi bi-calendar-plus text-success me-2"></i>Neues Training / Spiel';
   document.getElementById('trKatTraining').checked = true;
   document.getElementById('spielBlock').classList.add('d-none');
   document.getElementById('trHeimTeam').value = 'ATUS Bärnbach';
   document.getElementById('trGastTeam').value = '';
-  document.getElementById('trNotiz').value = '';
+  document.getElementById('trNotiz').value    = '';
+  const heute = new Date().toISOString().split('T')[0];
+  document.getElementById('trDatum').value = heute;
   updateTrainingsName();
+  ['trBeginn','trEnde','trTreffpunkt','trVorEnde'].forEach(id => {
+    const fp = document.getElementById(id)?._flatpickr;
+    if (fp) fp.clear(); else document.getElementById(id).value = '';
+  });
+  trainingDetails = []; tdCounter = 0;
+  renderTrainingDetails(); renderAbschnitteChips();
+  document.getElementById('trPanelListe').style.display = 'none';
+  document.getElementById('trPanelForm').style.display  = 'block';
 };
 
-function initTrainingPage() {
-  renderAbschnitteChips();
-}
+window.trainingBearbeiten = function(id) {
+  const tr = trainingsListe.find(t => t.id === id);
+  if (!tr) return;
+  editingTrainingID = id;
+  document.getElementById('trFormTitle').innerHTML = `<i class="bi bi-pencil-square text-success me-2"></i>${tr.name} bearbeiten`;
+  document.getElementById('trDatum').value  = tr.datum  || '';
+  document.getElementById('trName').value   = tr.name   || '';
+  document.getElementById('trNotiz').value  = tr.notiz  || '';
+  if (tr.typ === 'Spiel') {
+    document.getElementById('trKatSpiel').checked = true;
+    document.getElementById('spielBlock').classList.remove('d-none');
+    document.getElementById('trHeimTeam').value = tr.heimName || 'ATUS Bärnbach';
+    document.getElementById('trGastTeam').value = tr.gastName || '';
+    document.getElementById('btnHeim').className = tr.heimMode !== false ? 'btn btn-danger btn-sm' : 'btn btn-outline-secondary btn-sm';
+    document.getElementById('btnAusw').className = tr.heimMode !== false ? 'btn btn-outline-secondary btn-sm' : 'btn btn-primary btn-sm';
+  } else {
+    document.getElementById('trKatTraining').checked = true;
+    document.getElementById('spielBlock').classList.add('d-none');
+  }
+  [['trBeginn', tr.beginn], ['trEnde', tr.ende], ['trTreffpunkt', tr.treffpunkt], ['trVorEnde', tr.vorEnde]].forEach(([id, val]) => {
+    const fp = document.getElementById(id)?._flatpickr;
+    if (fp && val) fp.setDate(val, true, 'H:i'); else document.getElementById(id).value = val || '';
+  });
+  trainingDetails = JSON.parse(JSON.stringify(tr.details || []));
+  tdCounter = trainingDetails.length;
+  renderTrainingDetails(); renderAbschnitteChips();
+  document.getElementById('trPanelListe').style.display = 'none';
+  document.getElementById('trPanelForm').style.display  = 'block';
+};
+
+window.trainingSpeichern = function() {
+  const name = document.getElementById('trName').value.trim();
+  if (!name) { alert('Bitte einen Namen eingeben.'); return; }
+  const typ = document.getElementById('trKatSpiel').checked ? 'Spiel' : 'Training';
+  const obj = {
+    id:         editingTrainingID || ('tr' + String(++trainingsCounter).padStart(2, '0')),
+    name, typ,
+    datum:      document.getElementById('trDatum').value,
+    beginn:     document.getElementById('trBeginn').value,
+    ende:       document.getElementById('trEnde').value,
+    treffpunkt: document.getElementById('trTreffpunkt').value,
+    vorEnde:    document.getElementById('trVorEnde').value,
+    notiz:      document.getElementById('trNotiz').value.trim(),
+    heimMode:   document.getElementById('btnHeim').classList.contains('btn-danger'),
+    heimName:   document.getElementById('trHeimTeam').value,
+    gastName:   document.getElementById('trGastTeam').value,
+    details:    JSON.parse(JSON.stringify(trainingDetails)),
+  };
+  if (editingTrainingID) {
+    const idx = trainingsListe.findIndex(t => t.id === editingTrainingID);
+    if (idx !== -1) trainingsListe[idx] = obj;
+  } else {
+    trainingsListe.push(obj);
+  }
+  zurueckZurListe();
+};
+
+window.zurueckZurListe = function() {
+  document.getElementById('trPanelForm').style.display  = 'none';
+  document.getElementById('trPanelListe').style.display = 'block';
+  renderTrainingsListe();
+};
+
+window.trainingLoeschen = function(id) {
+  if (!confirm('Training wirklich löschen?')) return;
+  trainingsListe = trainingsListe.filter(t => t.id !== id);
+  renderTrainingsListe();
+};
+
+// ── ANZEIGE (Fullscreen Modal, mobiloptimiert) ───────────────
+window.trainingAnzeigen = function(id) {
+  const tr = trainingsListe.find(t => t.id === id);
+  if (!tr) return;
+  const datumStr = tr.datum
+    ? new Date(tr.datum + 'T12:00').toLocaleDateString('de-AT', {weekday:'long', day:'2-digit', month:'long', year:'numeric'})
+    : '';
+
+  const sections = {};
+  (tr.details || []).forEach(td => {
+    if (!sections[td.abschnitt]) sections[td.abschnitt] = [];
+    sections[td.abschnitt].push(td);
+  });
+
+  const detailsHTML = Object.entries(sections).map(([section, items]) => `
+    <div class="tra-section-title"><i class="bi bi-bookmark-fill me-2"></i>${section}</div>
+    ${items.map(td => {
+      const ytId = extractYTId(td.youtubeUrl);
+      const ytHTML = ytId
+        ? `<a href="${td.youtubeUrl}" target="_blank"><img src="https://img.youtube.com/vi/${ytId}/mqdefault.jpg" class="tra-thumb" alt="YouTube"></a>
+           <br><a href="${td.youtubeUrl}" target="_blank" class="tra-link-item mt-2"><i class="bi bi-youtube text-danger"></i> YouTube öffnen</a>`
+        : '';
+      const linksHTML = (td.links || []).map(l =>
+        `<a href="${l}" target="_blank" class="tra-link-item"><i class="bi bi-link-45deg"></i>${l.replace(/^https?:\/\//,'').substring(0,40)}</a>`
+      ).join('');
+      const fileHTML = td.fileName
+        ? `<span class="tra-link-item"><i class="bi bi-file-earmark-fill text-danger"></i> ${td.fileName}</span>` : '';
+      return `<div class="tra-uebung-card">
+        <div class="tra-uebung-title">${td.name}</div>
+        <span class="tra-dauer"><i class="bi bi-clock me-1"></i>${td.dauer} Min</span>
+        ${td.beschreibung ? `<div class="tra-beschreibung">${td.beschreibung}</div>` : ''}
+        ${ytHTML}
+        ${linksHTML || fileHTML ? `<div class="mt-2">${linksHTML}${fileHTML}</div>` : ''}
+      </div>`;
+    }).join('')}
+  `).join('') || '<p class="text-muted p-3">Keine Übungen erfasst.</p>';
+
+  const spielInfo = tr.typ === 'Spiel'
+    ? `<div class="tra-info-bar text-center"><i class="bi bi-trophy-fill text-warning me-2"></i>${tr.heimName || '—'} <span style="color:#c0392b;margin:0 12px;font-size:1.3rem">vs</span> ${tr.gastName || '—'}</div>`
+    : '';
+
+  document.getElementById('traAnzContent').innerHTML = `
+    <div class="tra-hero">
+      <div style="font-size:.85rem;opacity:.75;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">${tr.typ} · ${datumStr}</div>
+      <h2 style="margin:0;font-size:1.7rem;font-weight:800;line-height:1.2">${tr.name}</h2>
+      <div style="margin-top:14px;font-size:.95rem;opacity:.9;display:flex;flex-wrap:wrap;gap:18px">
+        ${tr.treffpunkt ? `<span><i class="bi bi-people-fill me-1"></i>Treffpunkt: <strong>${tr.treffpunkt}</strong></span>` : ''}
+        ${tr.beginn     ? `<span><i class="bi bi-play-fill me-1"></i>Beginn: <strong>${tr.beginn}</strong></span>` : ''}
+        ${tr.ende       ? `<span><i class="bi bi-stop-fill me-1"></i>Ende: <strong>${tr.ende}</strong></span>` : ''}
+        ${tr.vorEnde    ? `<span><i class="bi bi-flag-fill me-1"></i>Voraussichtl. Ende: <strong>${tr.vorEnde}</strong></span>` : ''}
+      </div>
+    </div>
+    ${spielInfo}
+    ${tr.notiz ? `<div class="alert alert-light mx-3 mt-3 mb-0"><i class="bi bi-info-circle-fill text-primary me-1"></i>${tr.notiz}</div>` : ''}
+    <div class="p-3 p-md-4">${detailsHTML}</div>
+    <div class="text-center pb-4">
+      <button class="btn btn-dark px-4" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Schließen</button>
+    </div>`;
+
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalTrainingAnzeige')).show();
+};
+
+// ── WORD EXPORT ──────────────────────────────────────────────
+window.trainingWordExport = function(id) {
+  const tr = trainingsListe.find(t => t.id === id);
+  if (!tr) return;
+  if (typeof htmlDocx === 'undefined') { alert('Word-Export nicht verfügbar (html-docx-js nicht geladen).'); return; }
+  const datumStr = tr.datum
+    ? new Date(tr.datum + 'T12:00').toLocaleDateString('de-AT', {weekday:'long', day:'2-digit', month:'long', year:'numeric'})
+    : '—';
+  const sections = {};
+  (tr.details || []).forEach(td => {
+    if (!sections[td.abschnitt]) sections[td.abschnitt] = [];
+    sections[td.abschnitt].push(td);
+  });
+  const detailsHtml = Object.entries(sections).map(([sec, items]) => `
+    <h2 style="color:#c0392b;border-bottom:2pt solid #c0392b;padding-bottom:3pt;margin-top:18pt">${sec}</h2>
+    ${items.map(td => `
+      <h3 style="margin-top:10pt;color:#1a1a2e">${td.name}
+        <span style="font-size:9pt;color:#888;font-weight:normal"> (${td.dauer} Min)</span>
+      </h3>
+      ${td.beschreibung ? `<div style="font-size:10pt">${td.beschreibung}</div>` : ''}
+      ${td.youtubeUrl   ? `<p style="font-size:9pt;color:#666">&#9654; YouTube: ${td.youtubeUrl}</p>` : ''}
+      ${(td.links||[]).length ? `<p style="font-size:9pt;color:#666">&#128279; Links: ${td.links.join(' | ')}</p>` : ''}
+      ${td.fileName     ? `<p style="font-size:9pt;color:#666">&#128196; Datei: ${td.fileName}</p>` : ''}
+      <hr style="border:none;border-top:1pt solid #eee;margin:6pt 0">
+    `).join('')}
+  `).join('');
+  const docHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+    body{font-family:Arial,sans-serif;font-size:11pt;color:#222;margin:2cm}
+    h1{font-size:18pt;color:#1a1a2e;margin-bottom:4pt}
+    .meta{color:#555;font-size:9pt;margin-bottom:6pt}
+    .notiz{background:#fff8e1;padding:8pt 10pt;border-left:4pt solid #c0392b;margin:10pt 0;font-size:10pt}
+  </style></head><body>
+    <h1>${tr.name}</h1>
+    <p class="meta">${tr.typ} &bull; ${datumStr}${tr.beginn ? ' &bull; Beginn: ' + tr.beginn : ''}${tr.ende ? ' &bull; Ende: ' + tr.ende : ''}</p>
+    ${tr.typ === 'Spiel' ? `<p style="font-size:13pt;font-weight:bold">${tr.heimName || '—'} vs ${tr.gastName || '—'}</p>` : ''}
+    ${tr.notiz ? `<div class="notiz">${tr.notiz}</div>` : ''}
+    ${detailsHtml || '<p>Keine Übungen erfasst.</p>'}
+  </body></html>`;
+  try {
+    const blob = htmlDocx.asBlob(docHtml);
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = (tr.name + '.docx').replace(/[<>:"/\\|?*]/g, '_');
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch(e) { alert('Word-Export fehlgeschlagen: ' + e.message); }
+};
 
 function renderAbschnitteChips() {
   document.getElementById('abschnitteChips').innerHTML = trainingsAbschnitte.map(a =>
