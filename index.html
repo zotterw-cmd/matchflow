@@ -170,37 +170,54 @@
     <div class="card shadow-sm p-3">
         <h5 class="mb-3">Mannschaftsübersicht</h5>
         <div class="table-responsive">
-            <table class="table table-striped align-middle" id="mannschaftenTable">
+            <table class="table table-align-middle" id="mannschaftenTable">
                 <thead class="table-dark">
                 <tr>
                     <th>Mannschaftsbezeichnung</th>
+                    <th>Aktiv</th>
                     <th>Status</th>
                     <th>Verwalter</th>
                     <th>Aktionen</th>
                 </tr>
                 </thead>
                 <tbody id="mannschaftenBody">
-                <tr>
+                <tr id="mrow-u10">
                     <td><strong>U10</strong></td>
-                    <td><span class="badge bg-success">Aktiv</span></td>
-                    <td><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>Muster Maria</td>
                     <td>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" checked onchange="toggleMannschaft('mrow-u10', this)">
+                        </div>
+                    </td>
+                    <td><span class="badge bg-success" id="mstatus-mrow-u10">Aktiv</span></td>
+                    <td><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>Muster Maria</td>
+                    <td id="mactions-mrow-u10">
                         <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-outline-danger btn-sm ms-1"><i class="bi bi-trash"></i></button>
+                        <button class="btn btn-warning btn-sm ms-1" title="Ausblenden" onclick="softDelete('mrow-u10')"><i class="bi bi-trash" style="color:#fff"></i></button>
+                        <button class="btn btn-danger btn-sm ms-1" title="Definitiv löschen (SuperAdmin)" onclick="hardDelete('mrow-u10')"><i class="bi bi-trash-fill"></i></button>
                     </td>
                 </tr>
-                <tr>
+                <tr id="mrow-u12">
                     <td><strong>U12</strong></td>
-                    <td><span class="badge bg-success">Aktiv</span></td>
-                    <td><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>Huber Karl</td>
                     <td>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" checked onchange="toggleMannschaft('mrow-u12', this)">
+                        </div>
+                    </td>
+                    <td><span class="badge bg-success" id="mstatus-mrow-u12">Aktiv</span></td>
+                    <td><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>Huber Karl</td>
+                    <td id="mactions-mrow-u12">
                         <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-outline-danger btn-sm ms-1"><i class="bi bi-trash"></i></button>
+                        <button class="btn btn-warning btn-sm ms-1" title="Ausblenden" onclick="softDelete('mrow-u12')"><i class="bi bi-trash" style="color:#fff"></i></button>
+                        <button class="btn btn-danger btn-sm ms-1" title="Definitiv löschen (SuperAdmin)" onclick="hardDelete('mrow-u12')"><i class="bi bi-trash-fill"></i></button>
                     </td>
                 </tr>
                 </tbody>
             </table>
         </div>
+        <small class="text-muted mt-2">
+            <i class="bi bi-trash text-warning me-1"></i> Ausblenden (wiederherstellbar) &nbsp;|&nbsp;
+            <i class="bi bi-trash-fill text-danger me-1"></i> Definitiv löschen (nur SuperAdmin)
+        </small>
     </div>
 
 </div>
@@ -543,6 +560,90 @@
         }
     };
 
+    let mRowCounter = 0;
+
+    window.toggleMannschaft = function(rowId, checkbox) {
+        const badge = document.getElementById('mstatus-' + rowId);
+        if (checkbox.checked) {
+            badge.className = 'badge bg-success';
+            badge.textContent = 'Aktiv';
+        } else {
+            badge.className = 'badge bg-secondary';
+            badge.textContent = 'Inaktiv';
+        }
+        updateMannschaftStats();
+    };
+
+    window.softDelete = function(rowId) {
+        const actionsEl = document.getElementById('mactions-' + rowId);
+        actionsEl.innerHTML = `
+            <span class="text-muted small me-2">Ausblenden?</span>
+            <button class="btn btn-warning btn-sm" onclick="softDeleteConfirm('${rowId}')"><i class="bi bi-check-lg" style="color:#fff"></i> Ja</button>
+            <button class="btn btn-outline-secondary btn-sm ms-1" onclick="softDeleteCancel('${rowId}')"><i class="bi bi-x-lg"></i> Nein</button>
+        `;
+    };
+
+    window.softDeleteCancel = function(rowId) {
+        restoreActions(rowId);
+    };
+
+    window.softDeleteConfirm = function(rowId) {
+        const row = document.getElementById(rowId);
+        row.style.opacity = '0.45';
+        row.querySelector('input[type=checkbox]').disabled = true;
+        document.getElementById('mstatus-' + rowId).className = 'badge bg-dark';
+        document.getElementById('mstatus-' + rowId).textContent = 'Ausgeblendet';
+        document.getElementById('mactions-' + rowId).innerHTML = `
+            <button class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-success btn-sm ms-1" title="Wiederherstellen (SuperAdmin)" onclick="restore('${rowId}')"><i class="bi bi-arrow-counterclockwise"></i></button>
+            <button class="btn btn-danger btn-sm ms-1" title="Definitiv löschen (SuperAdmin)" onclick="hardDelete('${rowId}')"><i class="bi bi-trash-fill"></i></button>
+        `;
+        updateMannschaftStats();
+    };
+
+    window.restore = function(rowId) {
+        const row = document.getElementById(rowId);
+        row.style.opacity = '1';
+        const cb = row.querySelector('input[type=checkbox]');
+        cb.disabled = false;
+        cb.checked = true;
+        document.getElementById('mstatus-' + rowId).className = 'badge bg-success';
+        document.getElementById('mstatus-' + rowId).textContent = 'Aktiv';
+        restoreActions(rowId);
+        updateMannschaftStats();
+    };
+
+    window.hardDelete = function(rowId) {
+        const actionsEl = document.getElementById('mactions-' + rowId);
+        actionsEl.innerHTML = `
+            <span class="text-danger small me-2 fw-bold">Unwiderruflich löschen?</span>
+            <button class="btn btn-danger btn-sm" onclick="hardDeleteConfirm('${rowId}')"><i class="bi bi-trash-fill"></i> Ja, löschen</button>
+            <button class="btn btn-outline-secondary btn-sm ms-1" onclick="softDeleteCancel('${rowId}')"><i class="bi bi-x-lg"></i> Abbrechen</button>
+        `;
+    };
+
+    window.hardDeleteConfirm = function(rowId) {
+        document.getElementById(rowId).remove();
+        updateMannschaftStats();
+    };
+
+    function restoreActions(rowId) {
+        document.getElementById('mactions-' + rowId).innerHTML = `
+            <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-warning btn-sm ms-1" title="Ausblenden" onclick="softDelete('${rowId}')"><i class="bi bi-trash" style="color:#fff"></i></button>
+            <button class="btn btn-danger btn-sm ms-1" title="Definitiv löschen (SuperAdmin)" onclick="hardDelete('${rowId}')"><i class="bi bi-trash-fill"></i></button>
+        `;
+    }
+
+    function updateMannschaftStats() {
+        const rows = document.querySelectorAll('#mannschaftenBody tr');
+        const aktiv    = [...rows].filter(r => { const b = r.querySelector('.badge'); return b && b.textContent === 'Aktiv'; }).length;
+        const inaktiv  = [...rows].filter(r => { const b = r.querySelector('.badge'); return b && b.textContent === 'Inaktiv'; }).length;
+        document.getElementById('statTeams').textContent = rows.length;
+        document.getElementById('statTeamsAktiv').textContent = aktiv;
+        document.getElementById('statTeamsInaktiv').textContent = inaktiv;
+    }
+
     window.rollenUpdate = function() {
         const trainer = document.getElementById('roleTrainer').checked;
         const eltern  = document.getElementById('roleEltern').checked;
@@ -578,19 +679,27 @@
         errorDiv.classList.add('d-none');
 
         const tbody = document.getElementById('mannschaftenBody');
-        const statusBadge = status === 'Aktiv' ? 'bg-success' : 'bg-secondary';
+        const rowId = 'mrow-' + (++mRowCounter);
+        const isAktiv = status === 'Aktiv';
+        const statusBadge = isAktiv ? 'bg-success' : 'bg-secondary';
         const verwalterText = verwalter
             ? `<i class="bi bi-clipboard2-check-fill text-primary me-1"></i>${verwalter}`
             : '<span class="text-muted">—</span>';
 
         tbody.insertAdjacentHTML('beforeend', `
-            <tr>
+            <tr id="${rowId}">
                 <td><strong>${name}</strong></td>
-                <td><span class="badge ${statusBadge}">${status}</span></td>
-                <td>${verwalterText}</td>
                 <td>
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" ${isAktiv ? 'checked' : ''} onchange="toggleMannschaft('${rowId}', this)">
+                    </div>
+                </td>
+                <td><span class="badge ${statusBadge}" id="mstatus-${rowId}">${status}</span></td>
+                <td>${verwalterText}</td>
+                <td id="mactions-${rowId}">
                     <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i></button>
-                    <button class="btn btn-outline-danger btn-sm ms-1"><i class="bi bi-trash"></i></button>
+                    <button class="btn btn-warning btn-sm ms-1" title="Ausblenden" onclick="softDelete('${rowId}')"><i class="bi bi-trash" style="color:#fff"></i></button>
+                    <button class="btn btn-danger btn-sm ms-1" title="Definitiv löschen (SuperAdmin)" onclick="hardDelete('${rowId}')"><i class="bi bi-trash-fill"></i></button>
                 </td>
             </tr>
         `);
