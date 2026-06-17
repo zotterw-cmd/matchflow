@@ -66,7 +66,6 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <div class="ms-auto d-flex flex-wrap gap-1 align-items-center">
-
                 <button id="navMain" class="btn btn-outline-light menu-btn nav-active" onclick="showView('main')">
                     <i class="bi bi-speedometer2"></i> Dashboard
                 </button>
@@ -94,7 +93,6 @@
                 <button class="btn btn-outline-danger" onclick="doLogout()">
                     <i class="bi bi-box-arrow-right"></i> Logout
                 </button>
-
             </div>
         </div>
     </div>
@@ -102,14 +100,12 @@
 
 <!-- ===== MAIN VIEW ===== -->
 <div id="viewMain" class="container-fluid p-4">
-
     <div class="row mb-4">
         <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Spieler gesamt</h6><h3>19</h3></div></div>
         <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Im Kader</h6><h3>12</h3></div></div>
         <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Spiele</h6><h3>5</h3></div></div>
         <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Tore gesamt</h6><h3>18</h3></div></div>
     </div>
-
     <div class="card shadow-sm p-3">
         <h5 class="mb-3">Spieler Übersicht</h5>
         <div class="table-responsive">
@@ -127,7 +123,6 @@
             </table>
         </div>
     </div>
-
     <div class="card shadow-sm p-3 mt-4">
         <h5>Alle Spiele</h5>
         <table class="table">
@@ -140,27 +135,23 @@
             </tbody>
         </table>
     </div>
-
     <div class="card shadow-sm p-3 mt-4">
         <h5>Export</h5>
         <p>Spielerstatistiken als PDF exportieren</p>
         <button class="btn btn-dark"><i class="bi bi-file-earmark-pdf"></i> PDF erstellen</button>
     </div>
-
 </div>
 
 <!-- ===== MANNSCHAFTEN VIEW ===== -->
 <div id="viewMannschaften" class="container-fluid p-4" style="display:none;">
-
     <div class="d-flex justify-content-between align-items-center mb-1">
         <h4 class="mb-0"><i class="bi bi-diagram-3-fill text-info"></i> Mannschaften</h4>
-        <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#modalMannschaft">
+        <button class="btn btn-dark" onclick="openMannschaftModal(null)">
             <i class="bi bi-plus-circle-fill"></i> Neue Mannschaft
         </button>
     </div>
     <p class="text-muted mb-4">Mannschaften verwalten und Verwalter zuweisen</p>
 
-    <!-- Statistik -->
     <div class="row mb-4">
         <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Mannschaften gesamt</h6><h3 id="statTeams">2</h3></div></div>
         <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Aktiv</h6><h3 id="statTeamsAktiv">2</h3></div></div>
@@ -170,7 +161,7 @@
     <div class="card shadow-sm p-3">
         <h5 class="mb-3">Mannschaftsübersicht</h5>
         <div class="table-responsive">
-            <table class="table table-align-middle" id="mannschaftenTable">
+            <table class="table table-align-middle">
                 <thead class="table-dark">
                 <tr>
                     <th>Mannschaftsbezeichnung</th>
@@ -182,33 +173,25 @@
                 </thead>
                 <tbody id="mannschaftenBody">
                 <tr id="mrow-u10">
-                    <td><strong>U10</strong></td>
-                    <td>
-                        <div class="form-check form-switch mb-0">
-                            <input class="form-check-input" type="checkbox" checked onchange="toggleMannschaft('mrow-u10', this)">
-                        </div>
-                    </td>
+                    <td><strong id="mname-mrow-u10">U10</strong></td>
+                    <td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked onchange="toggleMannschaft('mrow-u10', this)"></div></td>
                     <td><span class="badge bg-success" id="mstatus-mrow-u10">Aktiv</span></td>
-                    <td><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>Muster Maria</td>
+                    <td id="mverwalter-mrow-u10"><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>Muster Maria</td>
                     <td id="mactions-mrow-u10">
-                        <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-warning btn-sm ms-1" title="Ausblenden" onclick="softDelete('mrow-u10')"><i class="bi bi-trash" style="color:#fff"></i></button>
-                        <button class="btn btn-danger btn-sm ms-1" title="Definitiv löschen (SuperAdmin)" onclick="hardDelete('mrow-u10')"><i class="bi bi-trash-fill"></i></button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="openMannschaftModal('mrow-u10')"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-warning btn-sm ms-1" onclick="softDelete('mrow-u10')"><i class="bi bi-trash" style="color:#fff"></i></button>
+                        <button class="btn btn-danger btn-sm ms-1" onclick="hardDelete('mrow-u10')"><i class="bi bi-trash-fill"></i></button>
                     </td>
                 </tr>
                 <tr id="mrow-u12">
-                    <td><strong>U12</strong></td>
-                    <td>
-                        <div class="form-check form-switch mb-0">
-                            <input class="form-check-input" type="checkbox" checked onchange="toggleMannschaft('mrow-u12', this)">
-                        </div>
-                    </td>
+                    <td><strong id="mname-mrow-u12">U12</strong></td>
+                    <td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked onchange="toggleMannschaft('mrow-u12', this)"></div></td>
                     <td><span class="badge bg-success" id="mstatus-mrow-u12">Aktiv</span></td>
-                    <td><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>Huber Karl</td>
+                    <td id="mverwalter-mrow-u12"><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>Huber Karl</td>
                     <td id="mactions-mrow-u12">
-                        <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-warning btn-sm ms-1" title="Ausblenden" onclick="softDelete('mrow-u12')"><i class="bi bi-trash" style="color:#fff"></i></button>
-                        <button class="btn btn-danger btn-sm ms-1" title="Definitiv löschen (SuperAdmin)" onclick="hardDelete('mrow-u12')"><i class="bi bi-trash-fill"></i></button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="openMannschaftModal('mrow-u12')"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-warning btn-sm ms-1" onclick="softDelete('mrow-u12')"><i class="bi bi-trash" style="color:#fff"></i></button>
+                        <button class="btn btn-danger btn-sm ms-1" onclick="hardDelete('mrow-u12')"><i class="bi bi-trash-fill"></i></button>
                     </td>
                 </tr>
                 </tbody>
@@ -219,23 +202,17 @@
             <i class="bi bi-trash-fill text-danger me-1"></i> Definitiv löschen (nur SuperAdmin)
         </small>
     </div>
-
 </div>
 
 <!-- ===== BENUTZERVERWALTUNG VIEW ===== -->
 <div id="viewUsers" class="container-fluid p-4" style="display:none;">
-
     <h4 class="mb-1"><i class="bi bi-shield-lock-fill text-warning"></i> Benutzerverwaltung</h4>
     <p class="text-muted mb-4">Übersicht der Rollen, Berechtigungen und Benutzer</p>
 
-    <!-- Rollenkarten -->
     <div class="row mb-4">
         <div class="col-md-3 mb-3">
             <div class="card p-3 shadow-sm role-card role-superadmin">
-                <div class="d-flex align-items-center mb-2">
-                    <i class="bi bi-patch-check-fill text-danger fs-4 me-2"></i>
-                    <h6 class="mb-0 fw-bold">SuperAdmin</h6>
-                </div>
+                <div class="d-flex align-items-center mb-2"><i class="bi bi-patch-check-fill text-danger fs-4 me-2"></i><h6 class="mb-0 fw-bold">SuperAdmin</h6></div>
                 <small class="text-muted">Gleiche Rechte wie der Hauptadmin. Voller Zugriff auf alle Bereiche.</small>
                 <hr class="my-2">
                 <div><i class="bi bi-check-circle-fill perm-check"></i> Alles verwalten</div>
@@ -246,10 +223,7 @@
         </div>
         <div class="col-md-3 mb-3">
             <div class="card p-3 shadow-sm role-card role-trainer">
-                <div class="d-flex align-items-center mb-2">
-                    <i class="bi bi-clipboard2-check-fill text-primary fs-4 me-2"></i>
-                    <h6 class="mb-0 fw-bold">Trainer</h6>
-                </div>
+                <div class="d-flex align-items-center mb-2"><i class="bi bi-clipboard2-check-fill text-primary fs-4 me-2"></i><h6 class="mb-0 fw-bold">Trainer</h6></div>
                 <small class="text-muted">Kann Inhalte in freigeschalteten Menüpunkten verwalten.</small>
                 <hr class="my-2">
                 <div><i class="bi bi-check-circle-fill perm-check"></i> Freigesch. Menüpunkte verwalten</div>
@@ -260,10 +234,7 @@
         </div>
         <div class="col-md-3 mb-3">
             <div class="card p-3 shadow-sm role-card role-eltern">
-                <div class="d-flex align-items-center mb-2">
-                    <i class="bi bi-house-heart-fill text-success fs-4 me-2"></i>
-                    <h6 class="mb-0 fw-bold">Eltern</h6>
-                </div>
+                <div class="d-flex align-items-center mb-2"><i class="bi bi-house-heart-fill text-success fs-4 me-2"></i><h6 class="mb-0 fw-bold">Eltern</h6></div>
                 <small class="text-muted">Kann freigeschaltete Inhalte nur ansehen, nicht bearbeiten.</small>
                 <hr class="my-2">
                 <div><i class="bi bi-x-circle-fill perm-cross"></i> Inhalte verwalten</div>
@@ -274,52 +245,13 @@
         </div>
         <div class="col-md-3 mb-3">
             <div class="card p-3 shadow-sm role-card role-spieler">
-                <div class="d-flex align-items-center mb-2">
-                    <i class="bi bi-trophy-fill text-warning fs-4 me-2"></i>
-                    <h6 class="mb-0 fw-bold">Spieler</h6>
-                </div>
+                <div class="d-flex align-items-center mb-2"><i class="bi bi-trophy-fill text-warning fs-4 me-2"></i><h6 class="mb-0 fw-bold">Spieler</h6></div>
                 <small class="text-muted">Kann freigeschaltete Inhalte nur ansehen, nicht bearbeiten.</small>
                 <hr class="my-2">
                 <div><i class="bi bi-x-circle-fill perm-cross"></i> Inhalte verwalten</div>
                 <div><i class="bi bi-eye-fill perm-eye"></i> Freigesch. Menüpunkte ansehen</div>
                 <div><i class="bi bi-x-circle-fill perm-cross"></i> Benutzerverwaltung</div>
                 <div><i class="bi bi-x-circle-fill perm-cross"></i> Systemeinstellungen</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Trainer+Eltern Sonderfall -->
-    <div class="overlap-box p-4 mb-4">
-        <h6 class="fw-bold mb-3"><i class="bi bi-arrow-left-right text-warning me-2"></i>Sonderfall: Trainer ist gleichzeitig Elternteil</h6>
-        <div class="row align-items-center">
-            <div class="col-md-7">
-                <p class="mb-2">Ein Benutzer kann sowohl Trainer als auch Elternteil sein:</p>
-                <div class="d-flex gap-4 flex-wrap">
-                    <div class="card p-3 border-primary" style="min-width:200px;">
-                        <div class="fw-bold text-primary mb-1"><i class="bi bi-toggle-on me-1"></i> Trainer-Modus aktiv</div>
-                        <small>Coacht die Mannschaft → Trainer-Rechte (verwalten)</small>
-                    </div>
-                    <div class="card p-3 border-success" style="min-width:200px;">
-                        <div class="fw-bold text-success mb-1"><i class="bi bi-toggle-off me-1"></i> Nur Elternteil</div>
-                        <small>Coacht nicht → nur Eltern-Rechte (ansehen)</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-5 mt-3 mt-md-0">
-                <div class="card p-3 bg-white">
-                    <div class="fw-bold mb-2">Beispiel: Muster Maria</div>
-                    <div class="mb-2">
-                        <span class="badge bg-primary me-1">Trainer</span>
-                        <span class="badge bg-success">Elternteil</span>
-                    </div>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="trainerModeDemo" checked onchange="updateTrainerDemo(this)">
-                        <label class="form-check-label" for="trainerModeDemo" id="trainerDemoLabel">Trainer-Modus aktiv → darf verwalten</label>
-                    </div>
-                    <div id="trainerDemoInfo" class="mt-2 p-2 rounded small bg-primary bg-opacity-10 text-primary">
-                        <i class="bi bi-clipboard2-check-fill me-1"></i> Aktive Rolle: <strong>Trainer</strong> – kann Inhalte verwalten
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -333,55 +265,86 @@
             </button>
         </div>
         <div class="table-responsive">
-            <table class="table table-striped align-middle" id="benutzerTable">
+            <table class="table table-striped align-middle">
                 <thead class="table-dark">
                 <tr><th>Name</th><th>E-Mail</th><th>Rolle(n)</th><th>Trainer-Modus</th><th>Mannschaft</th><th>Status</th></tr>
                 </thead>
                 <tbody id="benutzerBody">
-                <tr>
+                <tr id="brow-wolfgang">
                     <td><i class="bi bi-patch-check-fill text-danger me-1"></i> Wolfgang Z.</td>
                     <td>zotter.w@gmail.com</td>
                     <td><span class="badge bg-danger">SuperAdmin</span></td>
-                    <td>—</td><td>Alle</td>
+                    <td>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" onchange="trainerModusChanged('Wolfgang Z.', this.checked)">
+                        </div>
+                    </td>
+                    <td>Alle</td>
                     <td><span class="badge bg-success">Aktiv</span></td>
                 </tr>
-                <tr>
-                    <td>Muster Maria</td><td>maria@beispiel.at</td>
+                <tr id="brow-mustermaria">
+                    <td>Muster Maria</td>
+                    <td>maria@beispiel.at</td>
                     <td><span class="badge bg-primary me-1">Trainer</span><span class="badge bg-success">Eltern</span></td>
-                    <td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked></div></td>
-                    <td>U10</td><td><span class="badge bg-success">Aktiv</span></td>
+                    <td>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" checked onchange="trainerModusChanged('Muster Maria', this.checked)">
+                        </div>
+                    </td>
+                    <td>U10</td>
+                    <td><span class="badge bg-success">Aktiv</span></td>
                 </tr>
-                <tr>
-                    <td>Huber Karl</td><td>huber@beispiel.at</td>
+                <tr id="brow-huberkarl">
+                    <td>Huber Karl</td>
+                    <td>huber@beispiel.at</td>
                     <td><span class="badge bg-primary">Trainer</span></td>
-                    <td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked></div></td>
-                    <td>U12</td><td><span class="badge bg-success">Aktiv</span></td>
+                    <td>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" checked onchange="trainerModusChanged('Huber Karl', this.checked)">
+                        </div>
+                    </td>
+                    <td>U12</td>
+                    <td><span class="badge bg-success">Aktiv</span></td>
                 </tr>
-                <tr>
-                    <td>Schmid Anna</td><td>schmid@beispiel.at</td>
+                <tr id="brow-schmidanna">
+                    <td>Schmid Anna</td>
+                    <td>schmid@beispiel.at</td>
                     <td><span class="badge bg-success">Eltern</span></td>
-                    <td>—</td><td>U10</td><td><span class="badge bg-success">Aktiv</span></td>
+                    <td>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" onchange="trainerModusChanged('Schmid Anna', this.checked)">
+                        </div>
+                    </td>
+                    <td>U10</td>
+                    <td><span class="badge bg-success">Aktiv</span></td>
                 </tr>
-                <tr>
-                    <td>Riedl Ben</td><td>ben@beispiel.at</td>
+                <tr id="brow-riedlben">
+                    <td>Riedl Ben</td>
+                    <td>ben@beispiel.at</td>
                     <td><span class="badge bg-warning text-dark">Spieler</span></td>
-                    <td>—</td><td>U10</td><td><span class="badge bg-success">Aktiv</span></td>
+                    <td>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" onchange="trainerModusChanged('Riedl Ben', this.checked)">
+                        </div>
+                    </td>
+                    <td>U10</td>
+                    <td><span class="badge bg-success">Aktiv</span></td>
                 </tr>
                 </tbody>
             </table>
         </div>
+        <small class="text-muted mt-2"><i class="bi bi-info-circle me-1"></i>Trainer-Modus ist unabhängig von der Rolle und kann für jeden Benutzer gesetzt werden.</small>
     </div>
-
 </div>
 
 </div> <!-- Ende Dashboard -->
 
-<!-- ===== MODAL: NEUE MANNSCHAFT ===== -->
+<!-- ===== MODAL: MANNSCHAFT ANLEGEN / BEARBEITEN ===== -->
 <div class="modal fade" id="modalMannschaft" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title"><i class="bi bi-diagram-3-fill me-2"></i>Neue Mannschaft anlegen</h5>
+                <h5 class="modal-title" id="modalMannschaftTitle"><i class="bi bi-diagram-3-fill me-2"></i>Mannschaft</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -390,20 +353,13 @@
                     <input type="text" id="mfName" class="form-control" placeholder="z. B. U10, U12, Herren 1b …">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Status</label>
-                    <select id="mfStatus" class="form-select">
-                        <option value="Aktiv">Aktiv</option>
-                        <option value="Inaktiv">Inaktiv</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Verwalter (Trainer)</label>
-                    <select id="mfVerwalter" class="form-select">
-                        <option value="">— Kein Verwalter —</option>
-                        <option value="Muster Maria">Muster Maria</option>
-                        <option value="Huber Karl">Huber Karl</option>
-                    </select>
-                    <div class="form-text">Nur Benutzer mit Trainer-Rolle werden angezeigt.</div>
+                    <label class="form-label fw-bold">Verwalter
+                        <small class="text-muted fw-normal ms-1">(Benutzer mit aktivem Trainer-Modus)</small>
+                    </label>
+                    <div id="mfVerwalterList" class="border rounded p-2" style="max-height:160px; overflow-y:auto;">
+                        <!-- wird dynamisch befüllt -->
+                    </div>
+                    <div class="form-text">Mehrfachauswahl möglich. Trainer-Modus in der Benutzerverwaltung aktivieren um jemanden hier anzuzeigen.</div>
                 </div>
                 <div id="mfError" class="alert alert-danger d-none"></div>
             </div>
@@ -444,58 +400,38 @@
                     <label class="form-label fw-bold">Passwort</label>
                     <input type="password" id="buPasswort" class="form-control" placeholder="Mindestens 6 Zeichen">
                 </div>
-
                 <hr>
-                <label class="form-label fw-bold">Rolle(n)</label>
-                <div class="row mb-2">
-                    <div class="col-6 col-md-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="roleSuperAdmin" onchange="rollenUpdate()">
-                            <label class="form-check-label" for="roleSuperAdmin">
-                                <span class="badge bg-danger">SuperAdmin</span>
-                            </label>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Rolle(n)</label>
+                        <div class="d-flex flex-wrap gap-3 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="roleSuperAdmin">
+                                <label class="form-check-label" for="roleSuperAdmin"><span class="badge bg-danger">SuperAdmin</span></label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="roleTrainer">
+                                <label class="form-check-label" for="roleTrainer"><span class="badge bg-primary">Trainer</span></label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="roleEltern">
+                                <label class="form-check-label" for="roleEltern"><span class="badge bg-success">Eltern</span></label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="roleSpieler">
+                                <label class="form-check-label" for="roleSpieler"><span class="badge bg-warning text-dark">Spieler</span></label>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-6 col-md-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="roleTrainer" onchange="rollenUpdate()">
-                            <label class="form-check-label" for="roleTrainer">
-                                <span class="badge bg-primary">Trainer</span>
-                            </label>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Trainer-Modus</label>
+                        <div class="form-check form-switch mt-1">
+                            <input class="form-check-input" type="checkbox" id="buTrainerModus">
+                            <label class="form-check-label" for="buTrainerModus">Trainer-Modus aktiv</label>
                         </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="roleEltern" onchange="rollenUpdate()">
-                            <label class="form-check-label" for="roleEltern">
-                                <span class="badge bg-success">Eltern</span>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="roleSpieler" onchange="rollenUpdate()">
-                            <label class="form-check-label" for="roleSpieler">
-                                <span class="badge bg-warning text-dark">Spieler</span>
-                            </label>
-                        </div>
+                        <div class="form-text">Unabhängig von der Rolle. Bestimmt ob der Benutzer als Verwalter einer Mannschaft verfügbar ist.</div>
                     </div>
                 </div>
-
-                <!-- Trainer-Modus (nur sichtbar wenn Trainer + Eltern beide gewählt) -->
-                <div id="trainerModusBlock" class="overlap-box p-3 mb-3" style="display:none;">
-                    <div class="fw-bold mb-1"><i class="bi bi-arrow-left-right text-warning me-1"></i> Sonderfall: Trainer + Elternteil</div>
-                    <div class="form-check form-switch mt-2">
-                        <input class="form-check-input" type="checkbox" id="buTrainerModus" checked onchange="trainerModusUpdate()">
-                        <label class="form-check-label" id="buTrainerModusLabel" for="buTrainerModus">
-                            Trainer-Modus aktiv → darf Inhalte verwalten
-                        </label>
-                    </div>
-                    <div id="buTrainerModusInfo" class="mt-2 p-2 rounded small bg-primary bg-opacity-10 text-primary">
-                        <i class="bi bi-clipboard2-check-fill me-1"></i> Aktive Rolle: <strong>Trainer</strong> – kann Inhalte verwalten
-                    </div>
-                </div>
-
                 <div class="mb-3">
                     <label class="form-label fw-bold">Mannschaft zuweisen</label>
                     <select id="buMannschaft" class="form-select">
@@ -504,7 +440,6 @@
                         <option value="U12">U12</option>
                     </select>
                 </div>
-
                 <div id="buError" class="alert alert-danger d-none"></div>
             </div>
             <div class="modal-footer">
@@ -534,7 +469,21 @@
         });
     });
 
-    const views = ['main', 'mannschaften', 'users'];
+    // ── Trainer-Modus Tracking ──────────────────────────────────────────────
+    // Set von Benutzernamen mit aktivem Trainer-Modus
+    const trainerModusSet = new Set(['Muster Maria', 'Huber Karl']);
+
+    window.trainerModusChanged = function(name, aktiv) {
+        if (aktiv) trainerModusSet.add(name);
+        else       trainerModusSet.delete(name);
+    };
+
+    function getTrainerModusListe() {
+        return [...trainerModusSet].sort();
+    }
+
+    // ── Navigation ─────────────────────────────────────────────────────────
+    const views  = ['main', 'mannschaften', 'users'];
     const navMap = { main: 'navMain', mannschaften: 'navMannschaften', users: 'navUsers' };
 
     window.showView = function(view) {
@@ -546,45 +495,129 @@
         });
     };
 
-    window.updateTrainerDemo = function(checkbox) {
-        const label = document.getElementById('trainerDemoLabel');
-        const info  = document.getElementById('trainerDemoInfo');
-        if (checkbox.checked) {
-            label.textContent = 'Trainer-Modus aktiv → darf verwalten';
-            info.className = 'mt-2 p-2 rounded small bg-primary bg-opacity-10 text-primary';
-            info.innerHTML = '<i class="bi bi-clipboard2-check-fill me-1"></i> Aktive Rolle: <strong>Trainer</strong> – kann Inhalte verwalten';
-        } else {
-            label.textContent = 'Trainer-Modus deaktiviert → nur Eltern-Ansicht';
-            info.className = 'mt-2 p-2 rounded small bg-success bg-opacity-10 text-success';
-            info.innerHTML = '<i class="bi bi-house-heart-fill me-1"></i> Aktive Rolle: <strong>Elternteil</strong> – kann Inhalte nur ansehen';
-        }
+    // ── Mannschaften: Verwalter pro Zeile ───────────────────────────────────
+    const mannschaftVerwalter = {
+        'mrow-u10': ['Muster Maria'],
+        'mrow-u12': ['Huber Karl'],
     };
 
-    let mRowCounter = 0;
+    function renderVerwalter(rowId) {
+        const names = mannschaftVerwalter[rowId] || [];
+        const el = document.getElementById('mverwalter-' + rowId);
+        if (!el) return;
+        if (names.length === 0) {
+            el.innerHTML = '<span class="text-muted">—</span>';
+        } else {
+            el.innerHTML = names.map(n =>
+                `<span class="me-2"><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>${n}</span>`
+            ).join('');
+        }
+    }
 
+    // ── Mannschaft Modal öffnen (neu oder bearbeiten) ───────────────────────
+    let editingRowId = null;
+    let mRowCounter  = 0;
+
+    window.openMannschaftModal = function(rowId) {
+        editingRowId = rowId;
+        const isEdit = rowId !== null;
+
+        document.getElementById('modalMannschaftTitle').innerHTML =
+            `<i class="bi bi-diagram-3-fill me-2"></i>${isEdit ? 'Mannschaft bearbeiten' : 'Neue Mannschaft anlegen'}`;
+        document.getElementById('mfError').classList.add('d-none');
+
+        // Name vorbelegen
+        document.getElementById('mfName').value = isEdit
+            ? (document.getElementById('mname-' + rowId)?.textContent || '')
+            : '';
+
+        // Verwalter-Checkboxen aufbauen
+        const currentVerwalter = isEdit ? (mannschaftVerwalter[rowId] || []) : [];
+        const liste = getTrainerModusListe();
+        const container = document.getElementById('mfVerwalterList');
+
+        if (liste.length === 0) {
+            container.innerHTML = '<small class="text-muted">Kein Benutzer hat Trainer-Modus aktiv.</small>';
+        } else {
+            container.innerHTML = liste.map(name => {
+                const checked = currentVerwalter.includes(name) ? 'checked' : '';
+                const cbId = 'mfv-' + name.replace(/\s/g, '');
+                return `
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="${cbId}" value="${name}" ${checked}>
+                        <label class="form-check-label" for="${cbId}">
+                            <i class="bi bi-clipboard2-check-fill text-primary me-1"></i>${name}
+                        </label>
+                    </div>`;
+            }).join('');
+        }
+
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalMannschaft')).show();
+    };
+
+    window.mannschaftSpeichern = function() {
+        const name     = document.getElementById('mfName').value.trim();
+        const errorDiv = document.getElementById('mfError');
+        if (!name) {
+            errorDiv.classList.remove('d-none');
+            errorDiv.textContent = 'Bitte eine Mannschaftsbezeichnung eingeben.';
+            return;
+        }
+        errorDiv.classList.add('d-none');
+
+        // Ausgewählte Verwalter lesen
+        const selected = [...document.querySelectorAll('#mfVerwalterList input:checked')].map(cb => cb.value);
+
+        if (editingRowId) {
+            // Bearbeiten
+            document.getElementById('mname-' + editingRowId).textContent = name;
+            mannschaftVerwalter[editingRowId] = selected;
+            renderVerwalter(editingRowId);
+        } else {
+            // Neu anlegen
+            const rowId = 'mrow-' + (++mRowCounter);
+            mannschaftVerwalter[rowId] = selected;
+
+            document.getElementById('mannschaftenBody').insertAdjacentHTML('beforeend', `
+                <tr id="${rowId}">
+                    <td><strong id="mname-${rowId}">${name}</strong></td>
+                    <td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked onchange="toggleMannschaft('${rowId}', this)"></div></td>
+                    <td><span class="badge bg-success" id="mstatus-${rowId}">Aktiv</span></td>
+                    <td id="mverwalter-${rowId}"></td>
+                    <td id="mactions-${rowId}">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="openMannschaftModal('${rowId}')"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-warning btn-sm ms-1" onclick="softDelete('${rowId}')"><i class="bi bi-trash" style="color:#fff"></i></button>
+                        <button class="btn btn-danger btn-sm ms-1" onclick="hardDelete('${rowId}')"><i class="bi bi-trash-fill"></i></button>
+                    </td>
+                </tr>
+            `);
+            renderVerwalter(rowId);
+
+            // Mannschaft in Benutzer-Modal eintragen
+            const buSelect = document.getElementById('buMannschaft');
+            if (![...buSelect.options].some(o => o.value === name))
+                buSelect.insertAdjacentHTML('beforeend', `<option value="${name}">${name}</option>`);
+
+            updateMannschaftStats();
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById('modalMannschaft')).hide();
+    };
+
+    // ── Toggle / Soft- / Hard-Delete ────────────────────────────────────────
     window.toggleMannschaft = function(rowId, checkbox) {
         const badge = document.getElementById('mstatus-' + rowId);
-        if (checkbox.checked) {
-            badge.className = 'badge bg-success';
-            badge.textContent = 'Aktiv';
-        } else {
-            badge.className = 'badge bg-secondary';
-            badge.textContent = 'Inaktiv';
-        }
+        badge.className = checkbox.checked ? 'badge bg-success' : 'badge bg-secondary';
+        badge.textContent = checkbox.checked ? 'Aktiv' : 'Inaktiv';
         updateMannschaftStats();
     };
 
     window.softDelete = function(rowId) {
-        const actionsEl = document.getElementById('mactions-' + rowId);
-        actionsEl.innerHTML = `
+        document.getElementById('mactions-' + rowId).innerHTML = `
             <span class="text-muted small me-2">Ausblenden?</span>
             <button class="btn btn-warning btn-sm" onclick="softDeleteConfirm('${rowId}')"><i class="bi bi-check-lg" style="color:#fff"></i> Ja</button>
-            <button class="btn btn-outline-secondary btn-sm ms-1" onclick="softDeleteCancel('${rowId}')"><i class="bi bi-x-lg"></i> Nein</button>
+            <button class="btn btn-outline-secondary btn-sm ms-1" onclick="restoreActions('${rowId}')"><i class="bi bi-x-lg"></i> Nein</button>
         `;
-    };
-
-    window.softDeleteCancel = function(rowId) {
-        restoreActions(rowId);
     };
 
     window.softDeleteConfirm = function(rowId) {
@@ -595,18 +628,17 @@
         document.getElementById('mstatus-' + rowId).textContent = 'Ausgeblendet';
         document.getElementById('mactions-' + rowId).innerHTML = `
             <button class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-pencil"></i></button>
-            <button class="btn btn-success btn-sm ms-1" title="Wiederherstellen (SuperAdmin)" onclick="restore('${rowId}')"><i class="bi bi-arrow-counterclockwise"></i></button>
-            <button class="btn btn-danger btn-sm ms-1" title="Definitiv löschen (SuperAdmin)" onclick="hardDelete('${rowId}')"><i class="bi bi-trash-fill"></i></button>
+            <button class="btn btn-success btn-sm ms-1" title="Wiederherstellen" onclick="restoreRow('${rowId}')"><i class="bi bi-arrow-counterclockwise"></i></button>
+            <button class="btn btn-danger btn-sm ms-1" onclick="hardDelete('${rowId}')"><i class="bi bi-trash-fill"></i></button>
         `;
         updateMannschaftStats();
     };
 
-    window.restore = function(rowId) {
+    window.restoreRow = function(rowId) {
         const row = document.getElementById(rowId);
         row.style.opacity = '1';
         const cb = row.querySelector('input[type=checkbox]');
-        cb.disabled = false;
-        cb.checked = true;
+        cb.disabled = false; cb.checked = true;
         document.getElementById('mstatus-' + rowId).className = 'badge bg-success';
         document.getElementById('mstatus-' + rowId).textContent = 'Aktiv';
         restoreActions(rowId);
@@ -614,114 +646,37 @@
     };
 
     window.hardDelete = function(rowId) {
-        const actionsEl = document.getElementById('mactions-' + rowId);
-        actionsEl.innerHTML = `
+        document.getElementById('mactions-' + rowId).innerHTML = `
             <span class="text-danger small me-2 fw-bold">Unwiderruflich löschen?</span>
-            <button class="btn btn-danger btn-sm" onclick="hardDeleteConfirm('${rowId}')"><i class="bi bi-trash-fill"></i> Ja, löschen</button>
-            <button class="btn btn-outline-secondary btn-sm ms-1" onclick="softDeleteCancel('${rowId}')"><i class="bi bi-x-lg"></i> Abbrechen</button>
+            <button class="btn btn-danger btn-sm" onclick="hardDeleteConfirm('${rowId}')"><i class="bi bi-trash-fill"></i> Ja</button>
+            <button class="btn btn-outline-secondary btn-sm ms-1" onclick="restoreActions('${rowId}')"><i class="bi bi-x-lg"></i> Nein</button>
         `;
     };
 
     window.hardDeleteConfirm = function(rowId) {
         document.getElementById(rowId).remove();
+        delete mannschaftVerwalter[rowId];
         updateMannschaftStats();
     };
 
-    function restoreActions(rowId) {
+    window.restoreActions = function(rowId) {
         document.getElementById('mactions-' + rowId).innerHTML = `
-            <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i></button>
-            <button class="btn btn-warning btn-sm ms-1" title="Ausblenden" onclick="softDelete('${rowId}')"><i class="bi bi-trash" style="color:#fff"></i></button>
-            <button class="btn btn-danger btn-sm ms-1" title="Definitiv löschen (SuperAdmin)" onclick="hardDelete('${rowId}')"><i class="bi bi-trash-fill"></i></button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="openMannschaftModal('${rowId}')"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-warning btn-sm ms-1" onclick="softDelete('${rowId}')"><i class="bi bi-trash" style="color:#fff"></i></button>
+            <button class="btn btn-danger btn-sm ms-1" onclick="hardDelete('${rowId}')"><i class="bi bi-trash-fill"></i></button>
         `;
-    }
+    };
 
     function updateMannschaftStats() {
         const rows = document.querySelectorAll('#mannschaftenBody tr');
-        const aktiv    = [...rows].filter(r => { const b = r.querySelector('.badge'); return b && b.textContent === 'Aktiv'; }).length;
-        const inaktiv  = [...rows].filter(r => { const b = r.querySelector('.badge'); return b && b.textContent === 'Inaktiv'; }).length;
+        const aktiv   = [...rows].filter(r => r.querySelector('.badge')?.textContent === 'Aktiv').length;
+        const inaktiv = [...rows].filter(r => r.querySelector('.badge')?.textContent === 'Inaktiv').length;
         document.getElementById('statTeams').textContent = rows.length;
         document.getElementById('statTeamsAktiv').textContent = aktiv;
         document.getElementById('statTeamsInaktiv').textContent = inaktiv;
     }
 
-    window.rollenUpdate = function() {
-        const trainer = document.getElementById('roleTrainer').checked;
-        const eltern  = document.getElementById('roleEltern').checked;
-        document.getElementById('trainerModusBlock').style.display = (trainer && eltern) ? 'block' : 'none';
-    };
-
-    window.trainerModusUpdate = function() {
-        const cb    = document.getElementById('buTrainerModus');
-        const label = document.getElementById('buTrainerModusLabel');
-        const info  = document.getElementById('buTrainerModusInfo');
-        if (cb.checked) {
-            label.textContent = 'Trainer-Modus aktiv → darf Inhalte verwalten';
-            info.className = 'mt-2 p-2 rounded small bg-primary bg-opacity-10 text-primary';
-            info.innerHTML = '<i class="bi bi-clipboard2-check-fill me-1"></i> Aktive Rolle: <strong>Trainer</strong> – kann Inhalte verwalten';
-        } else {
-            label.textContent = 'Trainer-Modus deaktiviert → nur Eltern-Ansicht';
-            info.className = 'mt-2 p-2 rounded small bg-success bg-opacity-10 text-success';
-            info.innerHTML = '<i class="bi bi-house-heart-fill me-1"></i> Aktive Rolle: <strong>Elternteil</strong> – kann Inhalte nur ansehen';
-        }
-    };
-
-    window.mannschaftSpeichern = function() {
-        const name      = document.getElementById('mfName').value.trim();
-        const status    = document.getElementById('mfStatus').value;
-        const verwalter = document.getElementById('mfVerwalter').value;
-        const errorDiv  = document.getElementById('mfError');
-
-        if (!name) {
-            errorDiv.classList.remove('d-none');
-            errorDiv.textContent = 'Bitte eine Mannschaftsbezeichnung eingeben.';
-            return;
-        }
-        errorDiv.classList.add('d-none');
-
-        const tbody = document.getElementById('mannschaftenBody');
-        const rowId = 'mrow-' + (++mRowCounter);
-        const isAktiv = status === 'Aktiv';
-        const statusBadge = isAktiv ? 'bg-success' : 'bg-secondary';
-        const verwalterText = verwalter
-            ? `<i class="bi bi-clipboard2-check-fill text-primary me-1"></i>${verwalter}`
-            : '<span class="text-muted">—</span>';
-
-        tbody.insertAdjacentHTML('beforeend', `
-            <tr id="${rowId}">
-                <td><strong>${name}</strong></td>
-                <td>
-                    <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" ${isAktiv ? 'checked' : ''} onchange="toggleMannschaft('${rowId}', this)">
-                    </div>
-                </td>
-                <td><span class="badge ${statusBadge}" id="mstatus-${rowId}">${status}</span></td>
-                <td>${verwalterText}</td>
-                <td id="mactions-${rowId}">
-                    <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i></button>
-                    <button class="btn btn-warning btn-sm ms-1" title="Ausblenden" onclick="softDelete('${rowId}')"><i class="bi bi-trash" style="color:#fff"></i></button>
-                    <button class="btn btn-danger btn-sm ms-1" title="Definitiv löschen (SuperAdmin)" onclick="hardDelete('${rowId}')"><i class="bi bi-trash-fill"></i></button>
-                </td>
-            </tr>
-        `);
-
-        // Statistik aktualisieren
-        const rows = tbody.querySelectorAll('tr');
-        document.getElementById('statTeams').textContent = rows.length;
-        document.getElementById('statTeamsAktiv').textContent = [...rows].filter(r => r.querySelector('.bg-success')).length;
-        document.getElementById('statTeamsInaktiv').textContent = [...rows].filter(r => r.querySelector('.bg-secondary')).length;
-
-        // Dropdown in Benutzer-Modal aktualisieren
-        const buSelect = document.getElementById('buMannschaft');
-        const exists = [...buSelect.options].some(o => o.value === name);
-        if (!exists) buSelect.insertAdjacentHTML('beforeend', `<option value="${name}">${name}</option>`);
-
-        // Verwalter-Dropdown in Mannschafts-Modal aktualisieren
-        document.getElementById('mfVerwalter').value = '';
-
-        document.getElementById('mfName').value = '';
-        bootstrap.Modal.getInstance(document.getElementById('modalMannschaft')).hide();
-    };
-
+    // ── Benutzer anlegen ────────────────────────────────────────────────────
     window.benutzerSpeichern = function() {
         const vorname  = document.getElementById('buVorname').value.trim();
         const nachname = document.getElementById('buNachname').value.trim();
@@ -736,44 +691,35 @@
         if (document.getElementById('roleSpieler').checked)    rollen.push('<span class="badge bg-warning text-dark me-1">Spieler</span>');
 
         if (!vorname || !nachname) { errorDiv.classList.remove('d-none'); errorDiv.textContent = 'Bitte Vor- und Nachname eingeben.'; return; }
-        if (!email)    { errorDiv.classList.remove('d-none'); errorDiv.textContent = 'Bitte eine E-Mail-Adresse eingeben.'; return; }
-        if (passwort.length < 6) { errorDiv.classList.remove('d-none'); errorDiv.textContent = 'Passwort muss mindestens 6 Zeichen haben.'; return; }
-        if (rollen.length === 0) { errorDiv.classList.remove('d-none'); errorDiv.textContent = 'Bitte mindestens eine Rolle auswählen.'; return; }
+        if (!email)                { errorDiv.classList.remove('d-none'); errorDiv.textContent = 'Bitte eine E-Mail-Adresse eingeben.'; return; }
+        if (passwort.length < 6)   { errorDiv.classList.remove('d-none'); errorDiv.textContent = 'Passwort muss mindestens 6 Zeichen haben.'; return; }
+        if (rollen.length === 0)   { errorDiv.classList.remove('d-none'); errorDiv.textContent = 'Bitte mindestens eine Rolle auswählen.'; return; }
         errorDiv.classList.add('d-none');
 
-        const trainer = document.getElementById('roleTrainer').checked;
-        const eltern  = document.getElementById('roleEltern').checked;
-        const trainerModus = (trainer && eltern) ? document.getElementById('buTrainerModus').checked : null;
-        const mannschaft = document.getElementById('buMannschaft').value || '—';
+        const fullName    = `${vorname} ${nachname}`;
+        const trainerModus = document.getElementById('buTrainerModus').checked;
+        const mannschaft  = document.getElementById('buMannschaft').value || '—';
 
-        let trainerModusHtml = '—';
-        if (trainer && !eltern) trainerModusHtml = '<div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked></div>';
-        if (trainer && eltern)  trainerModusHtml = `<div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" ${trainerModus ? 'checked' : ''}></div>`;
+        if (trainerModus) trainerModusSet.add(fullName);
 
         document.getElementById('benutzerBody').insertAdjacentHTML('beforeend', `
             <tr>
-                <td>${vorname} ${nachname}</td>
+                <td>${fullName}</td>
                 <td>${email}</td>
                 <td>${rollen.join('')}</td>
-                <td>${trainerModusHtml}</td>
+                <td>
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" ${trainerModus ? 'checked' : ''} onchange="trainerModusChanged('${fullName}', this.checked)">
+                    </div>
+                </td>
                 <td>${mannschaft}</td>
                 <td><span class="badge bg-success">Aktiv</span></td>
             </tr>
         `);
 
-        // Wenn Trainer → in Mannschaften-Verwalter-Dropdown eintragen
-        if (trainer) {
-            const vSelect = document.getElementById('mfVerwalter');
-            const name = `${vorname} ${nachname}`;
-            if (![...vSelect.options].some(o => o.value === name)) {
-                vSelect.insertAdjacentHTML('beforeend', `<option value="${name}">${name}</option>`);
-            }
-        }
-
         // Formular zurücksetzen
         ['buVorname','buNachname','buEmail','buPasswort'].forEach(id => document.getElementById(id).value = '');
         ['roleSuperAdmin','roleTrainer','roleEltern','roleSpieler','buTrainerModus'].forEach(id => document.getElementById(id).checked = false);
-        document.getElementById('trainerModusBlock').style.display = 'none';
         document.getElementById('buMannschaft').value = '';
 
         bootstrap.Modal.getInstance(document.getElementById('modalBenutzer')).hide();
@@ -795,17 +741,17 @@
     appId: "1:240206981355:web:a19432550a530b767b76ae"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+  const app  = initializeApp(firebaseConfig);
+  const db   = getFirestore(app);
   const auth = getAuth(app);
 
   onAuthStateChanged(auth, (user) => {
     if (user) {
       document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('dashboard').style.display = 'block';
+      document.getElementById('dashboard').style.display  = 'block';
     } else {
       document.getElementById('loginScreen').style.display = 'flex';
-      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('dashboard').style.display  = 'none';
     }
   });
 
