@@ -102,6 +102,8 @@ body{background:#f5f6fa}
 .camp-card-gruen{background:linear-gradient(160deg,#001a0a 0%,#0d2e1a 40%,#1a5c36 100%);border-color:#27ae60!important}
 .camp-card-pink{background:linear-gradient(160deg,#1a0012 0%,#3d0028 40%,#7d1049 100%);border-color:#e91e8c!important}
 .camp-card-rot{background:linear-gradient(160deg,#1a1a1a 0%,#2c2c2c 40%,#8b0000 100%);border-color:#c0392b!important}
+.camp-card-violett{background:linear-gradient(160deg,#0d001a 0%,#1a0035 40%,#4a0080 100%);border-color:#9b59b6!important}
+.camp-card-rosa{background:linear-gradient(160deg,#1a000d 0%,#3d0020 40%,#8b0044 100%);border-color:#ff69b4!important}
 .camp-stat-input{display:flex;gap:6px;align-items:center}
 .camp-stat-input .form-control{font-size:.85rem;padding:4px 8px}
 .camp-versuch-label{font-size:.7rem;color:#6c757d;min-width:20px;text-align:center}
@@ -117,8 +119,8 @@ body{background:#f5f6fa}
   <div class="card shadow p-4" style="width:100%;max-width:380px">
     <h4 class="mb-4 text-center">⚽ MatchFlow Login 2</h4>
     <div id="loginError" class="alert alert-danger d-none"></div>
-    <div class="mb-3"><label class="form-label">E-Mail</label><input type="email" id="loginEmail" class="form-control"></div>
-    <div class="mb-3"><label class="form-label">Passwort</label><input type="password" id="loginPassword" class="form-control"></div>
+    <div class="mb-3"><label class="form-label">E-Mail</label><input type="email" id="loginEmail" class="form-control" onkeydown="if(event.key==='Enter')doLoginEnter()"></div>
+    <div class="mb-3"><label class="form-label">Passwort</label><input type="password" id="loginPassword" class="form-control" onkeydown="if(event.key==='Enter')doLoginEnter()"></div>
     <button class="btn btn-dark w-100" onclick="doLogin()">Einloggen</button>
   </div>
 </div>
@@ -203,6 +205,7 @@ body{background:#f5f6fa}
   <ul class="nav nav-tabs mt-3 mb-3">
     <li class="nav-item"><button class="nav-link active" id="campTabSpielerBtn" onclick="showCampTab('spieler')"><i class="bi bi-people-fill me-1"></i>Spieler</button></li>
     <li class="nav-item"><button class="nav-link" id="campTabKartenBtn" onclick="showCampTab('karten')"><i class="bi bi-person-badge-fill me-1"></i>Karten</button></li>
+    <li class="nav-item"><button class="nav-link" id="campTabTeamsBtn" onclick="showCampTab('teams')"><i class="bi bi-heart-fill text-danger me-1"></i>Teams</button></li>
   </ul>
 
   <!-- Spieler-Tab -->
@@ -213,13 +216,13 @@ body{background:#f5f6fa}
         <select id="campFilterGruppe" class="form-select form-select-sm" style="width:auto" onchange="renderCampSpieler()">
           <option value="">Alle</option>
           <option value="Blau">Blau</option><option value="Gelb">Gelb</option>
-          <option value="Grün">Grün</option><option value="Pink">Pink</option><option value="Rot">Rot</option>
+          <option value="Grün">Grün</option><option value="Pink">Pink</option><option value="Rosa">Rosa</option><option value="Rot">Rot</option><option value="Violett">Violett</option>
         </select>
       </div>
       <div class="table-responsive">
         <table id="campSpielerTable" class="table table-striped align-middle w-100">
           <thead class="table-dark">
-            <tr><th>Foto</th><th>Name</th><th>Geb.</th><th>Gruppe</th><th>SPEED</th><th>ATTACK</th><th>BONUS</th><th>SHOOT</th><th>SKILL</th><th>PASS</th><th>JUMP</th><th></th></tr>
+            <tr><th>Foto</th><th>Name</th><th>Geb.</th><th>Gruppe</th><th>Lieblingsvereine</th><th>SPEED</th><th>ATTACK</th><th>BONUS</th><th>SHOOT</th><th>SKILL</th><th>PASS</th><th>JUMP</th><th></th></tr>
           </thead>
           <tbody id="campSpielerBody"></tbody>
         </table>
@@ -234,10 +237,22 @@ body{background:#f5f6fa}
       <select id="campKartenFilterGruppe" class="form-select form-select-sm" style="width:auto" onchange="renderCampKarten()">
         <option value="">Alle</option>
         <option value="Blau">Blau</option><option value="Gelb">Gelb</option>
-        <option value="Grün">Grün</option><option value="Pink">Pink</option><option value="Rot">Rot</option>
+        <option value="Grün">Grün</option><option value="Pink">Pink</option><option value="Rosa">Rosa</option><option value="Rot">Rot</option><option value="Violett">Violett</option>
       </select>
     </div>
     <div id="campKartenGrid" class="karten-grid"></div>
+  </div>
+
+  <!-- Teams-Tab -->
+  <div id="campPanelTeams" style="display:none">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <p class="text-muted mb-0">Vereine verwalten und eigene Logos hochladen. Hochgeladene Logos ersetzen die automatischen.</p>
+      <div class="d-flex gap-2">
+        <input type="text" id="neuerVereinName" class="form-control form-control-sm" placeholder="Neuer Vereinsname …" style="width:220px">
+        <button class="btn btn-dark btn-sm" onclick="vereinHinzufuegen()"><i class="bi bi-plus-circle-fill me-1"></i>Hinzufügen</button>
+      </div>
+    </div>
+    <div id="herzTeamsGrid" class="row g-3"></div>
   </div>
 </div>
 
@@ -459,8 +474,43 @@ body{background:#f5f6fa}
                   <option value="Gelb">🟡 Gelb</option>
                   <option value="Grün">🟢 Grün</option>
                   <option value="Pink">🩷 Pink</option>
+                  <option value="Rosa">🌸 Rosa</option>
                   <option value="Rot">🔴 Rot</option>
+                  <option value="Violett">🟣 Violett</option>
                 </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Hauptverein</label>
+                <select id="cHauptverein" class="form-select" onchange="updateHauptvereinPreview()">
+                  <option value="">— kein Hauptverein —</option>
+                  <option value="ATUS Bärnbach">ATUS Bärnbach</option>
+                  <option value="ATUS Sadiki Bau Bärnbach">ATUS Sadiki Bau Bärnbach</option>
+                  <option value="SK Sturm Graz">SK Sturm Graz</option>
+                  <option value="GAK 1902">GAK 1902</option>
+                  <option value="Rapid Wien">Rapid Wien</option>
+                  <option value="FC Ligist">FC Ligist</option>
+                  <option value="SV Kainach">SV Kainach</option>
+                  <option value="FC Maria Lankowitz">FC Maria Lankowitz</option>
+                  <option value="FC Barcelona">FC Barcelona</option>
+                  <option value="Real Madrid">Real Madrid</option>
+                  <option value="Bayern München">Bayern München</option>
+                  <option value="BVB Dortmund">BVB Dortmund</option>
+                  <option value="Arsenal">Arsenal</option>
+                  <option value="FC Liverpool">FC Liverpool</option>
+                  <option value="Juventus Turin">Juventus Turin</option>
+                  <option value="Inter Mailand">Inter Mailand</option>
+                  <option value="AC Mailand">AC Mailand</option>
+                  <option value="Manchester City">Manchester City</option>
+                  <option value="Manchester United">Manchester United</option>
+                  <option value="PSG">PSG</option>
+                  <option value="Al Nassr">Al Nassr</option>
+                  <option value="Crystal Palace">Crystal Palace</option>
+                </select>
+                <div id="cHauptvereinPreview" class="mt-1 d-flex align-items-center gap-2" style="min-height:28px"></div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Lieblingsvereine <small class="fw-normal text-muted">(kommagetrennt)</small></label>
+                <input type="text" id="cLieblingsverein" class="form-control" placeholder="FC Barcelona, Real Madrid, Bayern München">
               </div>
             </div>
           </div>
@@ -503,9 +553,12 @@ body{background:#f5f6fa}
                 <span class="badge bg-warning text-dark fs-6">⭐</span>
                 <div><div class="fw-bold" style="font-size:.85rem">BONUS</div><div class="text-muted" style="font-size:.75rem">Gaberln – 5 Versuche, max. Anzahl als Bonus</div></div>
               </div>
-              <div class="camp-stat-input">
+              <div class="camp-stat-input flex-wrap">
                 <span class="camp-versuch-label">V1</span><input type="number" min="0" max="6" id="cBonus1" class="form-control" placeholder="5">
                 <span class="camp-versuch-label">V2</span><input type="number" min="0" max="6" id="cBonus2" class="form-control" placeholder="6">
+                <span class="camp-versuch-label">V3</span><input type="number" min="0" max="6" id="cBonus3" class="form-control" placeholder="">
+                <span class="camp-versuch-label">V4</span><input type="number" min="0" max="6" id="cBonus4" class="form-control" placeholder="">
+                <span class="camp-versuch-label">V5</span><input type="number" min="0" max="6" id="cBonus5" class="form-control" placeholder="">
               </div>
             </div>
           </div>
@@ -1210,26 +1263,103 @@ window.renderAlleKarten = function() {
 // CAMP – DATEN
 // ══════════════════════════════════════════════════════════════
 const GRUPPE_STYLE = {
-  'Blau': { cls:'camp-card-blau', footer:'#2e86c1',  badge:'bg-primary' },
-  'Gelb': { cls:'camp-card-gelb', footer:'#d4ac0d',  badge:'bg-warning text-dark' },
-  'Grün': { cls:'camp-card-gruen',footer:'#27ae60',  badge:'bg-success' },
-  'Pink': { cls:'camp-card-pink', footer:'#e91e8c',  badge:'bg-danger' },
-  'Rot':  { cls:'camp-card-rot',  footer:'#c0392b',  badge:'bg-danger' },
+  'Blau':    { cls:'camp-card-blau',    footer:'#2e86c1',  badge:'bg-primary' },
+  'Gelb':    { cls:'camp-card-gelb',    footer:'#d4ac0d',  badge:'bg-warning text-dark' },
+  'Grün':    { cls:'camp-card-gruen',   footer:'#27ae60',  badge:'bg-success' },
+  'Pink':    { cls:'camp-card-pink',    footer:'#e91e8c',  badge:'bg-danger' },
+  'Rosa':    { cls:'camp-card-rosa',    footer:'#ff69b4',  badge:'bg-danger' },
+  'Rot':     { cls:'camp-card-rot',     footer:'#c0392b',  badge:'bg-danger' },
+  'Violett': { cls:'camp-card-violett', footer:'#9b59b6',  badge:'bg-secondary' },
 };
 
+const VEREIN_LOGOS = {
+  'Bayern München':   'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/FC_Bayern_M%C3%BCnchen_logo_%282002%E2%80%932017%29.svg/40px-FC_Bayern_M%C3%BCnchen_logo_%282002%E2%80%932017%29.svg.png',
+  'FC Barcelona':     'https://upload.wikimedia.org/wikipedia/en/thumb/4/47/FC_Barcelona_%28crest%29.svg/40px-FC_Barcelona_%28crest%29.svg.png',
+  'Real Madrid':      'https://upload.wikimedia.org/wikipedia/en/thumb/5/56/Real_Madrid_CF.svg/40px-Real_Madrid_CF.svg.png',
+  'BVB Dortmund':     'https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Borussia_Dortmund_logo.svg/40px-Borussia_Dortmund_logo.svg.png',
+  'Arsenal':          'https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Arsenal_FC.svg/40px-Arsenal_FC.svg.png',
+  'FC Liverpool':     'https://upload.wikimedia.org/wikipedia/en/thumb/0/0c/Liverpool_FC.svg/40px-Liverpool_FC.svg.png',
+  'Juventus Turin':   'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Juventus_FC_2017_icon_%28black%29.svg/40px-Juventus_FC_2017_icon_%28black%29.svg.png',
+  'Manchester City':  'https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Manchester_City_FC_badge.svg/40px-Manchester_City_FC_badge.svg.png',
+  'Manchester United':'https://upload.wikimedia.org/wikipedia/en/thumb/7/7a/Manchester_United_FC_crest.svg/40px-Manchester_United_FC_crest.svg.png',
+  'Inter Mailand':    'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/FC_Internazionale_Milano_2021.svg/40px-FC_Internazionale_Milano_2021.svg.png',
+  'AC Mailand':       'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Logo_of_AC_Milan.svg/40px-Logo_of_AC_Milan.svg.png',
+  'PSG':              'https://upload.wikimedia.org/wikipedia/en/thumb/a/a7/Paris_Saint-Germain_F.C..svg/40px-Paris_Saint-Germain_F.C..svg.png',
+  'SK Sturm Graz':    'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/SK_Sturm_Graz_logo.svg/40px-SK_Sturm_Graz_logo.svg.png',
+  'GAK 1902':         'https://upload.wikimedia.org/wikipedia/de/thumb/5/5f/GAK_Logo_2022.svg/40px-GAK_Logo_2022.svg.png',
+  'Rapid Wien':       'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/SK_Rapid_Wien_logo.svg/40px-SK_Rapid_Wien_logo.svg.png',
+  'Al Nassr':         'https://upload.wikimedia.org/wikipedia/en/thumb/4/4f/Al-Nassr_FC.svg/40px-Al-Nassr_FC.svg.png',
+  'Inter Miami':      'https://upload.wikimedia.org/wikipedia/en/thumb/8/8f/Inter_Miami_CF_crest.svg/40px-Inter_Miami_CF_crest.svg.png',
+  'Crystal Palace':   'https://upload.wikimedia.org/wikipedia/en/thumb/a/a2/Crystal_Palace_FC_logo_%282022%29.svg/40px-Crystal_Palace_FC_logo_%282022%29.svg.png',
+};
+
+
 let campSpielerData = [
-  { id:'c01', vorname:'Philipp',  nachname:'Flecker',   gruppe:'Blau', geb:'2012-12-05', foto:'', speed:[1.63,1.71], attack:[4,0],   bonus:[5,6],   shoot:[50,109],  skill:[7.08,5.20], pass:[13,13,15], jump:[1.53,1.65] },
-  { id:'c02', vorname:'Moritz',   nachname:'Scherz',    gruppe:'Blau', geb:'2012-03-03', foto:'', speed:[1.81,1.87], attack:[0,6],   bonus:[6,6],   shoot:[49,79],   skill:[8.05,5.95], pass:[3,3,7],    jump:[1.34,1.45] },
-  { id:'c03', vorname:'Heinrich', nachname:'Zotter',    gruppe:'Blau', geb:'2012-12-20', foto:'', speed:[1.66,1.68], attack:[4,0],   bonus:[6,0],   shoot:[99,52],   skill:[4.82,4.67], pass:[13,20,19], jump:[1.75,1.85] },
-  { id:'c04', vorname:'Julian',   nachname:'Großschädl',gruppe:'Blau', geb:'2012-05-14', foto:'', speed:[1.83,1.77], attack:[4,3],   bonus:[5,5],   shoot:[65,50],   skill:[5.92,5.35], pass:[7,8,3],    jump:[1.40,1.50] },
-  { id:'c05', vorname:'Noah',     nachname:'Fuchs',     gruppe:'Gelb', geb:'2018-07-28', foto:'', speed:[2.07,null], attack:[],      bonus:[],      shoot:[],        skill:[null,10.53],pass:[5,4,2],    jump:[] },
-  { id:'c06', vorname:'Tobias',   nachname:'Winterleitner',gruppe:'Gelb',geb:'2018-02-22',foto:'',speed:[2.03,null],attack:[],      bonus:[],      shoot:[],        skill:[7.72,6.86], pass:[4,5,6],    jump:[] },
-  { id:'c07', vorname:'Leon',     nachname:'Hirschböck',gruppe:'Grün', geb:'2016-04-07', foto:'', speed:[2.03,2.04], attack:[],     bonus:[],      shoot:[],        skill:[7.77,6.43], pass:[3,4,1],    jump:[1.46,1.60] },
-  { id:'c08', vorname:'Finn',     nachname:'Hösele',    gruppe:'Grün', geb:'2017-01-23', foto:'', speed:[1.95,1.89], attack:[],     bonus:[],      shoot:[],        skill:[5.41,6.73], pass:[7,7,8],    jump:[1.40,1.58] },
-  { id:'c09', vorname:'Emma',     nachname:'Grabar',    gruppe:'Pink', geb:'2012-09-17', foto:'', speed:[1.62,1.59], attack:[],     bonus:[],      shoot:[],        skill:[5.26,6.30], pass:[2,4,26],   jump:[] },
-  { id:'c10', vorname:'Ferdinand',nachname:'Zotter',    gruppe:'Rot',  geb:'2014-10-01', foto:'', speed:[1.75,1.80], attack:[4,4],  bonus:[0,5],   shoot:[81,89],   skill:[4.94,3.89], pass:[8,3,7],    jump:[1.70,1.73] },
-  { id:'c11', vorname:'Simon',    nachname:'Schriebl',  gruppe:'Rot',  geb:'2014-09-26', foto:'', speed:[1.67,1.71], attack:[4,0],  bonus:[0,0],   shoot:[49,40],   skill:[3.70,4.64], pass:[2,6,5],    jump:[1.68,1.70] },
-  { id:'c12', vorname:'Lukas',    nachname:'Riedl',     gruppe:'Rot',  geb:'2014-09-24', foto:'', speed:[1.89,1.89], attack:[4,0],  bonus:[0,4],   shoot:[100,83],  skill:[6.24,4.90], pass:[6,9,4],    jump:[1.59,1.50] },
+  { id:'c01', vorname:'Leon',        nachname:'Hirschböck',       geschlecht:'m', gruppe:'Rot',     geb:'2016-04-07', foto:'', lieblingsverein:['Bayern München'],                                                hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c02', vorname:'Philipp',     nachname:'Neukam',           geschlecht:'m', gruppe:'Gelb',    geb:'2020-10-20', foto:'', lieblingsverein:['FC Barcelona','Real Madrid'],                                    hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c03', vorname:'Jonas',       nachname:'Skerbinjek-Papst', geschlecht:'m', gruppe:'Grün',    geb:'2019-02-13', foto:'', lieblingsverein:[],                                                                 hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c04', vorname:'Max',         nachname:'Skerbinjek-Papst', geschlecht:'m', gruppe:'Gelb',    geb:'2020-07-06', foto:'', lieblingsverein:[],                                                                 hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c05', vorname:'Annika',      nachname:'Vötsch',           geschlecht:'w', gruppe:'Rosa',    geb:'2015-04-19', foto:'', lieblingsverein:['FC Barcelona'],                                                   hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c06', vorname:'Matteo',      nachname:'Eberhart',         geschlecht:'m', gruppe:'Gelb',    geb:'2019-10-09', foto:'', lieblingsverein:['BVB Dortmund'],                                                   hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c07', vorname:'Dominik',     nachname:'Prakapenia',       geschlecht:'m', gruppe:'Grün',    geb:'2018-10-22', foto:'', lieblingsverein:[],                                                                 hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c08', vorname:'Tobias',      nachname:'Kral',             geschlecht:'m', gruppe:'Violett', geb:'2015-11-15', foto:'', lieblingsverein:['Bayern München','SK Sturm Graz'],                                 hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c09', vorname:'Anton',       nachname:'Vötsch',           geschlecht:'m', gruppe:'Rot',     geb:'2016-08-04', foto:'', lieblingsverein:['FC Barcelona'],                                                   hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c10', vorname:'Paul',        nachname:'Wagner',           geschlecht:'m', gruppe:'Rot',     geb:'2018-04-18', foto:'', lieblingsverein:['FC Barcelona','Bayern München'],                                  hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c11', vorname:'Tobias',      nachname:'Lesky',            geschlecht:'m', gruppe:'Gelb',    geb:'2020-04-01', foto:'', lieblingsverein:['FC Barcelona','Real Madrid','Bayern München'],                    hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c12', vorname:'Fabiano',     nachname:'Mittermair',       geschlecht:'m', gruppe:'Gelb',    geb:'2019-09-07', foto:'', lieblingsverein:['Real Madrid'],                                                    hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c13', vorname:'Timo',        nachname:'Burgstaller',      geschlecht:'m', gruppe:'Gelb',    geb:'2019-06-03', foto:'', lieblingsverein:['Arsenal','FC Liverpool'],                                         hauptverein:'Al Nassr',       speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c14', vorname:'Leon',        nachname:'Schreiner',        geschlecht:'m', gruppe:'Rot',     geb:'2017-04-25', foto:'', lieblingsverein:['Real Madrid'],                                                    hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c15', vorname:'Jakob',       nachname:'Marcher',          geschlecht:'m', gruppe:'Gelb',    geb:'2019-10-27', foto:'', lieblingsverein:[],                                                                 hauptverein:'SK Sturm Graz',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c16', vorname:'Jonas',       nachname:'Marcher',          geschlecht:'m', gruppe:'Rot',     geb:'2017-03-07', foto:'', lieblingsverein:[],                                                                 hauptverein:'SK Sturm Graz',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c17', vorname:'Timo',        nachname:'Sturmann',         geschlecht:'m', gruppe:'Rot',     geb:'2018-06-05', foto:'', lieblingsverein:['Bayern München'],                                                 hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c18', vorname:'Nick',        nachname:'Weber',            geschlecht:'m', gruppe:'Grün',    geb:'2018-02-22', foto:'', lieblingsverein:['FC Barcelona'],                                                   hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c19', vorname:'Jakob',       nachname:'Spurej',           geschlecht:'m', gruppe:'Grün',    geb:'2018-07-02', foto:'', lieblingsverein:['BVB Dortmund'],                                                   hauptverein:'BVB Dortmund',   speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c20', vorname:'Matthias',    nachname:'Klanatzky',        geschlecht:'m', gruppe:'Grün',    geb:'2018-10-24', foto:'', lieblingsverein:['FC Barcelona','FC Liverpool','Bayern München','BVB Dortmund'],     hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c21', vorname:'Johannes',    nachname:'Schröttner',       geschlecht:'m', gruppe:'Rot',     geb:'2016-01-14', foto:'', lieblingsverein:['Real Madrid','Juventus Turin'],                                   hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c22', vorname:'Dennis',      nachname:'Kramer',           geschlecht:'m', gruppe:'Rot',     geb:'2017-12-30', foto:'', lieblingsverein:['Real Madrid','Bayern München'],                                   hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c23', vorname:'Noah',        nachname:'Rapp',             geschlecht:'m', gruppe:'Rot',     geb:'2016-10-24', foto:'', lieblingsverein:['FC Barcelona','Inter Mailand'],                                   hauptverein:'Inter Mailand',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c24', vorname:'Tim',         nachname:'Klug',             geschlecht:'m', gruppe:'Violett', geb:'2016-01-01', foto:'', lieblingsverein:['Real Madrid','Bayern München'],                                   hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c25', vorname:'Benno',       nachname:'Braun',            geschlecht:'m', gruppe:'Violett', geb:'2015-08-25', foto:'', lieblingsverein:['Real Madrid','Bayern München','SK Sturm Graz'],                   hauptverein:'SK Sturm Graz',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c26', vorname:'Timo',        nachname:'Guschnegg',        geschlecht:'m', gruppe:'Violett', geb:'2015-09-22', foto:'', lieblingsverein:['Bayern München'],                                                 hauptverein:'Bayern München', speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c27', vorname:'Sebastian',   nachname:'Czene',            geschlecht:'m', gruppe:'Grün',    geb:'2018-06-09', foto:'', lieblingsverein:['FC Barcelona','Bayern München'],                                  hauptverein:'SK Sturm Graz',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c28', vorname:'Anton',       nachname:'Pressler',         geschlecht:'m', gruppe:'Grün',    geb:'2018-09-16', foto:'', lieblingsverein:['Real Madrid'],                                                    hauptverein:'GAK 1902',       speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c29', vorname:'Konstantin',  nachname:'Pressler',         geschlecht:'m', gruppe:'Violett', geb:'2016-09-02', foto:'', lieblingsverein:['BVB Dortmund'],                                                   hauptverein:'GAK 1902',       speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c30', vorname:'Julian',      nachname:'Marcher',          geschlecht:'m', gruppe:'Violett', geb:'2017-02-28', foto:'', lieblingsverein:['Real Madrid','BVB Dortmund'],                                     hauptverein:'GAK 1902',       speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c31', vorname:'Maximilian',  nachname:'Marcher',          geschlecht:'m', gruppe:'Violett', geb:'2014-10-24', foto:'', lieblingsverein:['FC Barcelona','Bayern München'],                                  hauptverein:'SK Sturm Graz',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c32', vorname:'Margarethe',  nachname:'Zotter',           geschlecht:'w', gruppe:'Rosa',    geb:'2017-06-24', foto:'', lieblingsverein:['Bayern München','BVB Dortmund'],                                  hauptverein:'GAK 1902',       speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c33', vorname:'Ferdinand',   nachname:'Zotter',           geschlecht:'m', gruppe:'Violett', geb:'2014-10-01', foto:'', lieblingsverein:['FC Barcelona','Arsenal','Juventus Turin','Bayern München'],        hauptverein:'Bayern München', speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c34', vorname:'Heinrich',    nachname:'Zotter',           geschlecht:'m', gruppe:'Blau',    geb:'2012-12-20', foto:'', lieblingsverein:['BVB Dortmund'],                                                   hauptverein:'BVB Dortmund',   speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c35', vorname:'Tobias',      nachname:'Winterleitner',    geschlecht:'m', gruppe:'Grün',    geb:'2018-02-22', foto:'', lieblingsverein:['BVB Dortmund'],                                                   hauptverein:'BVB Dortmund',   speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c36', vorname:'Benjamin',    nachname:'Winterleitner',    geschlecht:'m', gruppe:'Gelb',    geb:'2021-01-12', foto:'', lieblingsverein:[],                                                                 hauptverein:'Bayern München', speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c37', vorname:'Luca',        nachname:'Schriebl',         geschlecht:'m', gruppe:'Rot',     geb:'2016-10-17', foto:'', lieblingsverein:['BVB Dortmund'],                                                   hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c38', vorname:'Marvin',      nachname:'Kolb',             geschlecht:'m', gruppe:'Grün',    geb:'2018-05-17', foto:'', lieblingsverein:['Bayern München'],                                                 hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c39', vorname:'Mona',        nachname:'Hösele',           geschlecht:'w', gruppe:'Rosa',    geb:'2015-06-28', foto:'', lieblingsverein:[],                                                                 hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c40', vorname:'Finn',        nachname:'Hösele',           geschlecht:'m', gruppe:'Rot',     geb:'2017-01-23', foto:'', lieblingsverein:['Real Madrid','Arsenal','FC Liverpool','Inter Mailand','Juventus Turin','Bayern München','BVB Dortmund'], hauptverein:'ATUS Bärnbach', speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c41', vorname:'Patrick',     nachname:'Bischelberger',    geschlecht:'m', gruppe:'Violett', geb:'2015-03-23', foto:'', lieblingsverein:['FC Barcelona'],                                                   hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c42', vorname:'Tobias',      nachname:'Riegler',          geschlecht:'m', gruppe:'Blau',    geb:'2013-01-19', foto:'', lieblingsverein:[],                                                                 hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c43', vorname:'Lukas',       nachname:'Krammer',          geschlecht:'m', gruppe:'Blau',    geb:'2013-06-05', foto:'', lieblingsverein:['Real Madrid','Bayern München'],                                   hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c44', vorname:'Theo',        nachname:'Pagger',           geschlecht:'m', gruppe:'Violett', geb:'2014-07-26', foto:'', lieblingsverein:['FC Barcelona','Bayern München'],                                  hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c45', vorname:'Jan',         nachname:'Bernsteiner',      geschlecht:'m', gruppe:'Rot',     geb:'2017-04-24', foto:'', lieblingsverein:['BVB Dortmund'],                                                   hauptverein:'BVB Dortmund',   speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c46', vorname:'Sebastian',   nachname:'Eisl',             geschlecht:'m', gruppe:'Blau',    geb:'2012-09-22', foto:'', lieblingsverein:['Bayern München'],                                                 hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c47', vorname:'Tim',         nachname:'Murg-Ofner',       geschlecht:'m', gruppe:'Violett', geb:'2015-05-29', foto:'', lieblingsverein:['FC Barcelona','Arsenal','Bayern München'],                        hauptverein:'FC Barcelona',   speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c48', vorname:'Tim',         nachname:'Hauser',           geschlecht:'m', gruppe:'Violett', geb:'2015-07-20', foto:'', lieblingsverein:['FC Barcelona','FC Liverpool','AC Mailand','BVB Dortmund'],        hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c49', vorname:'Philipp',     nachname:'Flecker',          geschlecht:'m', gruppe:'Blau',    geb:'2012-12-05', foto:'', lieblingsverein:[],                                                                 hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c50', vorname:'Jakob',       nachname:'Huber',            geschlecht:'m', gruppe:'Violett', geb:'2015-04-28', foto:'', lieblingsverein:['Bayern München'],                                                 hauptverein:'Bayern München', speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c51', vorname:'Noah',        nachname:'Fuchs',            geschlecht:'m', gruppe:'Grün',    geb:'2018-07-28', foto:'', lieblingsverein:[],                                                                 hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c52', vorname:'Luca',        nachname:'Stangl',           geschlecht:'m', gruppe:'Blau',    geb:'2013-06-20', foto:'', lieblingsverein:['Bayern München'],                                                 hauptverein:'Bayern München', speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c53', vorname:'Maximilian',  nachname:'Lind',             geschlecht:'m', gruppe:'Violett', geb:'2014-04-13', foto:'', lieblingsverein:[],                                                                 hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c54', vorname:'Fabian',      nachname:'Klopschitz',       geschlecht:'m', gruppe:'Gelb',    geb:'2019-09-12', foto:'', lieblingsverein:['Real Madrid'],                                                    hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c55', vorname:'Florian',     nachname:'Klopschitz',       geschlecht:'m', gruppe:'Rot',     geb:'2016-12-17', foto:'', lieblingsverein:['Bayern München'],                                                 hauptverein:'',               speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c56', vorname:'Max',         nachname:'Grabar',           geschlecht:'m', gruppe:'Violett', geb:'2015-09-17', foto:'', lieblingsverein:['FC Barcelona'],                                                   hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c57', vorname:'Viktor',      nachname:'Nyzkopoklonnyi',   geschlecht:'m', gruppe:'Blau',    geb:'2013-11-20', foto:'', lieblingsverein:['FC Barcelona'],                                                   hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c58', vorname:'Damian',      nachname:'Appler',           geschlecht:'m', gruppe:'Blau',    geb:'2012-08-15', foto:'', lieblingsverein:['FC Barcelona','Manchester City','Bayern München'],                 hauptverein:'FC Barcelona',   speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c59', vorname:'Liam',        nachname:'Pauser',           geschlecht:'m', gruppe:'Grün',    geb:'2018-10-02', foto:'', lieblingsverein:['FC Barcelona','Real Madrid','Manchester City','Bayern München','BVB Dortmund'], hauptverein:'ATUS Bärnbach', speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c60', vorname:'Erik',        nachname:'Schriebl',         geschlecht:'m', gruppe:'Blau',    geb:'2013-02-12', foto:'', lieblingsverein:['FC Barcelona'],                                                   hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c61', vorname:'Jannik',      nachname:'Schriebl',         geschlecht:'m', gruppe:'Rot',     geb:'2017-03-27', foto:'', lieblingsverein:['FC Barcelona'],                                                   hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c62', vorname:'Marcu',       nachname:'Alberto',          geschlecht:'m', gruppe:'Violett', geb:'2014-10-29', foto:'', lieblingsverein:['Real Madrid'],                                                    hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c63', vorname:'Luca',        nachname:'Gößler',           geschlecht:'m', gruppe:'Rot',     geb:'2016-08-29', foto:'', lieblingsverein:['FC Barcelona'],                                                   hauptverein:'ATUS Bärnbach',  speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c64', vorname:'Leo',         nachname:'Hofer',            geschlecht:'m', gruppe:'Rot',     geb:'2017-06-06', foto:'', lieblingsverein:['FC Barcelona','Real Madrid'],                                     hauptverein:'Manchester United',speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
+  { id:'c65', vorname:'Tim',         nachname:'Schernthaner',     geschlecht:'m', gruppe:'Blau',    geb:'2013-01-18', foto:'', lieblingsverein:['Real Madrid','PSG'],                                              hauptverein:'Real Madrid',    speed:[],pass:[],attack:[],bonus:[],shoot:[],skill:[],jump:[] },
 ];
 let campCounter = campSpielerData.length;
 let editingCampID = null;
@@ -1309,7 +1439,7 @@ function buildCampKarte(s) {
     <div class="ma-skills">${bars}</div>
     <div class="ma-footer" style="background:${gs.footer}">
       <div class="ma-footer-stat"><div class="label">JUMP</div><div class="value" style="font-size:.85rem">${jumpVal||'—'}</div></div>
-      <div class="ma-team-badge" style="font-size:.55rem;font-weight:800">${s.gruppe}</div>
+      <div class="ma-team-badge" style="font-size:.55rem;font-weight:800;overflow:hidden;padding:2px">${VEREIN_LOGOS[s.hauptverein] ? `<img src="${VEREIN_LOGOS[s.hauptverein]}" style="height:24px;width:24px;object-fit:contain" onerror="this.outerHTML='${s.gruppe}'">` : s.hauptverein||s.gruppe}</div>
       <div class="ma-footer-stat"><div class="label">SLV</div><div class="value">${slv}</div></div>
     </div>
     <div class="ma-bottom-strip">FUSSBALLCAMP · ${s.gruppe} · ${datumStr}</div>
@@ -1327,9 +1457,12 @@ function initCampPage() {
 window.showCampTab = function(tab) {
   document.getElementById('campPanelSpieler').style.display = tab === 'spieler' ? 'block' : 'none';
   document.getElementById('campPanelKarten').style.display  = tab === 'karten'  ? 'block' : 'none';
+  document.getElementById('campPanelTeams').style.display   = tab === 'teams'   ? 'block' : 'none';
   document.getElementById('campTabSpielerBtn').className = 'nav-link' + (tab === 'spieler' ? ' active' : '');
   document.getElementById('campTabKartenBtn').className  = 'nav-link' + (tab === 'karten'  ? ' active' : '');
+  document.getElementById('campTabTeamsBtn').className   = 'nav-link' + (tab === 'teams'   ? ' active' : '');
   if (tab === 'karten') renderCampKarten();
+  if (tab === 'teams')  renderHerzTeams();
 };
 
 window.renderCampSpieler = function() {
@@ -1348,11 +1481,13 @@ window.renderCampSpieler = function() {
     const foto = s.foto
       ? `<img src="${s.foto}" style="width:32px;height:32px;object-fit:cover;border-radius:50%;border:2px solid #ccc">`
       : `<div style="width:32px;height:32px;border-radius:50%;border:2px dashed #ced4da;display:flex;align-items:center;justify-content:center;color:#adb5bd"><i class="bi bi-person" style="font-size:.8rem"></i></div>`;
+    const logos = (s.lieblingsverein||[]).map(v => vereinLogo(v, 22)).join('');
     return `<tr>
       <td>${foto}</td>
       <td><strong>${s.nachname}</strong> ${s.vorname}</td>
       <td>${s.geb ? new Date(s.geb+'T12:00').toLocaleDateString('de-AT') : '—'}</td>
       <td><span class="badge ${gs.badge}">${s.gruppe}</span></td>
+      <td style="max-width:160px"><div style="display:flex;flex-wrap:wrap;gap:2px;align-items:center">${logos||'<span class="text-muted small">—</span>'}</div></td>
       <td>${best(s.speed,true)}</td>
       <td>${best(s.attack,false)}</td>
       <td>${best(s.bonus,false)}</td>
@@ -1401,14 +1536,17 @@ window.openCampSpielerModal = function(id) {
   document.getElementById('cVorname').value = s?.vorname  || '';
   document.getElementById('cNachname').value= s?.nachname || '';
   document.getElementById('cGeb').value     = s?.geb      || '';
-  document.getElementById('cGruppe').value  = s?.gruppe   || 'Blau';
+  document.getElementById('cGruppe').value       = s?.gruppe       || 'Blau';
+  document.getElementById('cHauptverein').value  = s?.hauptverein  || '';
+  document.getElementById('cLieblingsverein').value = (s?.lieblingsverein||[]).join(', ');
+  updateHauptvereinPreview();
   document.getElementById('cError').classList.add('d-none');
 
   // Messwerte
   const fill = (id, arr, idx) => { document.getElementById(id).value = arr?.[idx] ?? ''; };
   fill('cSpeed1',  s?.speed,  0); fill('cSpeed2',  s?.speed,  1);
   fill('cAttack1', s?.attack, 0); fill('cAttack2', s?.attack, 1);
-  fill('cBonus1',  s?.bonus,  0); fill('cBonus2',  s?.bonus,  1);
+  fill('cBonus1',  s?.bonus,  0); fill('cBonus2',  s?.bonus,  1); fill('cBonus3', s?.bonus, 2); fill('cBonus4', s?.bonus, 3); fill('cBonus5', s?.bonus, 4);
   fill('cShoot1',  s?.shoot,  0); fill('cShoot2',  s?.shoot,  1);
   fill('cSkill1',  s?.skill,  0); fill('cSkill2',  s?.skill,  1);
   fill('cPass1',   s?.pass,   0); fill('cPass2',   s?.pass,   1); fill('cPass3', s?.pass, 2);
@@ -1434,7 +1572,9 @@ window.campSpielerSpeichern = function() {
     foto:     campPendingFoto ?? (editingCampID ? (campSpielerData.find(x=>x.id===editingCampID)?.foto||'') : ''),
     speed:    [toNum('cSpeed1'),  toNum('cSpeed2')],
     attack:   [toNum('cAttack1'), toNum('cAttack2')],
-    bonus:    [toNum('cBonus1'),  toNum('cBonus2')],
+    bonus:    [toNum('cBonus1'), toNum('cBonus2'), toNum('cBonus3'), toNum('cBonus4'), toNum('cBonus5')],
+    hauptverein: document.getElementById('cHauptverein').value,
+    lieblingsverein: document.getElementById('cLieblingsverein').value.split(',').map(v=>v.trim()).filter(Boolean),
     shoot:    [toNum('cShoot1'),  toNum('cShoot2')],
     skill:    [toNum('cSkill1'),  toNum('cSkill2')],
     pass:     [toNum('cPass1'),   toNum('cPass2'),  toNum('cPass3')],
@@ -1448,6 +1588,110 @@ window.campSpielerSpeichern = function() {
   }
   bootstrap.Modal.getInstance(document.getElementById('modalCampSpieler')).hide();
   renderCampSpieler();
+};
+
+// ══════════════════════════════════════════════════════════════
+// HERZ-TEAMS
+// ══════════════════════════════════════════════════════════════
+const ALLE_VEREINE = [
+  'ATUS Bärnbach','ATUS Sadiki Bau Bärnbach','SK Sturm Graz','GAK 1902','Rapid Wien',
+  'FC Ligist','SV Kainach','FC Maria Lankowitz',
+  'FC Barcelona','Real Madrid','Bayern München','BVB Dortmund','Arsenal','FC Liverpool',
+  'Juventus Turin','Inter Mailand','AC Mailand','Manchester City','Manchester United',
+  'PSG','Al Nassr','Crystal Palace','Inter Miami'
+];
+
+let customVereinLogos = {};
+
+function vereinLogoUrl(name) {
+  return customVereinLogos[name] || VEREIN_LOGOS[name] || null;
+}
+
+function vereinLogo(name, size=22) {
+  const url = vereinLogoUrl(name);
+  if (url) return `<img src="${url}" title="${name}" style="height:${size}px;width:${size}px;object-fit:contain;margin:1px" onerror="this.style.display='none'">`;
+  return `<span class="badge bg-secondary" style="font-size:.6rem">${name}</span>`;
+}
+
+window.renderHerzTeams = function() {
+  const alle = [...new Set([...ALLE_VEREINE, ...Object.keys(customVereinLogos)])].sort((a,b)=>a.localeCompare(b));
+  document.getElementById('herzTeamsGrid').innerHTML = alle.map(name => {
+    const url = vereinLogoUrl(name);
+    const hasLogo = !!url;
+    return `<div class="col-6 col-md-4 col-lg-3">
+      <div class="card shadow-sm p-3 h-100">
+        <div class="d-flex align-items-center gap-3 mb-2">
+          <div style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;border:2px dashed #dee2e6;border-radius:8px;overflow:hidden;flex-shrink:0">
+            ${url ? `<img src="${url}" style="width:44px;height:44px;object-fit:contain" onerror="this.parentElement.innerHTML='<i class=\\'bi bi-image text-muted\\'></i>'">` : '<i class="bi bi-image text-muted"></i>'}
+          </div>
+          <div style="flex:1;min-width:0">
+            <div class="fw-bold" style="font-size:.85rem;word-break:break-word">${name}</div>
+            <div class="text-muted" style="font-size:.7rem">${hasLogo ? (customVereinLogos[name] ? 'Eigenes Logo' : 'Auto-Logo') : 'Kein Logo'}</div>
+          </div>
+        </div>
+        <div class="d-flex gap-1 flex-wrap">
+          <label class="btn btn-outline-secondary btn-sm flex-fill" style="cursor:pointer">
+            <i class="bi bi-upload me-1"></i>Logo
+            <input type="file" accept="image/*" style="display:none" onchange="uploadVereinLogo(event,'${name.replace(/'/g,"\\'")}')">
+          </label>
+          ${customVereinLogos[name] ? `<button class="btn btn-outline-danger btn-sm" onclick="loescheCustomLogo('${name.replace(/'/g,"\\'")}')"><i class="bi bi-x"></i></button>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+};
+
+window.vereinHinzufuegen = function() {
+  const input = document.getElementById('neuerVereinName');
+  const name = input.value.trim();
+  if (!name) return;
+  if (!ALLE_VEREINE.includes(name)) ALLE_VEREINE.push(name);
+  input.value = '';
+  renderHerzTeams();
+  updateHauptvereinDropdowns();
+};
+
+window.uploadVereinLogo = function(event, name) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    customVereinLogos[name] = e.target.result;
+    renderHerzTeams();
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+};
+
+window.loescheCustomLogo = function(name) {
+  delete customVereinLogos[name];
+  renderHerzTeams();
+};
+
+window.updateHauptvereinDropdowns = function() {
+  const selects = ['cHauptverein'];
+  selects.forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const current = sel.value;
+    const extra = ALLE_VEREINE.filter(v => !sel.querySelector(`option[value="${v}"]`));
+    extra.forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v; opt.textContent = v;
+      sel.appendChild(opt);
+    });
+    sel.value = current;
+  });
+};
+
+window.updateHauptvereinPreview = function() {
+  const val = document.getElementById('cHauptverein').value;
+  const el = document.getElementById('cHauptvereinPreview');
+  if (!val) { el.innerHTML = ''; return; }
+  const logo = VEREIN_LOGOS[val];
+  el.innerHTML = logo
+    ? `<img src="${logo}" style="height:26px;width:26px;object-fit:contain"> <span class="text-muted small">${val}</span>`
+    : `<span class="badge bg-secondary">${val}</span>`;
 };
 
 window.campLoeschen = function(id) {
@@ -2082,6 +2326,11 @@ onAuthStateChanged(auth, user => {
   document.getElementById('loginScreen').style.display = user ? 'none' : 'flex';
   document.getElementById('dashboard').style.display   = user ? 'block' : 'none';
 });
+window.doLoginEnter = function() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPassword').value;
+  if(email && pass) doLogin();
+};
 window.doLogin = async function() {
   const err = document.getElementById('loginError');
   try { await signInWithEmailAndPassword(auth, document.getElementById('loginEmail').value, document.getElementById('loginPassword').value); }
