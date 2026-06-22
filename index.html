@@ -3025,6 +3025,7 @@ let notizKategorien = ['Technik','Taktik','Allgemein','Stärken','Verbesserung']
 let spielerNotizen  = {};
 let notizCounter    = 0;
 let editingNotizSpielerID = null;
+let editingNotizID = null;
 
 let trainingsAbschnitte = ['Einleitung','Hauptteil (1)','Technik','Hauptteil (2)','Ende'];
 
@@ -5113,6 +5114,7 @@ function renderNotizTable(spielerId) {
            <button class="btn btn-danger btn-sm" onclick="notizHardDelete('${spielerId}','${n.id}')" title="Endgültig löschen"><i class="bi bi-trash-fill"></i></button>
          </div>`
       : `<div class="edit d-inline-flex gap-1">
+           <button class="btn btn-outline-secondary btn-sm" onclick="openNotizEditModal('${spielerId}','${n.id}')" title="Bearbeiten"><i class="bi bi-pencil"></i></button>
            <button class="btn btn-warning btn-sm" onclick="notizSoftDelete('${spielerId}','${n.id}')" title="Ausblenden"><i class="bi bi-trash" style="color:#fff"></i></button>
            <button class="btn btn-danger btn-sm" onclick="notizHardDelete('${spielerId}','${n.id}')" title="Endgültig löschen"><i class="bi bi-trash-fill"></i></button>
          </div>`;
@@ -5140,9 +5142,26 @@ window.katLoeschen = function(k) {
 window.openNotizModal = function() {
   if (!editingNotizSpielerID) { alert('Bitte zuerst Spieler speichern.'); return; }
   if (!spielerNotizen[editingNotizSpielerID]) spielerNotizen[editingNotizSpielerID] = [];
+  editingNotizID = null;
   document.getElementById('notizDatum').value = new Date().toISOString().split('T')[0];
+  document.querySelector('#modalNotiz .modal-title').innerHTML = '<i class="bi bi-journal-plus me-2"></i>Notiz erfassen';
   renderNotizKatSelect();
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalNotiz')).show();
+};
+window.openNotizEditModal = function(sid, nid) {
+  const n = (spielerNotizen[sid] || []).find(x => x.id === nid);
+  if (!n) return;
+  editingNotizID = nid;
+  document.getElementById('notizDatum').value = n.datum || '';
+  document.querySelector('#modalNotiz .modal-title').innerHTML = '<i class="bi bi-pencil me-2"></i>Notiz bearbeiten';
+  renderNotizKatSelect();
+  document.getElementById('notizKat').value = n.kategorie;
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalNotiz')).show();
+  // Quill nach Modal-Open befüllen
+  document.getElementById('modalNotiz').addEventListener('shown.bs.modal', function fillQuill() {
+    if (quillNotiz) quillNotiz.root.innerHTML = n.inhalt || '';
+    document.getElementById('modalNotiz').removeEventListener('shown.bs.modal', fillQuill);
+  }, { once: true });
 };
 document.getElementById('modalNotiz').addEventListener('shown.bs.modal', () => {
   if (!quillNotiz) {
@@ -5156,12 +5175,15 @@ window.notizSpeichern = function() {
   const sid    = editingNotizSpielerID;
   if (!sid) return;
   if (!spielerNotizen[sid]) spielerNotizen[sid] = [];
-  spielerNotizen[sid].push({
-    id: 'n'+(++notizCounter),
-    datum: document.getElementById('notizDatum').value,
-    kategorie: document.getElementById('notizKat').value,
-    inhalt,
-  });
+  const datum    = document.getElementById('notizDatum').value;
+  const kategorie = document.getElementById('notizKat').value;
+  if (editingNotizID) {
+    const n = spielerNotizen[sid].find(x => x.id === editingNotizID);
+    if (n) { n.datum = datum; n.kategorie = kategorie; n.inhalt = inhalt; }
+    editingNotizID = null;
+  } else {
+    spielerNotizen[sid].push({ id: 'n'+(++notizCounter), datum, kategorie, inhalt });
+  }
   renderNotizTable(sid);
   bootstrap.Modal.getInstance(document.getElementById('modalNotiz')).hide();
 };
