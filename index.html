@@ -2553,9 +2553,23 @@ firebase functions:config:set \
         <input type="hidden" id="buEditUid">
         <div class="row g-3">
           <div class="col-12">
-            <div class="alert alert-secondary py-2 mb-0">
+            <div class="alert alert-secondary py-2 mb-2">
               <strong id="buEditName"></strong> &nbsp;·&nbsp; <span class="text-muted" id="buEditEmail"></span>
             </div>
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-bold">Anzeigename</label>
+            <input type="text" id="buEditDisplayName" class="form-control" placeholder="Vorname Nachname">
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-bold">Passwort zurücksetzen</label>
+            <div class="d-flex gap-2 align-items-center">
+              <button type="button" class="btn btn-outline-warning btn-sm" onclick="benutzerResetPasswort()">
+                <i class="bi bi-envelope-arrow-up me-1"></i>Reset-E-Mail senden
+              </button>
+              <span class="text-muted small">Der Benutzer erhält eine E-Mail zum Passwort selbst setzen.</span>
+            </div>
+            <div id="buResetInfo" class="alert alert-success d-none mt-2 py-2 mb-0"></div>
           </div>
 
           <!-- Rollen -->
@@ -7584,7 +7598,9 @@ window.openBenutzerBearbeiten = async function(uid) {
   document.getElementById('buEditUid').value   = uid;
   document.getElementById('buEditName').textContent  = u.displayName || '—';
   document.getElementById('buEditEmail').textContent = u.email || '—';
+  document.getElementById('buEditDisplayName').value = u.displayName || '';
   document.getElementById('buEditError').classList.add('d-none');
+  document.getElementById('buResetInfo').classList.add('d-none');
 
   // Rollen-Select füllen
   const roles = window._cachedRoles;
@@ -7627,14 +7643,35 @@ window.benutzerBearbeitenSpeichern = async function() {
   const teamIds = TEAMS_VERFUEGBAR.filter(t => document.getElementById(`buTeam_${t}`)?.checked);
   const childPlayerIds = spielerData.filter(p => document.getElementById(`buSpieler_${p.id}`)?.checked).map(p => p.id);
 
+  const displayName = document.getElementById('buEditDisplayName').value.trim();
+
   try {
     const { doc, updateDoc } = window._firestoreAPI;
-    await updateDoc(doc(window._firestoreDB, 'users', uid), { roleIds, teamIds, childPlayerIds });
+    const update = { roleIds, teamIds, childPlayerIds };
+    if (displayName) update.displayName = displayName;
+    await updateDoc(doc(window._firestoreDB, 'users', uid), update);
     bootstrap.Modal.getInstance(document.getElementById('modalBenutzerBearbeiten')).hide();
     renderUsersView();
   } catch(e) {
     err.classList.remove('d-none');
     err.textContent = 'Fehler beim Speichern: ' + e.message;
+  }
+};
+
+window.benutzerResetPasswort = async function() {
+  const email = document.getElementById('buEditEmail').textContent.trim();
+  const info  = document.getElementById('buResetInfo');
+  info.classList.add('d-none');
+  if (!email || email === '—') return;
+  try {
+    const { sendPasswordResetEmail } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+    await sendPasswordResetEmail(window._firebaseAuth, email);
+    info.classList.remove('d-none');
+    info.textContent = `✓ Reset-E-Mail wurde an ${email} gesendet.`;
+  } catch(e) {
+    const err = document.getElementById('buEditError');
+    err.classList.remove('d-none');
+    err.textContent = 'Fehler: ' + e.message;
   }
 };
 
