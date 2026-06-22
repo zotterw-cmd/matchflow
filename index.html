@@ -1151,6 +1151,7 @@ body.sa-mode .sa-var{display:inline}
       </div>
       <div class="d-flex gap-2 flex-wrap">
         <button class="btn btn-outline-secondary btn-sm" onclick="openCampCsvImport()"><i class="bi bi-upload me-1"></i>CSV Import</button>
+        <button class="btn btn-outline-info btn-sm" onclick="campSpielerAusVorigemCamp()"><i class="bi bi-arrow-down-circle me-1"></i>Aus Camp übernehmen</button>
         <button class="btn btn-warning fw-bold" onclick="openCampSpielerModal(null)"><i class="bi bi-person-plus-fill me-1"></i>Neuer Spieler</button>
       </div>
     </div>
@@ -5326,12 +5327,21 @@ window.renderCampListe = function() {
 };
 
 window.neuesCampErstellen = function() {
+  _syncCampSpieler(); // aktuelles Camp zuerst sichern
   const id = 'camp' + String(++campListeCounter).padStart(2,'0');
   const name = `Neues Camp ${campListeCounter}`;
   const newCamp = { id, name, datum: new Date().toISOString().split('T')[0], beschreibung: '', spieler: [] };
   campListe.push(newCamp);
+  currentCampId = id;
+  campSpielerData = []; // explizit leer – kein Carry-over
+  campCounter = 0;
   fsSaveCamp(newCamp).catch(console.warn);
-  openCamp(id);
+  document.getElementById('campPanelListe').style.display = 'none';
+  document.getElementById('campPanelDetail').style.display = '';
+  document.getElementById('campDetailTitel').innerHTML = `<i class="bi bi-trophy-fill text-warning me-2"></i>${name}`;
+  showCampTab('spieler');
+  renderCampSpieler();
+  campFarbenLaden();
   setTimeout(() => campUmbenennen(id), 100);
 };
 
@@ -5349,6 +5359,27 @@ window.openCamp = function(id) {
   showCampTab('spieler');
   renderCampSpieler();
   campFarbenLaden();
+};
+
+window.campSpielerAusVorigemCamp = function() {
+  const andere = campListe.filter(c => c.id !== currentCampId && (c.spieler||[]).length > 0);
+  if (!andere.length) { alert('Keine anderen Camps mit Spielern vorhanden.'); return; }
+  const auswahl = andere.map(c => `${c.name} (${(c.spieler||[]).length} Spieler)`).join('\n');
+  const idx = andere.length === 1 ? 0 : (() => {
+    const name = prompt(`Welches Camp übernehmen?\n\n${andere.map((c,i)=>`${i+1}. ${c.name} (${(c.spieler||[]).length} Spieler)`).join('\n')}\n\nNummer eingeben:`);
+    return name ? parseInt(name) - 1 : -1;
+  })();
+  if (idx < 0 || idx >= andere.length) return;
+  const quelle = andere[idx];
+  if (!confirm(`${(quelle.spieler||[]).length} Spieler aus "${quelle.name}" übernehmen? Bestehende Spieler bleiben erhalten.`)) return;
+  const existingIds = new Set(campSpielerData.map(s => s.id));
+  const neu = (quelle.spieler || []).filter(s => !existingIds.has(s.id));
+  campSpielerData.push(...neu);
+  campCounter = campSpielerData.length;
+  _syncCampSpieler();
+  fsSaveCamp(_aktCamp()).catch(console.warn);
+  renderCampSpieler();
+  alert(`✓ ${neu.length} Spieler übernommen.`);
 };
 
 window.zurueckZuCampListe = function() {
