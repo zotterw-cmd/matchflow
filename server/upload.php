@@ -22,9 +22,13 @@ header('Content-Type: application/json; charset=utf-8');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
 
-$path = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
-$segments = explode('/', $path);
-$endpoint = end($segments);
+// Endpoint: ?action=... (query param) oder letzter URL-Pfad-Segment
+$endpoint = $_GET['action'] ?? '';
+if (!$endpoint) {
+  $path     = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+  $segments = explode('/', $path);
+  $endpoint = end($segments);
+}
 
 switch ($endpoint) {
   case 'test-connection': testConnection(); break;
@@ -34,7 +38,7 @@ switch ($endpoint) {
   case 'list':            listFiles();      break;
   case 'delete':          deleteFile();     break;
   default:
-    json(['error' => 'Unknown endpoint: ' . $endpoint], 404);
+    json(['error' => 'Unknown endpoint: ' . $endpoint . ' (use ?action=test-connection etc.)'], 404);
 }
 
 // ── Endpoints ────────────────────────────────────────────────

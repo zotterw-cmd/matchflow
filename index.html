@@ -1848,32 +1848,34 @@ body.sa-mode .sa-var{display:inline}
         <div class="card-body small">
           <div class="row g-3">
             <div class="col-md-6">
-              <h6 class="fw-bold">1. Media Server starten</h6>
-              <pre class="bg-dark text-light rounded p-2 small">cd media-server
-npm install
-npm start</pre>
-              <p class="text-muted">Server läuft dann auf Port 4000 (oder via <code>PORT</code> env).</p>
+              <h6 class="fw-bold">1. Dateien auf Webserver hochladen</h6>
+              <p class="text-muted mb-1">Lade folgende Dateien per FTP in den Ordner <code>/matchflow-api/</code>:</p>
+              <ul class="text-muted mb-0">
+                <li><code>server/upload.php</code> → <code>/matchflow-api/upload.php</code></li>
+              </ul>
             </div>
             <div class="col-md-6">
-              <h6 class="fw-bold">2. Umgebungsvariablen</h6>
-              <pre class="bg-dark text-light rounded p-2 small">BASE_URL=https://media.example.at
-CORS_ORIGIN=https://matchflow.example.at
-PORT=4000</pre>
+              <h6 class="fw-bold">2. Server URL eintragen</h6>
+              <p class="text-muted mb-1">Im Feld oben links eintragen:</p>
+              <pre class="bg-dark text-light rounded p-2 small">https://matchflow.atus-baernbach.at/matchflow-api</pre>
+              <p class="text-muted">Dann <strong>Speichern</strong> → <strong>Verbindung testen</strong>.</p>
             </div>
             <div class="col-md-6">
-              <h6 class="fw-bold">3. Firebase Cloud Function deployen</h6>
-              <pre class="bg-dark text-light rounded p-2 small">cd functions && npm install
-firebase deploy --only functions
-firebase functions:config:set \
-  media.server_url="https://media.example.at"</pre>
+              <h6 class="fw-bold">3. Ordner anlegen (automatisch)</h6>
+              <p class="text-muted mb-1">Klick auf <strong>Ordner prüfen</strong> — PHP legt automatisch an:</p>
+              <ul class="text-muted mb-0">
+                <li><code>/matchflow-api/uploads/videos/</code></li>
+                <li><code>/matchflow-api/uploads/thumbnails/</code></li>
+                <li><code>/matchflow-api/uploads/players/</code></li>
+              </ul>
             </div>
             <div class="col-md-6">
               <h6 class="fw-bold">4. Funktionsweise</h6>
               <ul class="text-muted mb-0">
-                <li>Videos werden nach <strong>48 Stunden</strong> automatisch gelöscht</li>
-                <li>Screenshots bleiben dauerhaft gespeichert</li>
-                <li>Täglicher Cron-Job um 03:00 Uhr (Server) und Firebase Function (24h)</li>
-                <li>Firestore Collection: <code>shot_measurements</code></li>
+                <li>Spielerfotos werden unter <code>uploads/players/</code> gespeichert</li>
+                <li>Videos &amp; Thumbnails aus dem Skill Calculator</li>
+                <li>URL wird in Firestore beim Spieler gespeichert</li>
+                <li>Max. Upload-Größe: <strong>50 MB</strong></li>
               </ul>
             </div>
           </div>
@@ -9983,7 +9985,7 @@ window.mediaServerTest = async function() {
   if (!cfg.serverUrl) { st.innerHTML = '<div class="alert alert-warning py-2 mb-0">Bitte zuerst Server URL eingeben und speichern.</div>'; return; }
   st.innerHTML = '<div class="alert alert-secondary py-2 mb-0"><span class="spinner-border spinner-border-sm me-2"></span>Verbindung wird getestet…</div>';
   try {
-    const r = await fetch(`${cfg.serverUrl}/api/test-connection`, { method: 'POST' });
+    const r = await fetch(`${cfg.serverUrl}/upload.php?action=test-connection`);
     const j = await r.json();
     st.innerHTML = `<div class="alert alert-success py-2 mb-0"><i class="bi bi-wifi me-1"></i>${j.message} <small class="text-muted">${j.time}</small></div>`;
   } catch(e) {
@@ -9996,7 +9998,7 @@ window.mediaServerCheckFolders = async function() {
   const cfg = getMediaConfig();
   if (!cfg.serverUrl) { st.innerHTML = '<div class="alert alert-warning py-2 mb-0">Bitte zuerst Server URL eingeben.</div>'; return; }
   try {
-    const r = await fetch(`${cfg.serverUrl}/api/check-folders`, { method: 'POST' });
+    const r = await fetch(`${cfg.serverUrl}/upload.php?action=check-folders`, { method: 'POST' });
     const j = await r.json();
     const items = Object.entries(j.folders || {}).map(([n,f]) =>
       `<li>${f.ok ? '✅' : '❌'} <code>${n}</code></li>`).join('');
@@ -10012,7 +10014,7 @@ window.mediaLoadStats = async function() {
   if (!cfg.serverUrl) { el.innerHTML = '<span class="text-warning">Keine Server URL konfiguriert.</span>'; return; }
   el.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Lade…';
   try {
-    const r = await fetch(`${cfg.serverUrl}/api/storage-stats`);
+    const r = await fetch(`${cfg.serverUrl}/upload.php?action=storage-stats`);
     const j = await r.json();
     const fmt = bytes => bytes < 1024*1024 ? (bytes/1024).toFixed(1)+' KB' : (bytes/1024/1024).toFixed(1)+' MB';
     el.innerHTML = `
@@ -10035,7 +10037,7 @@ async function uploadToMediaServer(file, type, id) {
   fd.append('file', file);
   fd.append('type', type);
   fd.append('id', id);
-  const r = await fetch(`${cfg.serverUrl}/api/upload`, { method: 'POST', body: fd });
+  const r = await fetch(`${cfg.serverUrl}/upload.php?action=upload`, { method: 'POST', body: fd });
   if (!r.ok) throw new Error(`Upload fehlgeschlagen (${r.status})`);
   const j = await r.json();
   return j.url;
