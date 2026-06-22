@@ -9956,7 +9956,7 @@ async function fsLoadSpieler() {
   }
 }
 
-async function fsSaveVereinLogo(name, url) {
+window.fsSaveVereinLogo = async function fsSaveVereinLogo(name, url) {
   const db = window._firestoreDB;
   if (!db) return;
   try {
@@ -9990,7 +9990,7 @@ async function fsLoadVereinLogos() {
 // ══════════════════════════════════════════════════════════════
 // FIRESTORE: Trainings
 // ══════════════════════════════════════════════════════════════
-async function fsSaveTraining(obj) {
+window.fsSaveTraining = async function fsSaveTraining(obj) {
   const db = window._firestoreDB;
   if (!db || !obj?.id) return;
   try {
@@ -10018,7 +10018,7 @@ async function fsLoadTrainings() {
   } catch(e) { console.warn('fsLoadTrainings:', e.message); return null; }
 }
 
-async function fsDeleteTraining(id) {
+window.fsDeleteTraining = async function fsDeleteTraining(id) {
   const db = window._firestoreDB;
   if (!db) return;
   try {
@@ -10030,7 +10030,7 @@ async function fsDeleteTraining(id) {
 // ══════════════════════════════════════════════════════════════
 // FIRESTORE: Übungsbibliothek
 // ══════════════════════════════════════════════════════════════
-async function fsSaveUebung(obj) {
+window.fsSaveUebung = async function fsSaveUebung(obj) {
   const db = window._firestoreDB;
   if (!db || !obj?.id) return;
   try {
@@ -10056,7 +10056,7 @@ async function fsLoadUebungen() {
   } catch(e) { console.warn('fsLoadUebungen:', e.message); return null; }
 }
 
-async function fsDeleteUebung(id) {
+window.fsDeleteUebung = async function fsDeleteUebung(id) {
   const db = window._firestoreDB;
   if (!db) return;
   try {
@@ -10068,7 +10068,7 @@ async function fsDeleteUebung(id) {
 // ══════════════════════════════════════════════════════════════
 // FIRESTORE: Mannschaften
 // ══════════════════════════════════════════════════════════════
-async function fsSaveMannschaft(obj) {
+window.fsSaveMannschaft = async function fsSaveMannschaft(obj) {
   const db = window._firestoreDB;
   if (!db || !obj?.id) return;
   try {
@@ -10211,7 +10211,7 @@ function _cleanCampForFirestore(obj) {
   return out;
 }
 
-async function fsSaveCamp(campObj) {
+window.fsSaveCamp = async function fsSaveCamp(campObj) {
   const db = window._firestoreDB;
   if (!db) { console.warn('fsSaveCamp: kein Firestore DB'); return; }
   if (!campObj?.id) { console.warn('fsSaveCamp: campObj.id fehlt'); return; }
@@ -10242,7 +10242,7 @@ async function fsLoadCamps() {
   } catch(e) { console.warn('fsLoadCamps:', e.message); return null; }
 }
 
-async function fsDeleteCamp(id) {
+window.fsDeleteCamp = async function fsDeleteCamp(id) {
   const db = window._firestoreDB;
   if (!db) return;
   try {
@@ -10318,8 +10318,8 @@ async function _loadAllFromFirestore() {
 // MEDIA SERVER – Config, Upload, Capture
 // ══════════════════════════════════════════════════════════════
 let _mediaCfgCache = {};
-function getMediaConfig() { return _mediaCfgCache; }
-async function setMediaConfig(cfg) {
+window.getMediaConfig = function getMediaConfig() { return _mediaCfgCache; }
+window.setMediaConfig = async function setMediaConfig(cfg) {
   _mediaCfgCache = cfg;
   const db = window._firestoreDB;
   if (!db) return;
@@ -10330,7 +10330,7 @@ async function setMediaConfig(cfg) {
     }, { merge: true });
   } catch(e) { console.warn('setMediaConfig:', e.message); }
 }
-async function loadMediaConfig() {
+window.loadMediaConfig = async function loadMediaConfig() {
   const db = window._firestoreDB;
   if (!db) return;
   try {
@@ -10406,7 +10406,7 @@ window.mediaLoadStats = async function() {
 };
 
 // Upload a File to the media server → returns URL string
-async function uploadToMediaServer(file, type, id) {
+window.uploadToMediaServer = async function uploadToMediaServer(file, type, id) {
   const cfg = getMediaConfig();
   if (!cfg.serverUrl) throw new Error('Kein Media Server konfiguriert');
   const fd = new FormData();
@@ -10420,7 +10420,7 @@ async function uploadToMediaServer(file, type, id) {
 }
 
 // Capture a single frame from a video element as a Blob (PNG)
-function captureVideoFrame(videoEl, timeSeconds) {
+window.captureVideoFrame = function captureVideoFrame(videoEl, timeSeconds) {
   return new Promise((resolve, reject) => {
     const canvas = document.createElement('canvas');
     canvas.width  = videoEl.videoWidth  || 640;
@@ -10440,7 +10440,7 @@ function captureVideoFrame(videoEl, timeSeconds) {
 }
 
 // Save a shot measurement to Firestore
-async function saveShotMeasurement(data) {
+window.saveShotMeasurement = async function saveShotMeasurement(data) {
   const db = window._firestoreDB;
   if (!db) return null;
   const { addDoc, collection, serverTimestamp } = window._firestoreAPI;
