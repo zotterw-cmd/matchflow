@@ -1524,7 +1524,6 @@ body.sa-mode .sa-var{display:inline}
       </div>
       <div class="d-flex gap-2">
         <button class="btn btn-dark" onclick="neuesTrainingErstellen()"><i class="bi bi-plus-circle-fill me-1"></i>Training anlegen</button>
-        <button class="btn btn-danger" onclick="neuesSpielErstellen()"><i class="bi bi-trophy-fill me-1"></i>Spiel anlegen</button>
       </div>
     </div>
     <div class="card shadow-sm p-3 mt-3">
@@ -1554,15 +1553,11 @@ body.sa-mode .sa-var{display:inline}
         </div>
         <div class="col-md-3">
           <label class="form-label fw-bold">Kategorie</label>
-          <div class="d-flex gap-2 mt-1">
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="trKat" id="trKatTraining" value="Training" checked onchange="katChanged()">
-              <label class="form-check-label" for="trKatTraining">Training</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="trKat" id="trKatSpiel" value="Spiel" onchange="katChanged()">
-              <label class="form-check-label" for="trKatSpiel">Spiel</label>
-            </div>
+          <div class="mt-1">
+            <input type="radio" class="btn-check" name="trKat" id="trKatTraining" value="Training" checked onchange="katChanged()">
+            <label class="btn btn-outline-success btn-sm" for="trKatTraining"><i class="bi bi-calendar-check me-1"></i>Training</label>
+            <input type="radio" class="btn-check" name="trKat" id="trKatSpiel" value="Spiel" onchange="katChanged()">
+            <label class="btn btn-outline-danger btn-sm" for="trKatSpiel"><i class="bi bi-trophy me-1"></i>Spiel</label>
           </div>
         </div>
         <div class="col-md-6">
@@ -5890,35 +5885,11 @@ function renderTrainingsListe() {
 }
 
 window.neuesSpielErstellen = function() {
-  editingTrainingID = null;
-  document.getElementById('trFormTitle').innerHTML = '<i class="bi bi-trophy-fill text-danger me-2"></i>Neues Spiel';
+  neuesTrainingErstellen();
   document.getElementById('trKatSpiel').checked = true;
+  document.getElementById('trFormTitle').innerHTML = '<i class="bi bi-trophy-fill text-danger me-2"></i>Neues Spiel';
   document.getElementById('spielBlock').classList.remove('d-none');
-  document.getElementById('trHeimTeam').value = 'ATUS Bärnbach';
-  document.getElementById('trGastTeam').value = '';
-  document.getElementById('trNotiz').value     = '';
-  document.getElementById('trOrt').value       = '';
-  document.getElementById('trBelastung').value = '';
-  document.getElementById('trTrainer').value   = '';
-  document.getElementById('trSonstiges').value = '';
-  const heute = new Date().toISOString().split('T')[0];
-  document.getElementById('trDatum').value = heute;
   updateTrainingsName();
-  ['trBeginn','trEnde','trTreffpunkt','trVorEnde'].forEach(id => {
-    const fp = document.getElementById(id)?._flatpickr;
-    if (fp) fp.clear(); else document.getElementById(id).value = '';
-  });
-  trainingDetails = []; tdCounter = 0;
-  renderTrainingDetails(); renderAbschnitteChips();
-  window.currentTrainingAnwesenheit = {};
-  window.currentTrainingGameEvents  = [];
-  window.currentTrainingGameStatus  = 'geplant';
-  window.currentTrainingGameHalves  = [];
-  window.currentTrainingLineup      = { onField: [], kapitaen: null, system: '6+1' };
-  if (window.gtTimerInterval) { clearInterval(window.gtTimerInterval); window.gtTimerInterval = null; }
-  renderAnwesenheit();
-  const tf = document.getElementById('trainingForm');
-  if (tf) tf.scrollIntoView({ behavior: 'smooth' });
 };
 
 window.neuesTrainingErstellen = function() {
