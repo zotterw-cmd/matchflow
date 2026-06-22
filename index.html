@@ -283,7 +283,7 @@ body.sa-mode .sa-var{display:inline}
   <div class="sb-header">
     <div class="sb-brand">
       <span style="font-size:1.3rem">⚽</span>
-      <span>MatchFlow <span class="logo-small">v1.7</span></span>
+      <span>MatchFlow <span class="logo-small">v1.7.5</span></span>
     </div>
     <button class="sb-close-btn" onclick="toggleSidebar()" title="Menü schließen">
       <i class="bi bi-x-lg" style="font-size:1rem"></i>
@@ -449,57 +449,81 @@ body.sa-mode .sa-var{display:inline}
 
   <!-- Implementierungsstand -->
   <div class="card shadow-sm p-3 mb-3" id="dashRoadmapCard">
-    <h6 class="fw-bold mb-3"><i class="bi bi-kanban text-primary me-2"></i>Implementierungsstand MatchFlow v1.7</h6>
-    <div class="row g-3">
-      <div class="col-md-4">
-        <div class="fw-bold small text-success mb-2"><i class="bi bi-check-circle-fill me-1"></i>Umgesetzt</div>
-        <ul class="list-unstyled small mb-0">
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.0</span> Login &amp; Firebase Auth</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.0</span> Multi-Tenant Architektur</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.1</span> Saison-System (Firestore)</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.1</span> Rollen &amp; Berechtigungssystem</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.1</span> Benutzerverwaltung (Firestore)</li>
+    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+      <h6 class="fw-bold mb-0"><i class="bi bi-kanban text-primary me-2"></i>Implementierungsstand MatchFlow <span class="badge bg-dark">v1.7.5</span></h6>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary btn-sm" onclick="document.querySelectorAll('.rm-collapse').forEach(el=>bootstrap.Collapse.getOrCreateInstance(el).show())">Alle ausklappen</button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="document.querySelectorAll('.rm-collapse').forEach(el=>bootstrap.Collapse.getOrCreateInstance(el).hide())">Alle einklappen</button>
+      </div>
+    </div>
+    <p class="text-muted small mb-3">
+      <strong>MatchFlow</strong> ist eine Single-Page-Web-App (eine HTML-Datei, ~11.000 Zeilen) für Fußballvereine.
+      Firebase Auth + Firestore für Login &amp; Datenhaltung. Multi-Tenant-fähig. Media Server via PHP (Plesk).
+      Alle Module sind Rollen-geschützt. Stand: <strong>22.06.2025</strong>.
+    </p>
+
+    <!-- v1.0–1.6 -->
+    <div class="border rounded mb-2">
+      <button class="btn btn-link text-start w-100 fw-bold text-decoration-none d-flex justify-content-between align-items-center px-3 py-2"
+        onclick="bootstrap.Collapse.getOrCreateInstance(document.getElementById('rm16')).toggle()">
+        <span><i class="bi bi-check-circle-fill text-success me-2"></i>v1.0 – v1.6 &nbsp;<span class="fw-normal text-muted small">Grundfunktionen (Login, Spieler, Training, Camp, Game Tracking)</span></span>
+        <i class="bi bi-chevron-down text-muted small"></i>
+      </button>
+      <div class="collapse rm-collapse" id="rm16">
+        <ul class="list-unstyled small mb-0 px-3 pb-2">
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.0</span> Login &amp; Firebase Auth (E-Mail/Passwort, Tenant-Erkennung)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.0</span> Multi-Tenant Architektur (ein Codestand, mehrere Vereine)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.1</span> Saison-System (Firestore, Saisonwechsel pro Benutzer)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.1</span> Rollen &amp; Berechtigungssystem (dynamische Rollen, Permissions je Modul)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.1</span> Benutzerverwaltung (Firestore, Anlegen, Bearbeiten, Deaktivieren)</li>
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.2</span> CSV-Import für Benutzer</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.2</span> Spieler-Verwaltung (lokal)</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.3</span> Spieler-Karten (Vereinslogos, Skills)</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.4</span> Training/Spiel inkl. Taktikfeld, Word-Export</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.5</span> Camp – Spieler, Karten, Teams, Farben (lokal)</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.1</span> Game Tracking – Halbzeiten, Score, Status</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.2</span> Spieler-Verwaltung (CRUD, Foto, Skills, Notizen, Soft-Delete)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.3</span> Spieler-Karten (Vereinslogos, Skill-Badges, QR-Code, PPTX-Export)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.4</span> Training/Spiel (Kalender, Taktikfeld SVG, Word-Export, Übungsplan)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.5</span> Camp – Spieler, Karten, Teams, Farben (Firestore)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.1</span> Game Tracking – Halbzeiten, Score, Spielstatus</li>
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.2</span> Tor: Minute + Sekunde, Pass/Assist/Torschütze</li>
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.3</span> Startaufstellung – SVG-Feld, Drag&amp;Drop, Kapitän</li>
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.4</span> Spielsystem (3v3 bis 10+1) + Auto-Layout</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.5</span> Blaue Karte</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.6</span> Halbzeit bearbeiten / löschen / fortsetzen</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.7</span> Spielende mit Bestätigung + Wieder öffnen</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.8</span> Auto-Ende nach 45 Min pro Halbzeit</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.9</span> Events bearbeiten + löschen</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.10</span> Anwesenheit → Startaufstellung &amp; Events gefiltert</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.11</span> Speichern-Button unten dupliziert</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.12</span> Statistik: Spiele-Zähler pro Spieler</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.13</span> Wechsel-Markierung (Feld ▶ / Bank / ✔ / ✖)</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.14</span> Karten-Auswahl visuell markiert (sel-karte)</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.15</span> Camp Farben in Firebase gespeichert + Neue Farbe</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.16</span> Camp Farben live bearbeitbar (kein Fokusverlust)</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.17</span> Camp Gruppe umbenennen</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.18</span> KPI-System (Tore, Assists, Karten, Anwesenheit)</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.19</span> Dashboard-Diagramme (Top Torschützen, Anwesenheit %)</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.20</span> Spieler-Statistik Tabelle im Dashboard</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.21</span> Benutzer: teamIds + childPlayerIds (Bearbeiten-Modal)</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.22</span> Übungsbibliothek – CRUD, Filter, Karten-Ansicht</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.23</span> Übung aus Bibliothek in Training übernehmen (Quick-Add)</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.24</span> Taktik-Werkzeuge: Firestore-Sync (global/tenant), Seed-Funktion</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.25</span> Neue Übung aus Training → öffnet vollen Editor, direkt zuordnen</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.26</span> Training: Felder Ort, Belastung, Trainer, Sonstiges</li>
-          <li class="mb-1">⚠️ <span class="text-muted" style="font-size:.7rem">v1.6.27</span> PowerPoint-Export (Template-Upload + Variablen) – <strong>Vorlage noch anpassen!</strong></li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.5–9</span> Blaue Karte, Halbzeit edit/delete, Spielende, Auto-Ende, Events edit</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.10–14</span> Anwesenheit → Aufstellung, Speichern-Dopplung, Statistik, Wechsel, Karten-Markierung</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.15–17</span> Camp-Farben: Firebase, live-edit, Gruppe umbenennen</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.18–20</span> KPI-System, Dashboard-Diagramme, Spieler-Statistik-Tabelle</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.21</span> Benutzer: teamIds + childPlayerIds im Bearbeiten-Modal</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.22–25</span> Übungsbibliothek: CRUD, Filter, Quick-Add aus Training, Taktik-Sync</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.6.26</span> Training: Ort, Belastung, Trainer, Sonstiges</li>
+          <li class="mb-1">⚠️ <span class="text-muted" style="font-size:.7rem">v1.6.27</span> PowerPoint-Export (Template-Upload + Variablen) – <strong>Vorlage noch finalisieren</strong></li>
         </ul>
       </div>
-      <div class="col-md-4">
-        <div class="fw-bold small text-warning mb-2"><i class="bi bi-hourglass-split me-1"></i>Nächste Schritte</div>
-        <ul class="list-unstyled small mb-0">
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.1</span> Spieler-Modell Split (players / player_seasons) – Firestore-Struktur &amp; Funktionen</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.2</span> Media Server: Spielerfotos, Vereinslogos, Übungsbilder via PHP-API (kein Firebase Storage)</li>
+    </div>
+
+    <!-- v1.7.1–1.7.4 -->
+    <div class="border rounded mb-2">
+      <button class="btn btn-link text-start w-100 fw-bold text-decoration-none d-flex justify-content-between align-items-center px-3 py-2"
+        onclick="bootstrap.Collapse.getOrCreateInstance(document.getElementById('rm174')).toggle()">
+        <span><i class="bi bi-check-circle-fill text-success me-2"></i>v1.7.1 – v1.7.4 &nbsp;<span class="fw-normal text-muted small">Firestore-Vollintegration, Media Server, PPTX</span></span>
+        <i class="bi bi-chevron-down text-muted small"></i>
+      </button>
+      <div class="collapse rm-collapse" id="rm174">
+        <ul class="list-unstyled small mb-0 px-3 pb-2">
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.1</span> Spieler-Modell Split: <code>players</code> (Stammdaten) + <code>player_seasons</code> (Saison) in Firestore</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.2</span> Media Server: Spielerfotos, Vereinslogos, Übungsbilder via PHP-API auf Plesk (kein Firebase Storage)</li>
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.3</span> Firestore-Vollintegration: Trainings, Übungen, Camps automatisch gespeichert &amp; geladen</li>
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.4</span> PPTX-Export: QR-Codes, YouTube-Thumbnails, Bilder eingebettet, Links klickbar</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- v1.7.5 -->
+    <div class="border rounded border-primary mb-2">
+      <button class="btn btn-link text-start w-100 fw-bold text-decoration-none d-flex justify-content-between align-items-center px-3 py-2"
+        onclick="bootstrap.Collapse.getOrCreateInstance(document.getElementById('rm175')).toggle()">
+        <span><i class="bi bi-check-circle-fill text-success me-2"></i>v1.7.5 &nbsp;<span class="fw-normal text-muted small">Rollen-Sichtbarkeit, Benutzer-Verbesserungen, Firestore-Fixes</span></span>
+        <span class="badge bg-primary ms-2">Vorherige Session</span>
+        <i class="bi bi-chevron-down text-muted small"></i>
+      </button>
+      <div class="collapse show rm-collapse" id="rm175">
+        <ul class="list-unstyled small mb-0 px-3 pb-2">
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.5</span> Rollen: Menüpunkt ausblenden Toggle pro Modul</li>
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.5</span> Spielerliste nach Mannschaft-Verwalter gefiltert (nicht-Admin sieht nur eigene Teams)</li>
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.5</span> Benutzerliste ebenfalls nach Mannschaft gefiltert</li>
@@ -510,21 +534,53 @@ body.sa-mode .sa-var{display:inline}
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.5</span> Camp: Speichern-Button mit Fehleranzeige, Doppelklick-Schutz</li>
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.5</span> Media Storage: PHP-Routing via ?action= (kein .htaccess nötig)</li>
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.5</span> DataTables: Init-Guard bei leeren Tabellen (kein Crash mehr)</li>
-          <li class="mb-1">⏳ <span class="text-muted" style="font-size:.7rem">v1.8</span> Media Storage: upload.php auf Server hochladen + testen</li>
-          <li class="mb-1">⏳ <span class="text-muted" style="font-size:.7rem">v1.8</span> PPTX-Vorlage finalisieren &amp; testen</li>
-        </ul>
-      </div>
-      <div class="col-md-4">
-        <div class="fw-bold small text-secondary mb-2"><i class="bi bi-calendar3 me-1"></i>Geplant</div>
-        <ul class="list-unstyled small mb-0">
-          <li class="mb-1">📅 Spielerprofil-Export (Word)</li>
-          <li class="mb-1">📅 Offline-Fähigkeit (IndexedDB)</li>
-          <li class="mb-1">📅 Audit Log + Restore (Undo)</li>
-          <li class="mb-1">📅 Eltern-Portal (Anwesenheit erfassen)</li>
-          <li class="mb-1">📅 Spieler-App (eigene Stats sehen)</li>
         </ul>
       </div>
     </div>
+
+    <!-- v1.7.5.1–9 (heute) -->
+    <div class="border rounded border-success mb-2">
+      <button class="btn btn-link text-start w-100 fw-bold text-decoration-none d-flex justify-content-between align-items-center px-3 py-2"
+        onclick="bootstrap.Collapse.getOrCreateInstance(document.getElementById('rm175x')).toggle()">
+        <span><i class="bi bi-stars text-warning me-2"></i>v1.7.5.1 – v1.7.5.9 &nbsp;<span class="fw-normal text-muted small">Foto-Upload, DataTable-Update, Notizen, Registrierung</span></span>
+        <span class="badge bg-success ms-2">Heute 22.06.2025</span>
+        <i class="bi bi-chevron-down text-muted small"></i>
+      </button>
+      <div class="collapse show rm-collapse" id="rm175x">
+        <ul class="list-unstyled small mb-0 px-3 pb-2">
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.5.1</span> Foto-Upload: URL-Pfad in upload.php dynamisch (nicht mehr hardcoded), Fallback auf bestehendes Foto bei Fehler</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.5.2</span> Spieler-Tabelle: DataTable per <code>clear()/row.add()/draw()</code> aktualisieren – Werte sofort sichtbar nach Save</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.5.3</span> Spielerfotos: sofort nach Upload anzeigen via Blob-URL + DOM-Patch (setTimeout nach DataTable-Init)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.5.4</span> Notizen: Bearbeiten-Button pro Notiz (Kategorie, Datum, Inhalt nachträglich änderbar)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.5.5</span> Login-Screen: Selbst-Registrierungs-Formular (Vorname, Nachname, E-Mail, Passwort, Rolle)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.5.6</span> Benutzerverwaltung: Tab "Ausstehend" – neue Benutzer freigeben oder ablehnen, Badge-Zähler</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.5.7</span> Benutzerverwaltung: Tab "Registrierung" – Admin konfiguriert welche Rollen beim Registrieren wählbar sind (SuperAdmin ausgeschlossen)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.5.8</span> Benutzer bearbeiten: Zugewiesene Mannschaften dynamisch aus Mannschaftsliste (nicht mehr hardcoded)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.5.9</span> Dashboard: Implementierungsstand kollabierbar nach Hauptversionen (Baum-Ansicht)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Geplant -->
+    <div class="border rounded mb-2">
+      <button class="btn btn-link text-start w-100 fw-bold text-decoration-none d-flex justify-content-between align-items-center px-3 py-2"
+        onclick="bootstrap.Collapse.getOrCreateInstance(document.getElementById('rmPlanned')).toggle()">
+        <span><i class="bi bi-calendar3 text-secondary me-2"></i>Geplant &amp; Offen &nbsp;<span class="fw-normal text-muted small">v1.8+</span></span>
+        <i class="bi bi-chevron-down text-muted small"></i>
+      </button>
+      <div class="collapse rm-collapse" id="rmPlanned">
+        <ul class="list-unstyled small mb-0 px-3 pb-2">
+          <li class="mb-1">⏳ <span class="text-muted" style="font-size:.7rem">v1.8</span> PPTX-Vorlage finalisieren &amp; testen</li>
+          <li class="mb-1">📅 Spielerprofil-Export (Word/PDF)</li>
+          <li class="mb-1">📅 Offline-Fähigkeit (IndexedDB Cache)</li>
+          <li class="mb-1">📅 Audit Log + Undo</li>
+          <li class="mb-1">📅 Eltern-Portal (Anwesenheit erfassen, eigenes Kind sehen)</li>
+          <li class="mb-1">📅 Spieler-App (eigene Stats, Noten, News)</li>
+          <li class="mb-1">📅 Push-Benachrichtigungen (Training, Camp)</li>
+        </ul>
+      </div>
+    </div>
+
   </div>
 
   <!-- Komplettbeschreibung -->
