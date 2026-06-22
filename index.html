@@ -3134,8 +3134,20 @@ window.renderUsersView = async function() {
     // Rollen vorher laden falls Cache leer
     if (!Object.keys(window._cachedRoles).length) await renderRollenView();
     const snap = await getDocs(query(collection(db,'users'), where('tenantId','==',tenantId)));
-    const users = snap.docs.map(d => ({ id:d.id, ...d.data() }))
-                           .sort((a,b) => (a.displayName||'').localeCompare(b.displayName||''));
+    let users = snap.docs.map(d => ({ id:d.id, ...d.data() }))
+                         .sort((a,b) => (a.displayName||'').localeCompare(b.displayName||''));
+    // Nicht-Admins sehen nur Benutzer aus ihren eigenen Mannschaften
+    const allowedTeams = _getAllowedTeams();
+    if (allowedTeams !== null) {
+      const isSelf = u => u.id === window.currentUserDoc?.uid;
+      users = users.filter(u => {
+        if (isSelf(u)) return true; // eigener Account immer sichtbar
+        const uTeams = (u.childPlayerIds||[])
+          .map(pid => spielerData.find(s=>s.id===pid)?.team).filter(Boolean);
+        const uTeamIds = u.teamIds || [];
+        return [...uTeams, ...uTeamIds].some(t => allowedTeams.includes(t));
+      });
+    }
     if (!users.length) { el.innerHTML='<p class="text-muted py-4 text-center">Keine Benutzer gefunden.</p>'; return; }
     const roles = window._cachedRoles;
     if (dtUsers) { dtUsers.destroy(); dtUsers = null; }
