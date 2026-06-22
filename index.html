@@ -1152,6 +1152,7 @@ body.sa-mode .sa-var{display:inline}
       <div class="d-flex gap-2 flex-wrap">
         <button class="btn btn-outline-secondary btn-sm" onclick="openCampCsvImport()"><i class="bi bi-upload me-1"></i>CSV Import</button>
         <button class="btn btn-outline-info btn-sm" onclick="campSpielerAusVorigemCamp()"><i class="bi bi-arrow-down-circle me-1"></i>Aus Camp übernehmen</button>
+        <button class="btn btn-success btn-sm" id="btnCampSpeichern" onclick="campManuellSpeichern()"><i class="bi bi-cloud-upload me-1"></i>Speichern</button>
         <button class="btn btn-warning fw-bold" onclick="openCampSpielerModal(null)"><i class="bi bi-person-plus-fill me-1"></i>Neuer Spieler</button>
       </div>
     </div>
@@ -5337,10 +5338,20 @@ window.neuesCampErstellen = async function() {
   currentCampId = id;
   campSpielerData = []; // explizit leer – kein Carry-over
   campCounter = 0;
-  await fsSaveCamp(newCamp);
+  try {
+    await fsSaveCamp(newCamp);
+  } catch(e) {
+    alert('Fehler beim Speichern in Firestore:\n' + e.message + '\n\nBitte überprüfe deine Internetverbindung und Firebase-Regeln.');
+    campListe.pop();
+    currentCampId = campListe[0]?.id || null;
+    campListeCounter--;
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-plus-circle-fill me-1"></i>Neues Camp'; }
+    return;
+  }
   document.getElementById('campPanelListe').style.display = 'none';
   document.getElementById('campPanelDetail').style.display = '';
   document.getElementById('campDetailTitel').innerHTML = `<i class="bi bi-trophy-fill text-warning me-2"></i>${name}`;
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-plus-circle-fill me-1"></i>Neues Camp'; }
   showCampTab('spieler');
   renderCampSpieler();
   campFarbenLaden();
@@ -5361,6 +5372,20 @@ window.openCamp = function(id) {
   showCampTab('spieler');
   renderCampSpieler();
   campFarbenLaden();
+};
+
+window.campManuellSpeichern = async function() {
+  const btn = document.getElementById('btnCampSpeichern');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Speichert…'; }
+  _syncCampSpieler();
+  try {
+    await fsSaveCamp(_aktCamp());
+    if (btn) { btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Gespeichert!'; }
+    setTimeout(() => { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-cloud-upload me-1"></i>Speichern'; } }, 2000);
+  } catch(e) {
+    alert('Fehler beim Speichern:\n' + e.message);
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-cloud-upload me-1"></i>Speichern'; }
+  }
 };
 
 window.campSpielerAusVorigemCamp = function() {
@@ -9933,15 +9958,13 @@ async function seedU12IfEmpty() {
 async function fsSaveCamp(campObj) {
   const db = window._firestoreDB;
   if (!db || !campObj?.id) return;
-  try {
-    const { doc, setDoc, serverTimestamp } = window._firestoreAPI;
-    const tid = window._currentTenantId;
-    await setDoc(doc(db, 'camps', campObj.id), {
-      ...campObj,
-      tenant_id:  tid || '',
-      updated_at: serverTimestamp(),
-    }, { merge: true });
-  } catch(e) { console.warn('fsSaveCamp:', e.message); }
+  const { doc, setDoc, serverTimestamp } = window._firestoreAPI;
+  const tid = window._currentTenantId;
+  await setDoc(doc(db, 'camps', campObj.id), {
+    ...campObj,
+    tenant_id:  tid || '',
+    updated_at: serverTimestamp(),
+  }, { merge: true });
 }
 
 async function fsLoadCamps() {
