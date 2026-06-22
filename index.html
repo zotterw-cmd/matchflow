@@ -9446,10 +9446,11 @@ window.ssaCalculate = function() {
     setTimeout(() => { gaugeBar.style.width = pct + '%'; }, 50);
   }
 
-  // Save-Buttons einblenden
+  // Save-Buttons einblenden + Dropdown aktuell befüllen
   document.getElementById('ssaSaveToCalcBtn').style.display  = 'inline-flex';
   document.getElementById('ssaSaveToPlayerBtn').style.display = 'inline-flex';
   document.getElementById('ssaPlayerSaveCard').style.display  = 'block';
+  ssaFillPlayerSel(); // Immer neu befüllen – Firestore-Daten könnten jetzt da sein
 
   // History
   ssaAttempts.unshift(ssaLastResult);
@@ -9505,15 +9506,31 @@ window.ssaFillPlayerSel = function() {
   if (mode === 'camp') {
     const camp = _aktCamp();
     const campName = camp ? camp.name : 'Camp';
-    sel.innerHTML = `<option value="">— Spieler aus ${campName} —</option>` +
-      (campSpielerData || []).map(s =>
-        `<option value="${s.id}">${s.nachname} ${s.vorname}${s.geb ? ' ('+s.geb+')' : ''}</option>`
-      ).join('');
+    const spieler = (campSpielerData || []).slice().sort((a,b) => (a.nachname||'').localeCompare(b.nachname||''));
+    // Nach Gruppe gruppieren
+    const gruppen = {};
+    spieler.forEach(s => { const g = s.gruppe || 'Ohne Gruppe'; (gruppen[g] = gruppen[g]||[]).push(s); });
+    let html = `<option value="">— Spieler aus ${campName} (${spieler.length}) —</option>`;
+    for (const [g, list] of Object.entries(gruppen)) {
+      html += `<optgroup label="${g}">` +
+        list.map(s => `<option value="${s.id}">${s.nachname} ${s.vorname}${s.geb ? ' · '+s.geb : ''}</option>`).join('') +
+        '</optgroup>';
+    }
+    sel.innerHTML = html;
   } else {
-    sel.innerHTML = '<option value="">— Vereinsspieler auswählen —</option>' +
-      (spielerData || []).filter(s=>!s.softDeleted).map(s=>
-        `<option value="${s.id}">${s.nachname} ${s.vorname} (#${s.rnr||'?'}, ${s.team||''})</option>`
-      ).join('');
+    const aktiv = (spielerData || []).filter(s => !s.softDeleted);
+    // Nach Team gruppieren
+    const teams = {};
+    aktiv.forEach(s => { const t = s.team || 'Kein Team'; (teams[t] = teams[t]||[]).push(s); });
+    let html = `<option value="">— Vereinsspieler auswählen (${aktiv.length}) —</option>`;
+    for (const [t, list] of Object.entries(teams).sort(([a],[b]) => a.localeCompare(b))) {
+      html += `<optgroup label="${t}">` +
+        list.sort((a,b)=>(a.nachname||'').localeCompare(b.nachname||'')).map(s =>
+          `<option value="${s.id}">${s.nachname} ${s.vorname} #${s.rnr||'?'}</option>`
+        ).join('') +
+        '</optgroup>';
+    }
+    sel.innerHTML = html;
   }
 };
 
@@ -10399,9 +10416,11 @@ async function saveShotMeasurement(data) {
   const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
   const doc = await addDoc(collection(db, 'shot_measurements'), {
     player_id:        data.player_id   || null,
+    camp_id:          data.camp_id     || null,
     speed_kmh:        data.speed_kmh,
-    time_ms:          data.time_ms,
-    distance_m:       data.distance_m,
+    time_ms:          data.time_ms     || null,
+    distance_m:       data.distance_m  || null,
+    tenant_id:        window._currentTenantId || '',
     created_at:       serverTimestamp(),
     thumbnail_url:    data.thumbnail_url || null,
     video_url:        data.video_url     || null,
@@ -10457,6 +10476,7 @@ window.ssaConfirmSaveToPlayerWithUpload = async function() {
     // Save to Firestore
     await saveShotMeasurement({
       player_id:    pid,
+      camp_id:      isCampMode ? (_aktCamp()?.id || null) : null,
       speed_kmh:    ssaLastResult.speed_kmh,
       time_ms:      ssaLastResult.time_ms,
       distance_m:   ssaLastResult.distance_m,
