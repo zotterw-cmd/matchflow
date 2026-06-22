@@ -10004,6 +10004,13 @@ async function _loadAllFromFirestore() {
       campSpielerData = _aktCamp()?.spieler || [];
       campCounter = campSpielerData.length;
       renderCampListe?.();
+    } else if (campListe.length) {
+      // Lokale Demo-Camps in Firestore seeden (einmalig)
+      console.log('[MatchFlow] Seede lokale Camps nach Firestore…');
+      for (const c of campListe) {
+        await fsSaveCamp(c);
+      }
+      renderCampListe?.();
     }
     if (fsMannschaften?.length) {
       mannschaftenListe = fsMannschaften;
