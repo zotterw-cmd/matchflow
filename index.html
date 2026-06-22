@@ -1976,10 +1976,17 @@ body.sa-mode .sa-var{display:inline}
     <li class="nav-item sa-only"><a class="nav-link" href="#" onclick="showLeistungTab('typen',this);return false"><i class="bi bi-sliders me-1"></i>Messungstypen</a></li>
   </ul>
   <div id="leistungPanelMessungen">
-    <div class="alert alert-info mb-0">
-      <i class="bi bi-info-circle me-2"></i>
-      Messungen erfassen wird in Schritt 5 implementiert.
+    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+      <div class="d-flex gap-2">
+        <select id="messungFilterStatus" class="form-select form-select-sm" style="width:auto" onchange="renderMessungenView()">
+          <option value="">Alle Sitzungen</option>
+          <option value="open">Offen</option>
+          <option value="closed">Abgeschlossen</option>
+        </select>
+      </div>
+      <button class="btn btn-dark btn-sm" onclick="openNeueMessungSitzung()"><i class="bi bi-plus-circle me-1"></i>Neue Messsitzung</button>
     </div>
+    <div id="messungenContent"><div class="text-center py-5 text-muted"><div class="spinner-border mb-2"></div><br>Wird geladen…</div></div>
   </div>
   <div id="leistungPanelTypen" style="display:none">
     <div class="card p-4">
@@ -1989,6 +1996,40 @@ body.sa-mode .sa-var{display:inline}
       </div>
       <p class="text-muted small mb-3">Definiert welche Messwerte erfasst werden (z.B. Schussgeschwindigkeit, Sprint 10m). Jeder Typ gehört einer Skill-Kategorie an und hat eine Berechnungsmethode.</p>
       <div id="messungstypenContent"><div class="text-center py-3 text-muted"><div class="spinner-border spinner-border-sm mb-1"></div> Wird geladen…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Neue Messsitzung -->
+<div class="modal fade" id="modalMessungSitzung" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Neue Messsitzung</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="messungSitzungError" class="alert alert-danger d-none"></div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Bezeichnung <span class="text-danger">*</span></label>
+          <input type="text" id="messungSitzungName" class="form-control" placeholder="z.B. Messung März 2026 – U13">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Datum <span class="text-danger">*</span></label>
+          <input type="date" id="messungSitzungDatum" class="form-control">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Messungstypen <span class="text-danger">*</span></label>
+          <div id="messungSitzungTypen" class="border rounded p-2" style="max-height:200px;overflow-y:auto">
+            <div class="text-muted small">Wird geladen…</div>
+          </div>
+          <div class="form-text">Welche Messungstypen sollen in dieser Sitzung erfasst werden?</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Abbrechen</button>
+        <button type="button" class="btn btn-dark btn-sm" onclick="messungSitzungSpeichern()"><i class="bi bi-save me-1"></i>Sitzung anlegen</button>
+      </div>
     </div>
   </div>
 </div>
@@ -8437,6 +8478,107 @@ window.renderLeistungView = function() {
   showLeistungTab(tabName, activeTab);
 };
 
+window.renderMessungenView = async function() {
+  const el = document.getElementById('messungenContent');
+  if (!el) return;
+  el.innerHTML = '<div class="text-center py-5 text-muted"><div class="spinner-border mb-2"></div><br>Wird geladen…</div>';
+  try {
+    const { collection, query, where, orderBy, getDocs } = window._firestoreAPI;
+    const tid = window._currentTenantId;
+    const statusFilter = document.getElementById('messungFilterStatus')?.value || '';
+    const constraints = [where('tenant_id', '==', tid), orderBy('date', 'desc')];
+    if (statusFilter) constraints.push(where('status', '==', statusFilter));
+    const snap = await getDocs(query(collection(window._firestoreDB, 'measurement_sessions'), ...constraints));
+    const sitzungen = [];
+    snap.forEach(d => sitzungen.push({ id: d.id, ...d.data() }));
+    if (!sitzungen.length) {
+      el.innerHTML = '<div class="text-center py-5 text-muted"><i class="bi bi-inbox fs-2 d-block mb-2"></i>Noch keine Messsitzungen vorhanden.</div>';
+      return;
+    }
+    el.innerHTML = `<div class="list-group">${sitzungen.map(s => {
+      const datum = s.date ? new Date(s.date).toLocaleDateString('de-AT') : '–';
+      const badge = s.status === 'closed'
+        ? '<span class="badge bg-success">Abgeschlossen</span>'
+        : '<span class="badge bg-warning text-dark">Offen</span>';
+      const typenAnz = (s.measurement_type_ids || []).length;
+      return `<div class="list-group-item list-group-item-action d-flex align-items-center justify-content-between gap-2">
+        <div>
+          <div class="fw-bold">${s.name}</div>
+          <div class="text-muted small"><i class="bi bi-calendar3 me-1"></i>${datum} &nbsp;·&nbsp; <i class="bi bi-sliders me-1"></i>${typenAnz} Messungstyp${typenAnz !== 1 ? 'en' : ''}</div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          ${badge}
+          <button class="btn btn-outline-primary btn-sm" onclick="openMessungSitzung('${s.id}')"><i class="bi bi-arrow-right-circle me-1"></i>Öffnen</button>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+  } catch(e) {
+    el.innerHTML = `<div class="alert alert-danger">Fehler: ${e.message}</div>`;
+  }
+};
+
+window.openNeueMessungSitzung = async function() {
+  document.getElementById('messungSitzungError').classList.add('d-none');
+  document.getElementById('messungSitzungName').value  = '';
+  document.getElementById('messungSitzungDatum').value = new Date().toISOString().slice(0, 10);
+  // Messungstypen laden für Checkboxen
+  const typenEl = document.getElementById('messungSitzungTypen');
+  typenEl.innerHTML = '<div class="text-muted small">Wird geladen…</div>';
+  try {
+    const { collection, query, where, getDocs } = window._firestoreAPI;
+    const tid = window._currentTenantId;
+    const [typSnap, katSnap] = await Promise.all([
+      getDocs(query(collection(window._firestoreDB, 'measurement_types'),  where('tenant_id', '==', tid), where('active', '==', true))),
+      getDocs(query(collection(window._firestoreDB, 'skill_categories'),   where('tenant_id', '==', tid))),
+    ]);
+    const katMap = {};
+    katSnap.forEach(d => { katMap[d.id] = d.data().name; });
+    const typen = [];
+    typSnap.forEach(d => typen.push({ id: d.id, ...d.data() }));
+    typen.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    if (!typen.length) {
+      typenEl.innerHTML = '<p class="text-muted small mb-0">Keine aktiven Messungstypen vorhanden. Bitte zuerst im Tab "Messungstypen" anlegen.</p>';
+    } else {
+      typenEl.innerHTML = typen.map(t =>
+        `<div class="form-check"><input class="form-check-input" type="checkbox" id="sitzTyp_${t.id}" value="${t.id}" checked>
+         <label class="form-check-label" for="sitzTyp_${t.id}">${t.name} <span class="text-muted small">(${katMap[t.skill_category_id] || '–'}, ${t.unit})</span></label></div>`
+      ).join('');
+    }
+  } catch(e) {
+    typenEl.innerHTML = `<div class="text-danger small">Fehler beim Laden: ${e.message}</div>`;
+  }
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalMessungSitzung')).show();
+};
+
+window.messungSitzungSpeichern = async function() {
+  const name  = document.getElementById('messungSitzungName').value.trim();
+  const datum = document.getElementById('messungSitzungDatum').value;
+  const err   = document.getElementById('messungSitzungError');
+  err.classList.add('d-none');
+  if (!name)  { err.classList.remove('d-none'); err.textContent = 'Bezeichnung ist erforderlich.'; return; }
+  if (!datum) { err.classList.remove('d-none'); err.textContent = 'Datum ist erforderlich.'; return; }
+  const checkedTypen = [...document.querySelectorAll('#messungSitzungTypen input:checked')].map(cb => cb.value);
+  if (!checkedTypen.length) { err.classList.remove('d-none'); err.textContent = 'Mindestens ein Messungstyp muss gewählt sein.'; return; }
+  const tid = window._currentTenantId;
+  const { collection, addDoc, serverTimestamp } = window._firestoreAPI;
+  try {
+    await addDoc(collection(window._firestoreDB, 'measurement_sessions'), {
+      name, date: datum, status: 'open',
+      measurement_type_ids: checkedTypen,
+      tenant_id: tid,
+      created_at: serverTimestamp(),
+      created_by: window.currentUserDoc?.uid || '',
+    });
+    bootstrap.Modal.getInstance(document.getElementById('modalMessungSitzung')).hide();
+    renderMessungenView();
+  } catch(e) { err.classList.remove('d-none'); err.textContent = 'Fehler: ' + e.message; }
+};
+
+window.openMessungSitzung = function(id) {
+  // Schritt 5: Werte erfassen innerhalb einer Sitzung
+  alert('Werte erfassen wird in Schritt 5 implementiert. Sitzungs-ID: ' + id);
+};
+
 window.showLeistungTab = function(tab, el) {
   ['Messungen','Typen'].forEach(t => {
     const p = document.getElementById('leistungPanel' + t);
@@ -8444,7 +8586,8 @@ window.showLeistungTab = function(tab, el) {
   });
   document.querySelectorAll('#viewLeistung .nav-link').forEach(a => a.classList.remove('active'));
   if (el) el.classList.add('active');
-  if (tab === 'typen') renderMessungstypenView();
+  if (tab === 'messungen') renderMessungenView();
+  if (tab === 'typen')     renderMessungstypenView();
 };
 
 window.renderMessungstypenView = async function() {
