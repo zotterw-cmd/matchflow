@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>⚽ MatchFlow v1.4</title>
+<title>⚽ MatchFlow v1.7</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
@@ -236,7 +236,7 @@ body.sa-mode .sa-var{display:inline}
 <!-- LOGIN -->
 <div id="loginScreen" style="display:none;position:fixed;inset:0;background:#f5f6fa;z-index:9999;display:flex;align-items:center;justify-content:center">
   <div class="card shadow p-4" style="width:100%;max-width:380px">
-    <h4 class="mb-4 text-center">⚽ MatchFlow Login 2</h4>
+    <h4 class="mb-4 text-center">⚽ MatchFlow</h4>
     <div id="loginError" class="alert alert-danger d-none"></div>
     <div class="mb-3"><label class="form-label">E-Mail</label><input type="email" id="loginEmail" class="form-control" onkeydown="if(event.key==='Enter')doLoginEnter()"></div>
     <div class="mb-3"><label class="form-label">Passwort</label><input type="password" id="loginPassword" class="form-control" onkeydown="if(event.key==='Enter')doLoginEnter()"></div>
@@ -2907,62 +2907,21 @@ firebase functions:config:set \
 // ══════════════════════════════════════════════════════════════
 const SKILL_COLORS = ['#c0392b','#922b21','#7f8c8d','#616a6b','#a93226','#6e2f1a','#884ea0','#1a5276'];
 
-let spielerData = [
-  { id:'p1',  rnr:7,  pos:'GK', nachname:'Schmid',           vorname:'Ben',              geb:'2014-07-06', foto:'', team:'U12', skills:{Passen:72,Schießen:68,Zweikampf:55,Laufen:78}, slv:75 },
-  { id:'p2',  rnr:10, pos:'ST', nachname:'Riedl',            vorname:'Lukas',            geb:'2014-09-24', foto:'', team:'U12', skills:{Passen:65,Schießen:85,Zweikampf:60,Laufen:80}, slv:82 },
-  { id:'p3',  rnr:5,  pos:'IV', nachname:'Pagger',           vorname:'Theo',             geb:'2014-07-26', foto:'', team:'U12', skills:{Passen:60,Schießen:50,Zweikampf:72,Laufen:65}, slv:68 },
-  { id:'p4',  rnr:11, pos:'MF', nachname:'Marcher',          vorname:'Maximilian',       geb:'2014-10-24', foto:'', team:'U12', skills:{Passen:70,Schießen:62,Zweikampf:65,Laufen:72}, slv:70 },
-  { id:'p5',  rnr:8,  pos:'MF', nachname:'Schriebl',         vorname:'Simon',            geb:'2014-09-26', foto:'', team:'U12', skills:{Passen:68,Schießen:58,Zweikampf:60,Laufen:70}, slv:67 },
-  { id:'p6',  rnr:6,  pos:'MF', nachname:'Marcu',            vorname:'Alberto Carlos',   geb:'2014-10-29', foto:'', team:'U12', skills:{Passen:72,Schießen:65,Zweikampf:58,Laufen:75}, slv:72 },
-  { id:'p7',  rnr:9,  pos:'ST', nachname:'Nunez',            vorname:'Rafael',           geb:'2014-03-03', foto:'', team:'U12', skills:{Passen:60,Schießen:82,Zweikampf:55,Laufen:80}, slv:80 },
-  { id:'p8',  rnr:4,  pos:'IV', nachname:'Hassanzadah',      vorname:'Melad',            geb:'2014-02-21', foto:'', team:'U12', skills:{Passen:58,Schießen:48,Zweikampf:74,Laufen:68}, slv:69 },
-  { id:'p9',  rnr:2,  pos:'LV', nachname:'Hauser',           vorname:'Tim',              geb:'2015-07-20', foto:'', team:'U12', skills:{Passen:62,Schießen:50,Zweikampf:68,Laufen:72}, slv:65 },
-  { id:'p10', rnr:3,  pos:'RV', nachname:'Murg-Ofner',       vorname:'Tim',              geb:'2015-05-29', foto:'', team:'U12', skills:{Passen:64,Schießen:52,Zweikampf:66,Laufen:74}, slv:66 },
-  { id:'p11', rnr:12, pos:'ST', nachname:'Grabar',           vorname:'Max',              geb:'2015-09-17', foto:'', team:'U12', skills:{Passen:58,Schießen:76,Zweikampf:52,Laufen:78}, slv:74 },
-  { id:'p12', rnr:13, pos:'MF', nachname:'Marcher',          vorname:'Jonas',            geb:'2015-09-22', foto:'', team:'U12', skills:{Passen:65,Schießen:60,Zweikampf:62,Laufen:70}, slv:64 },
-  { id:'p13', rnr:14, pos:'IV', nachname:'Hohl',             vorname:'Elias',            geb:'2015-02-02', foto:'', team:'U12', skills:{Passen:60,Schießen:45,Zweikampf:70,Laufen:65}, slv:62 },
-  { id:'p14', rnr:15, pos:'MF', nachname:'Habenreich',       vorname:'Noah Valentin',    geb:'2014-04-05', foto:'', team:'U12', skills:{Passen:70,Schießen:62,Zweikampf:60,Laufen:72}, slv:68 },
-  { id:'p15', rnr:16, pos:'MF', nachname:'Sadiki',           vorname:'Edin',             geb:'2014-09-29', foto:'', team:'U12', skills:{Passen:68,Schießen:64,Zweikampf:62,Laufen:74}, slv:69 },
-  { id:'p16', rnr:17, pos:'MF', nachname:'Zotter',           vorname:'Ferdinand Karl Simon', geb:'2014-10-01', foto:'', team:'U12', skills:{Passen:72,Schießen:60,Zweikampf:65,Laufen:70}, slv:70 },
-  { id:'p17', rnr:18, pos:'LV', nachname:'Lind',             vorname:'Maximilian',       geb:'2014-04-13', foto:'', team:'U12', skills:{Passen:65,Schießen:55,Zweikampf:68,Laufen:72}, slv:66 },
-  { id:'p18', rnr:19, pos:'MF', nachname:'Kral',             vorname:'Tobias',           geb:'2015-11-15', foto:'', team:'U12', skills:{Passen:62,Schießen:58,Zweikampf:60,Laufen:68}, slv:62 },
-  { id:'p19', rnr:1,  pos:'IV', nachname:'Bischelberger',    vorname:'Patrick',          geb:'2015-03-23', foto:'', team:'U12', skills:{Passen:55,Schießen:40,Zweikampf:70,Laufen:62}, slv:71 },
-  { id:'p20', rnr:20, pos:'GK', nachname:'Huber',            vorname:'Jakob',             geb:'2015-04-28', foto:'', team:'U12', skills:{Passen:58,Schießen:42,Zweikampf:68,Laufen:64}, slv:70 },
-];
+// Spieler werden aus Firestore geladen – lokale Fallback-Daten leer
+let spielerData = [];
 let spielerCounter = spielerData.length;
 let editingSpielerID = null;
 let pendingFotoBase64 = null;
 
 let notizKategorien = ['Technik','Taktik','Allgemein','Stärken','Verbesserung'];
-let spielerNotizen  = { p1:[], p2:[], p3:[], p4:[], p5:[], p6:[], p7:[], p8:[], p9:[], p10:[], p11:[], p12:[], p13:[], p14:[], p15:[], p16:[], p17:[], p18:[], p19:[], p20:[] };
+let spielerNotizen  = {};
 let notizCounter    = 0;
 let editingNotizSpielerID = null;
 
 let trainingsAbschnitte = ['Einleitung','Hauptteil (1)','Technik','Hauptteil (2)','Ende'];
 
-let trainingsListe = [
-  {
-    id:'tr01', name:'Training – Mi, 11.06.2026', typ:'Training', datum:'2026-06-11',
-    beginn:'18:00', ende:'19:30', treffpunkt:'17:45', vorEnde:'19:25',
-    heimMode:true, heimName:'ATUS Bärnbach', gastName:'',
-    notiz:'Fokus auf Passgenauigkeit und Gegenpressing.',
-    details:[
-      { id:'td1', abschnitt:'Einleitung',    name:'Passspiel in Dreiecken',    dauer:15, youtubeUrl:'', beschreibung:'<p>3 Spieler bilden ein Dreieck und passen sich den Ball zu. Variation: 1-2 Kontakte.</p>', links:['https://training.advance.football/programs/passspiel-dreiecke'], fileBlobUrl:null, fileName:null, tkItems:[] },
-      { id:'td2', abschnitt:'Einleitung',    name:'Dribbling durch Hütchengasse', dauer:10, youtubeUrl:'', beschreibung:'<p>Spieler dribbeln im Slalom durch aufgestellte Hütchen. Variation: linker/rechter Fuß abwechselnd.</p>', links:[], fileBlobUrl:null, fileName:null, tkItems:[] },
-      { id:'td3', abschnitt:'Hauptteil (1)', name:'4 gegen 2 Rondo',           dauer:15, youtubeUrl:'https://www.youtube.com/watch?v=9bZkp7q19f0', beschreibung:'<p>4 Spieler außen gegen 2 in der Mitte. Die Außenspieler halten den Ball. Wer verliert, geht in die Mitte.</p>', links:[], fileBlobUrl:null, fileName:null, tkItems:[] },
-      { id:'td4', abschnitt:'Hauptteil (1)', name:'Sprinttreppen – 30m',       dauer:12, youtubeUrl:'', beschreibung:'<p>Spieler sprinten auf Signal 30m. Pause 60 Sek. 5-8 Wiederholungen.</p>', links:[], fileBlobUrl:null, fileName:null, tkItems:[] },
-      { id:'td5', abschnitt:'Hauptteil (2)', name:'Torabschluss nach Flanke',  dauer:20, youtubeUrl:'https://www.youtube.com/watch?v=dQw4w9WgXcQ', beschreibung:'<p>Flanke von der Seite, Stürmer schließt per Kopf oder Volley ab. Flanke links und rechts abwechseln.</p>', links:['https://training.advance.football/programs/flanke-und-abschluss'], fileBlobUrl:null, fileName:null, tkItems:[] },
-      { id:'td6', abschnitt:'Ende',          name:'5 gegen 5 Kleinfeld',       dauer:20, youtubeUrl:'', beschreibung:'<p>Kleinfeldspiel mit normalen Regeln. Tore nur nach Kombination gültig (mind. 3 Pässe).</p>', links:[], fileBlobUrl:null, fileName:null, tkItems:[] },
-    ]
-  },
-  {
-    id:'tr02', name:'Spiel – Sa, 14.06.2026', typ:'Spiel', datum:'2026-06-14',
-    beginn:'14:00', ende:'16:00', treffpunkt:'13:15', vorEnde:'16:30',
-    heimMode:true, heimName:'ATUS Bärnbach', gastName:'SV Voitsberg',
-    notiz:'Pflichtspiel U10 Meisterschaft. Bitte pünktlich erscheinen!',
-    details:[]
-  },
-];
+// Trainings werden aus Firestore geladen
+let trainingsListe = [];
 let trainingsCounter  = trainingsListe.length;
 let editingTrainingID = null;
 let dtTrainingListe   = null;
@@ -2975,23 +2934,17 @@ let editingTDID = null;
 let tdFileBlobUrl = null;
 let tdFileName    = null;
 
-// ── Übungsbibliothek ──────────────────────────────────────────
-let uebungsDB = [
-  { id:'ue1', name:'Passspiel in Dreiecken', kategorie:'Passspiel', schwierigkeit:'Leicht', alter:'U10', dauer:15, spielerMin:6, spielerMax:12, feld:'15×15m', tags:['Passen','Ballkontrolle'], beschreibung:'3 Spieler bilden ein Dreieck und passen sich den Ball zu. Variation: 1-2 Kontakte.', coaching:'Auf schnelle Ballabgabe und korrektes Anbieten achten.', youtube:'', link:'https://training.advance.football/programs/passspiel-dreiecke', verwendungen:0, zuletzt:null },
-  { id:'ue2', name:'Dribbling durch Hütchengasse', kategorie:'Technik', schwierigkeit:'Leicht', alter:'U8', dauer:10, spielerMin:4, spielerMax:16, feld:'20×5m', tags:['Dribbling','Technik'], beschreibung:'Spieler dribbeln im Slalom durch aufgestellte Hütchen. Variation: linker/rechter Fuß abwechselnd.', coaching:'Enges Führen, Blick heben.', youtube:'', link:'', verwendungen:0, zuletzt:null },
-  { id:'ue3', name:'4 gegen 2 Rondo', kategorie:'Taktik', schwierigkeit:'Mittel', alter:'U12', dauer:15, spielerMin:6, spielerMax:9, feld:'10×10m', tags:['Pressing','Ballbesitz','Rondo'], beschreibung:'4 Spieler außen gegen 2 in der Mitte. Die Außenspieler halten den Ball. Wer verliert, geht in die Mitte.', coaching:'Schnelles Umschalten, Kommunikation.', youtube:'https://www.youtube.com/watch?v=9bZkp7q19f0', link:'', verwendungen:0, zuletzt:null },
-  { id:'ue4', name:'Sprinttreppen – 30m', kategorie:'Kondition', schwierigkeit:'Mittel', alter:'Alle', dauer:12, spielerMin:2, spielerMax:20, feld:'30m Linie', tags:['Sprint','Kondition','Schnelligkeit'], beschreibung:'Spieler sprinten auf Signal 30m. Pause 60 Sek. 5-8 Wiederholungen.', coaching:'Startposition, Armeinsatz.', youtube:'', link:'', verwendungen:0, zuletzt:null },
-  { id:'ue5', name:'Torabschluss nach Flanke', kategorie:'Torschuss', schwierigkeit:'Mittel', alter:'U12', dauer:20, spielerMin:6, spielerMax:14, feld:'Strafraum', tags:['Torschuss','Flanke','Kopfball'], beschreibung:'Flanke von der Seite, Stürmer schließt per Kopf oder Volley ab. Flanke links und rechts abwechseln.', coaching:'Timing des Einlaufens, Abstimmung Flanker-Stürmer.', youtube:'https://www.youtube.com/watch?v=dQw4w9WgXcQ', link:'https://training.advance.football/programs/flanke-und-abschluss', verwendungen:0, zuletzt:null },
-  { id:'ue6', name:'5 gegen 5 Kleinfeld', kategorie:'Spiel', schwierigkeit:'Leicht', alter:'Alle', dauer:20, spielerMin:10, spielerMax:12, feld:'30×20m', tags:['Spiel','Kleinfeld','SSG'], beschreibung:'Kleinfeldspiel mit normalen Regeln. Tore nur nach Kombination gültig (mind. 3 Pässe).', coaching:'Spielfreude fördern, Pressing trainieren.', youtube:'', link:'', verwendungen:0, zuletzt:null },
-];
-let uebCounter = uebungsDB.length;
+// Übungen werden aus Firestore geladen
+let uebungsDB = [];
+let uebCounter = 0;
 let editingUeID = null;
 
 window.showView = window.showView; // wird unten überschrieben
 
-const trainerModusSet = new Set(['Muster Maria','Huber Karl']);
-const mannschaftVerwalter = { 'mrow-u10':['Muster Maria'], 'mrow-u12':['Huber Karl'] };
-let editingRowId = null, mRowCounter = 0;
+let mannschaftenListe = []; // wird aus Firestore geladen
+let editingMannschaftId = null;
+const trainerModusSet = new Set(); // wird dynamisch aus Benutzer-Daten befüllt
+window._allUsers = []; // globale Benutzer-Liste für Mannschaft-Verwalter
 
 // Quill Instanzen
 let quillNotiz = null;
@@ -3051,6 +3004,7 @@ window.showView = function(view) {
   if (view === 'training') { initTrainingPage(); }
   if (view === 'uebungen') renderUebungen();
   if (view === 'users')    renderUsersView();
+  if (view === 'mannschaften') renderMannschaften();
   if (view === 'skillcalc') scRenderAll();
   if (view === 'media')    mediaTabInit();
 };
@@ -6467,54 +6421,93 @@ document.addEventListener('keydown', e => {
 // ══════════════════════════════════════════════════════════════
 // MANNSCHAFTEN
 // ══════════════════════════════════════════════════════════════
-function renderVerwalter(rowId) {
-  const names = mannschaftVerwalter[rowId]||[];
-  const el = document.getElementById('mverwalter-'+rowId);
-  if (!el) return;
-  el.innerHTML = names.length===0?'<span class="text-muted">—</span>':names.map(n=>`<span class="me-2"><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>${n}</span>`).join('');
-}
-window.openMannschaftModal = function(rowId) {
-  editingRowId = rowId;
-  document.getElementById('modalMannschaftTitle').innerHTML = `<i class="bi bi-diagram-3-fill me-2"></i>${rowId?'Bearbeiten':'Neue Mannschaft'}`;
+// MANNSCHAFTEN – Firestore
+// ══════════════════════════════════════════════════════════════
+window.renderMannschaften = function() {
+  const body = document.getElementById('mannschaftenBody');
+  if (!body) return;
+  body.innerHTML = mannschaftenListe.map(m => `
+    <tr id="mrow-${m.id}">
+      <td><strong id="mname-${m.id}">${m.name}</strong></td>
+      <td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" ${m.aktiv!==false?'checked':''} onchange="toggleMannschaft('${m.id}',this)"></div></td>
+      <td><span class="badge ${m.aktiv!==false?'bg-success':'bg-secondary'}" id="mstatus-${m.id}">${m.aktiv!==false?'Aktiv':'Inaktiv'}</span></td>
+      <td id="mverwalter-${m.id}">${(m.verwalter||[]).map(v=>`<span class="me-2"><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>${v}</span>`).join('')||'—'}</td>
+      <td>
+        <button class="btn btn-outline-secondary btn-sm" onclick="openMannschaftModal('${m.id}')"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-danger btn-sm ms-1" onclick="deleteMannschaft('${m.id}')"><i class="bi bi-trash-fill"></i></button>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="5" class="text-muted text-center py-3">Keine Mannschaften – bitte anlegen.</td></tr>';
+  updateMannschaftStats();
+  // Dropdowns synchronisieren
+  ['spTeam','spFilterTeam','kartenFilterTeam','buMannschaft'].forEach(selId => {
+    const e = document.getElementById(selId);
+    if (!e) return;
+    const cur = e.value;
+    [...e.options].forEach(o => { if (o.value) o.remove(); });
+    mannschaftenListe.filter(m => m.aktiv !== false).forEach(m => {
+      if (![...e.options].some(o => o.value === m.name))
+        e.insertAdjacentHTML('beforeend', `<option value="${m.name}">${m.name}</option>`);
+    });
+    e.value = cur;
+  });
+};
+
+window.openMannschaftModal = function(id) {
+  editingMannschaftId = id || null;
+  const m = id ? mannschaftenListe.find(x => x.id === id) : null;
+  document.getElementById('modalMannschaftTitle').innerHTML = `<i class="bi bi-diagram-3-fill me-2"></i>${id?'Bearbeiten':'Neue Mannschaft'}`;
   document.getElementById('mfError').classList.add('d-none');
-  document.getElementById('mfName').value = rowId?(document.getElementById('mname-'+rowId)?.textContent||''):'';
-  const current = rowId?(mannschaftVerwalter[rowId]||[]):[];
-  const liste = [...trainerModusSet].sort();
-  document.getElementById('mfVerwalterList').innerHTML = liste.length===0
-    ? '<small class="text-muted">Kein Benutzer mit Trainer-Modus.</small>'
-    : liste.map(n=>`<div class="form-check"><input class="form-check-input" type="checkbox" id="mfv-${n.replace(/\s/g,'')}" value="${n}" ${current.includes(n)?'checked':''}><label class="form-check-label" for="mfv-${n.replace(/\s/g,'')}">${n}</label></div>`).join('');
+  document.getElementById('mfName').value = m?.name || '';
+  const current = m?.verwalter || [];
+  // Trainer aus Benutzer-Liste ermitteln
+  const trainerNamen = (window._allUsers||[]).filter(u=>u.modus==='trainer').map(u=>u.name).sort();
+  document.getElementById('mfVerwalterList').innerHTML = trainerNamen.length === 0
+    ? '<small class="text-muted">Keine Trainer-Benutzer vorhanden.</small>'
+    : trainerNamen.map(n=>`<div class="form-check"><input class="form-check-input" type="checkbox" id="mfv-${n.replace(/\s/g,'_')}" value="${n}" ${current.includes(n)?'checked':''}><label class="form-check-label" for="mfv-${n.replace(/\s/g,'_')}">${n}</label></div>`).join('');
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalMannschaft')).show();
 };
-window.mannschaftSpeichern = function() {
+
+window.mannschaftSpeichern = async function() {
   const name = document.getElementById('mfName').value.trim();
   const err  = document.getElementById('mfError');
   if (!name) { err.classList.remove('d-none'); err.textContent='Bezeichnung erforderlich.'; return; }
   err.classList.add('d-none');
-  const sel = [...document.querySelectorAll('#mfVerwalterList input:checked')].map(cb=>cb.value);
-  if (editingRowId) {
-    document.getElementById('mname-'+editingRowId).textContent = name;
-    mannschaftVerwalter[editingRowId] = sel;
-    renderVerwalter(editingRowId);
+  const verwalter = [...document.querySelectorAll('#mfVerwalterList input:checked')].map(cb=>cb.value);
+  if (editingMannschaftId) {
+    const m = mannschaftenListe.find(x => x.id === editingMannschaftId);
+    if (m) { m.name = name; m.verwalter = verwalter; }
+    await fsSaveMannschaft(mannschaftenListe.find(x => x.id === editingMannschaftId));
   } else {
-    const rowId = 'mrow-'+(++mRowCounter);
-    mannschaftVerwalter[rowId] = sel;
-    document.getElementById('mannschaftenBody').insertAdjacentHTML('beforeend',`<tr id="${rowId}"><td><strong id="mname-${rowId}">${name}</strong></td><td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked onchange="toggleMannschaft('${rowId}',this)"></div></td><td><span class="badge bg-success" id="mstatus-${rowId}">Aktiv</span></td><td id="mverwalter-${rowId}"></td><td id="mactions-${rowId}"><button class="btn btn-outline-secondary btn-sm" onclick="openMannschaftModal('${rowId}')"><i class="bi bi-pencil"></i></button><button class="btn btn-warning btn-sm ms-1" onclick="softDelete('${rowId}')"><i class="bi bi-trash" style="color:#fff"></i></button><button class="btn btn-danger btn-sm ms-1" onclick="hardDelete('${rowId}')"><i class="bi bi-trash-fill"></i></button></td></tr>`);
-    renderVerwalter(rowId);
-    ['spTeam','spFilterTeam','kartenFilterTeam','buMannschaft'].forEach(selId=>{const e=document.getElementById(selId);if(e&&![...e.options].some(o=>o.value===name))e.insertAdjacentHTML('beforeend',`<option value="${name}">${name}</option>`);});
-    updateMannschaftStats();
+    const newM = { id: 'mann_' + Date.now(), name, verwalter, aktiv: true };
+    mannschaftenListe.push(newM);
+    await fsSaveMannschaft(newM);
   }
+  renderMannschaften();
   bootstrap.Modal.getInstance(document.getElementById('modalMannschaft')).hide();
 };
-window.toggleMannschaft = function(rowId,cb) {
-  const b=document.getElementById('mstatus-'+rowId); b.className=cb.checked?'badge bg-success':'badge bg-secondary'; b.textContent=cb.checked?'Aktiv':'Inaktiv'; updateMannschaftStats();
+
+window.toggleMannschaft = async function(id, cb) {
+  const m = mannschaftenListe.find(x => x.id === id);
+  if (!m) return;
+  m.aktiv = cb.checked;
+  const b = document.getElementById('mstatus-' + id);
+  if (b) { b.className = cb.checked ? 'badge bg-success' : 'badge bg-secondary'; b.textContent = cb.checked ? 'Aktiv' : 'Inaktiv'; }
+  await fsSaveMannschaft(m);
+  updateMannschaftStats();
 };
-window.softDelete = function(rowId) { document.getElementById('mactions-'+rowId).innerHTML=`<span class="text-muted small me-2">Ausblenden?</span><button class="btn btn-warning btn-sm" onclick="softDeleteConfirm('${rowId}')"><i class="bi bi-check-lg" style="color:#fff"></i></button><button class="btn btn-outline-secondary btn-sm ms-1" onclick="restoreActions('${rowId}')"><i class="bi bi-x-lg"></i></button>`; };
-window.softDeleteConfirm = function(rowId) { const r=document.getElementById(rowId);r.style.opacity='.45';r.querySelector('input[type=checkbox]').disabled=true;document.getElementById('mstatus-'+rowId).className='badge bg-dark';document.getElementById('mstatus-'+rowId).textContent='Ausgeblendet';document.getElementById('mactions-'+rowId).innerHTML=`<button class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-pencil"></i></button><button class="btn btn-success btn-sm ms-1" onclick="restoreRow('${rowId}')"><i class="bi bi-arrow-counterclockwise"></i></button><button class="btn btn-danger btn-sm ms-1" onclick="hardDelete('${rowId}')"><i class="bi bi-trash-fill"></i></button>`;updateMannschaftStats(); };
-window.restoreRow = function(rowId) { const r=document.getElementById(rowId);r.style.opacity='1';const cb=r.querySelector('input[type=checkbox]');cb.disabled=false;cb.checked=true;document.getElementById('mstatus-'+rowId).className='badge bg-success';document.getElementById('mstatus-'+rowId).textContent='Aktiv';restoreActions(rowId);updateMannschaftStats(); };
-window.hardDelete = function(rowId) { document.getElementById('mactions-'+rowId).innerHTML=`<span class="text-danger small me-2 fw-bold">Unwiderruflich?</span><button class="btn btn-danger btn-sm" onclick="hardDeleteConfirm('${rowId}')"><i class="bi bi-trash-fill"></i> Ja</button><button class="btn btn-outline-secondary btn-sm ms-1" onclick="restoreActions('${rowId}')"><i class="bi bi-x-lg"></i></button>`; };
-window.hardDeleteConfirm = function(rowId) { document.getElementById(rowId).remove();delete mannschaftVerwalter[rowId];updateMannschaftStats(); };
-window.restoreActions = function(rowId) { document.getElementById('mactions-'+rowId).innerHTML=`<div class="edit d-inline-flex gap-1"><button class="btn btn-outline-secondary btn-sm" onclick="openMannschaftModal('${rowId}')"><i class="bi bi-pencil"></i></button><button class="btn btn-warning btn-sm" onclick="softDelete('${rowId}')"><i class="bi bi-trash" style="color:#fff"></i></button><button class="btn btn-danger btn-sm" onclick="hardDelete('${rowId}')"><i class="bi bi-trash-fill"></i></button></div>`; };
-function updateMannschaftStats() { const r=[...document.querySelectorAll('#mannschaftenBody tr')];document.getElementById('statTeams').textContent=r.length;document.getElementById('statTeamsAktiv').textContent=r.filter(x=>x.querySelector('.badge')?.textContent==='Aktiv').length;document.getElementById('statTeamsInaktiv').textContent=r.filter(x=>x.querySelector('.badge')?.textContent==='Inaktiv').length; }
+
+window.deleteMannschaft = async function(id) {
+  if (!confirm('Mannschaft wirklich löschen?')) return;
+  mannschaftenListe = mannschaftenListe.filter(x => x.id !== id);
+  await fsDeleteMannschaft(id);
+  renderMannschaften();
+};
+
+function updateMannschaftStats() {
+  document.getElementById('statTeams').textContent = mannschaftenListe.length;
+  document.getElementById('statTeamsAktiv').textContent = mannschaftenListe.filter(m => m.aktiv !== false).length;
+  document.getElementById('statTeamsInaktiv').textContent = mannschaftenListe.filter(m => m.aktiv === false).length;
+}
 
 // ══════════════════════════════════════════════════════════════
 // ANWESENHEIT
@@ -8327,9 +8320,11 @@ onAuthStateChanged(auth, async user => {
       applyPermissions();
       renderSeasonSelector();
       campFarbenLaden();
-      // Tools aus Firestore laden (non-blocking, fällt auf localStorage-Defaults zurück)
+      // Tools aus Firestore laden (non-blocking)
       loadToolsFromFirestore().catch(console.warn);
-      // Daten aus Firestore laden (non-blocking, fällt auf lokale Defaults zurück)
+      // Media-Config aus Firestore laden
+      loadMediaConfig().catch(console.warn);
+      // Alle Daten aus Firestore laden
       _loadAllFromFirestore().catch(console.warn);
       if (userDoc.mustSetPassword) {
         document.getElementById('erstEmail').value = user.email || '';
@@ -9480,7 +9475,7 @@ window.pptxStarterGenerieren = async function() {
 // FIRESTORE: Spieler-Modell-Split (players / player_seasons)
 // ══════════════════════════════════════════════════════════════
 // Aktuell aktive Saison (kann später per UI wählbar gemacht werden)
-window.currentSeason = localStorage.getItem('mf_season') || '2024/25';
+window.currentSeason = '2025/26';
 
 // Trennung der Spieler-Daten in zwei Collections:
 //   players/{id}          → Stammdaten (unveränderlich)
@@ -9690,6 +9685,104 @@ async function fsDeleteUebung(id) {
 }
 
 // ══════════════════════════════════════════════════════════════
+// FIRESTORE: Mannschaften
+// ══════════════════════════════════════════════════════════════
+async function fsSaveMannschaft(obj) {
+  const db = window._firestoreDB;
+  if (!db || !obj?.id) return;
+  try {
+    const { doc, setDoc, serverTimestamp } = window._firestoreAPI;
+    await setDoc(doc(db, 'mannschaften', obj.id), {
+      ...obj,
+      tenant_id: window._currentTenantId || '',
+      updated_at: serverTimestamp(),
+    }, { merge: true });
+  } catch(e) { console.warn('fsSaveMannschaft:', e.message); }
+}
+
+async function fsLoadMannschaften() {
+  const db = window._firestoreDB;
+  if (!db) return null;
+  try {
+    const { collection, query, where, getDocs } = window._firestoreAPI;
+    const snap = await getDocs(query(collection(db, 'mannschaften'), where('tenant_id', '==', window._currentTenantId || '')));
+    if (snap.empty) return null;
+    return snap.docs.map(d => ({ ...d.data(), id: d.id })).sort((a,b) => (a.name||'').localeCompare(b.name||''));
+  } catch(e) { console.warn('fsLoadMannschaften:', e.message); return null; }
+}
+
+async function fsDeleteMannschaft(id) {
+  const db = window._firestoreDB;
+  if (!db) return;
+  try {
+    const { doc, deleteDoc } = window._firestoreAPI;
+    await deleteDoc(doc(db, 'mannschaften', id));
+  } catch(e) { console.warn('fsDeleteMannschaft:', e.message); }
+}
+
+// ══════════════════════════════════════════════════════════════
+// SEED: U12 Spieler → Firestore (einmalig beim ersten Login)
+// ══════════════════════════════════════════════════════════════
+const U12_SEED_SPIELER = [
+  { id:'p1',  rnr:7,  pos:'GK', nachname:'Schmid',           vorname:'Ben',                  geb:'2014-07-06', team:'U12' },
+  { id:'p2',  rnr:10, pos:'ST', nachname:'Riedl',            vorname:'Lukas',                geb:'2014-09-24', team:'U12' },
+  { id:'p3',  rnr:5,  pos:'IV', nachname:'Pagger',           vorname:'Theo',                 geb:'2014-07-26', team:'U12' },
+  { id:'p4',  rnr:11, pos:'MF', nachname:'Marcher',          vorname:'Maximilian',           geb:'2014-10-24', team:'U12' },
+  { id:'p5',  rnr:8,  pos:'MF', nachname:'Schriebl',         vorname:'Simon',                geb:'2014-09-26', team:'U12' },
+  { id:'p6',  rnr:6,  pos:'MF', nachname:'Marcu',            vorname:'Alberto Carlos',       geb:'2014-10-29', team:'U12' },
+  { id:'p7',  rnr:9,  pos:'ST', nachname:'Nunez',            vorname:'Rafael',               geb:'2014-03-03', team:'U12' },
+  { id:'p8',  rnr:4,  pos:'IV', nachname:'Hassanzadah',      vorname:'Melad',                geb:'2014-02-21', team:'U12' },
+  { id:'p9',  rnr:2,  pos:'LV', nachname:'Hauser',           vorname:'Tim',                  geb:'2015-07-20', team:'U12' },
+  { id:'p10', rnr:3,  pos:'RV', nachname:'Murg-Ofner',       vorname:'Tim',                  geb:'2015-05-29', team:'U12' },
+  { id:'p11', rnr:12, pos:'ST', nachname:'Grabar',           vorname:'Max',                  geb:'2015-09-17', team:'U12' },
+  { id:'p12', rnr:13, pos:'MF', nachname:'Marcher',          vorname:'Jonas',                geb:'2015-09-22', team:'U12' },
+  { id:'p13', rnr:14, pos:'IV', nachname:'Hohl',             vorname:'Elias',                geb:'2015-02-02', team:'U12' },
+  { id:'p14', rnr:15, pos:'MF', nachname:'Habenreich',       vorname:'Noah Valentin',        geb:'2014-04-05', team:'U12' },
+  { id:'p15', rnr:16, pos:'MF', nachname:'Sadiki',           vorname:'Edin',                 geb:'2014-09-29', team:'U12' },
+  { id:'p16', rnr:17, pos:'MF', nachname:'Zotter',           vorname:'Ferdinand Karl Simon', geb:'2014-10-01', team:'U12' },
+  { id:'p17', rnr:18, pos:'LV', nachname:'Lind',             vorname:'Maximilian',           geb:'2014-04-13', team:'U12' },
+  { id:'p18', rnr:19, pos:'MF', nachname:'Kral',             vorname:'Tobias',               geb:'2015-11-15', team:'U12' },
+  { id:'p19', rnr:1,  pos:'IV', nachname:'Bischelberger',    vorname:'Patrick',              geb:'2015-03-23', team:'U12' },
+  { id:'p20', rnr:20, pos:'GK', nachname:'Huber',            vorname:'Jakob',                geb:'2015-04-28', team:'U12' },
+];
+
+const U12_MANNSCHAFT_SEED = { id: 'mann_u12', name: 'U12', aktiv: true, verwalter: [] };
+
+async function seedU12IfEmpty() {
+  const db = window._firestoreDB;
+  if (!db) return;
+  try {
+    const { collection, query, where, getDocs, doc, setDoc, serverTimestamp } = window._firestoreAPI;
+    const tid = window._currentTenantId || '';
+    // Nur seeden wenn noch keine Spieler vorhanden
+    const pSnap = await getDocs(query(collection(db, 'players'), where('tenant_id', '==', tid)));
+    if (!pSnap.empty) return; // bereits Daten vorhanden
+    console.log('[MatchFlow] Seed U12 Spieler → Firestore…');
+    const sk = seasonKey(window.currentSeason);
+    for (const sp of U12_SEED_SPIELER) {
+      await setDoc(doc(db, 'players', sp.id), {
+        id: sp.id, vorname: sp.vorname, nachname: sp.nachname,
+        geb: sp.geb, foto_url: '', tenant_id: tid, updated_at: serverTimestamp(),
+      }, { merge: true });
+      await setDoc(doc(db, 'player_seasons', `${sp.id}_${sk}`), {
+        player_id: sp.id, season: window.currentSeason, tenant_id: tid,
+        rnr: sp.rnr, pos: sp.pos, team: sp.team,
+        skillBase: {}, campScore: {}, lieblingsverein: [], hauptverein: '',
+        softDeleted: false, updated_at: serverTimestamp(),
+      }, { merge: true });
+    }
+    // U12 Mannschaft anlegen falls noch keine vorhanden
+    const mSnap = await getDocs(query(collection(db, 'mannschaften'), where('tenant_id', '==', tid)));
+    if (mSnap.empty) {
+      await setDoc(doc(db, 'mannschaften', U12_MANNSCHAFT_SEED.id), {
+        ...U12_MANNSCHAFT_SEED, tenant_id: tid, updated_at: serverTimestamp(),
+      });
+    }
+    console.log('[MatchFlow] Seed abgeschlossen.');
+  } catch(e) { console.warn('seedU12IfEmpty:', e.message); }
+}
+
+// ══════════════════════════════════════════════════════════════
 // FIRESTORE: Camps
 // ══════════════════════════════════════════════════════════════
 async function fsSaveCamp(campObj) {
@@ -9734,16 +9827,21 @@ async function fsDeleteCamp(id) {
 // ══════════════════════════════════════════════════════════════
 async function _loadAllFromFirestore() {
   try {
-    const [fsPlayers, fsTrainings, fsUebungen, fsCamps] = await Promise.all([
+    // Seed U12 falls Firestore noch leer
+    await seedU12IfEmpty();
+
+    const [fsPlayers, fsTrainings, fsUebungen, fsCamps, fsMannschaften] = await Promise.all([
       fsLoadSpieler(),
       fsLoadTrainings(),
       fsLoadUebungen(),
       fsLoadCamps(),
+      fsLoadMannschaften(),
       fsLoadVereinLogos(),
     ]);
 
     if (fsPlayers?.length) {
       spielerData = fsPlayers;
+      spielerCounter = Math.max(spielerCounter, fsPlayers.length);
       renderSpielerSimple?.();
     }
     if (fsTrainings?.length) {
@@ -9764,11 +9862,16 @@ async function _loadAllFromFirestore() {
       campCounter = campSpielerData.length;
       renderCampListe?.();
     }
+    if (fsMannschaften?.length) {
+      mannschaftenListe = fsMannschaften;
+      renderMannschaften?.();
+    }
     console.log('[MatchFlow] Firestore-Daten geladen:', {
       spieler: fsPlayers?.length || 0,
       trainings: fsTrainings?.length || 0,
       uebungen: fsUebungen?.length || 0,
       camps: fsCamps?.length || 0,
+      mannschaften: fsMannschaften?.length || 0,
     });
   } catch(e) {
     console.warn('_loadAllFromFirestore:', e.message);
@@ -9778,25 +9881,42 @@ async function _loadAllFromFirestore() {
 // ══════════════════════════════════════════════════════════════
 // MEDIA SERVER – Config, Upload, Capture
 // ══════════════════════════════════════════════════════════════
-function getMediaConfig() {
-  try { return JSON.parse(localStorage.getItem('mf_media_cfg') || '{}'); } catch { return {}; }
+let _mediaCfgCache = {};
+function getMediaConfig() { return _mediaCfgCache; }
+async function setMediaConfig(cfg) {
+  _mediaCfgCache = cfg;
+  const db = window._firestoreDB;
+  if (!db) return;
+  try {
+    const { doc, setDoc, serverTimestamp } = window._firestoreAPI;
+    await setDoc(doc(db, 'settings', 'media_config'), {
+      ...cfg, tenant_id: window._currentTenantId || '', updated_at: serverTimestamp(),
+    }, { merge: true });
+  } catch(e) { console.warn('setMediaConfig:', e.message); }
 }
-function setMediaConfig(cfg) {
-  localStorage.setItem('mf_media_cfg', JSON.stringify(cfg));
+async function loadMediaConfig() {
+  const db = window._firestoreDB;
+  if (!db) return;
+  try {
+    const { doc, getDoc } = window._firestoreAPI;
+    const snap = await getDoc(doc(db, 'settings', 'media_config'));
+    if (snap.exists()) _mediaCfgCache = snap.data();
+  } catch(e) { console.warn('loadMediaConfig:', e.message); }
 }
 
-window.mediaTabInit = function() {
+window.mediaTabInit = async function() {
+  await loadMediaConfig();
   const cfg = getMediaConfig();
   const urlEl = document.getElementById('mediaServerUrl');
   if (urlEl) urlEl.value = cfg.serverUrl || '';
 };
 
-window.mediaServerSave = function() {
+window.mediaServerSave = async function() {
   const urlEl = document.getElementById('mediaServerUrl');
   const url = urlEl?.value.trim().replace(/\/$/, '');
-  setMediaConfig({ serverUrl: url });
+  await setMediaConfig({ serverUrl: url });
   const st = document.getElementById('mediaServerStatus');
-  if (st) st.innerHTML = '<div class="alert alert-success py-2 mb-0"><i class="bi bi-check-circle me-1"></i>Gespeichert!</div>';
+  if (st) st.innerHTML = '<div class="alert alert-success py-2 mb-0"><i class="bi bi-check-circle me-1"></i>In Firestore gespeichert!</div>';
 };
 
 window.mediaServerTest = async function() {
