@@ -3247,27 +3247,61 @@ window.openRolleModal = async function(roleId) {
   document.getElementById('rollePrioInput').value = roleData?.priority || 70;
   const modules = [...new Set(ALL_PERMISSIONS.map(p => p.modul))];
   const perms = roleData?.permissions || {};
+  // Modul → view-Permission-Key
+  const MODULE_VIEW_KEY = {
+    'Spieler':'spieler.view', 'Camp':'camp.view', 'Training':'training.view',
+    'Übungen':'uebungen.view', 'Mannschaften':'mannschaften.view',
+    'Benutzer':'users.view', 'Rollen':'roles.view',
+  };
   document.getElementById('rollePermGrid').innerHTML = modules.map(modul => {
-    const modPerms = ALL_PERMISSIONS.filter(p => p.modul === modul);
-    return `<div class="col-md-6 col-lg-4"><div class="card p-2 h-100">
-      <div class="fw-bold small mb-2 text-uppercase" style="letter-spacing:.5px;color:#555">${modul}</div>
-      ${modPerms.map(p => {
-        const val = perms[p.key] || 'none';
-        return `<div class="mb-2">
-          <div class="small mb-1">${p.label}</div>
-          <div class="d-flex gap-1">
-            <input type="radio" class="btn-check" name="perm_${p.key}" id="perm_${p.key}_allow" value="allow" ${val==='allow'?'checked':''}>
-            <label class="btn btn-outline-success btn-sm py-0 px-2" for="perm_${p.key}_allow" style="font-size:.7rem">Allow</label>
-            <input type="radio" class="btn-check" name="perm_${p.key}" id="perm_${p.key}_deny" value="deny" ${val==='deny'?'checked':''}>
-            <label class="btn btn-outline-danger btn-sm py-0 px-2" for="perm_${p.key}_deny" style="font-size:.7rem">Deny</label>
-            <input type="radio" class="btn-check" name="perm_${p.key}" id="perm_${p.key}_none" value="none" ${val==='none'?'checked':''}>
-            <label class="btn btn-outline-secondary btn-sm py-0 px-2" for="perm_${p.key}_none" style="font-size:.7rem">—</label>
-          </div>
-        </div>`;
-      }).join('')}
-    </div></div>`;
+    const modPerms   = ALL_PERMISSIONS.filter(p => p.modul === modul);
+    const viewKey    = MODULE_VIEW_KEY[modul];
+    const isHidden   = viewKey && perms[viewKey] === 'deny';
+    const toggleHtml = viewKey ? `
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="fw-bold small text-uppercase" style="letter-spacing:.5px;color:#555">${modul}</span>
+        <div class="form-check form-switch mb-0 d-flex align-items-center gap-1">
+          <input class="form-check-input" type="checkbox" role="switch"
+            id="hideMenu_${modul}" ${isHidden ? 'checked' : ''}
+            onchange="rolleToggleMenuHide('${modul}','${viewKey}',this.checked)">
+          <label class="form-check-label small text-danger fw-bold" for="hideMenu_${modul}" style="font-size:.7rem;white-space:nowrap">
+            <i class="bi bi-eye-slash me-1"></i>Menü ausblenden
+          </label>
+        </div>
+      </div>` : `<div class="fw-bold small mb-2 text-uppercase" style="letter-spacing:.5px;color:#555">${modul}</div>`;
+    return `<div class="col-md-6 col-lg-4">
+      <div class="card p-2 h-100 ${isHidden ? 'border-danger' : ''}" id="moduleCard_${modul}" style="${isHidden ? 'opacity:.6' : ''}">
+        ${toggleHtml}
+        <div id="modulePerms_${modul}">
+        ${modPerms.map(p => {
+          const val = perms[p.key] || 'none';
+          return `<div class="mb-2">
+            <div class="small mb-1">${p.label}</div>
+            <div class="d-flex gap-1">
+              <input type="radio" class="btn-check" name="perm_${p.key}" id="perm_${p.key}_allow" value="allow" ${val==='allow'?'checked':''}>
+              <label class="btn btn-outline-success btn-sm py-0 px-2" for="perm_${p.key}_allow" style="font-size:.7rem">Allow</label>
+              <input type="radio" class="btn-check" name="perm_${p.key}" id="perm_${p.key}_deny" value="deny" ${val==='deny'?'checked':''}>
+              <label class="btn btn-outline-danger btn-sm py-0 px-2" for="perm_${p.key}_deny" style="font-size:.7rem">Deny</label>
+              <input type="radio" class="btn-check" name="perm_${p.key}" id="perm_${p.key}_none" value="none" ${val==='none'?'checked':''}>
+              <label class="btn btn-outline-secondary btn-sm py-0 px-2" for="perm_${p.key}_none" style="font-size:.7rem">—</label>
+            </div>
+          </div>`;
+        }).join('')}
+        </div>
+      </div></div>`;
   }).join('');
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalRolle')).show();
+};
+
+window.rolleToggleMenuHide = function(modul, viewKey, hide) {
+  const card = document.getElementById('moduleCard_' + modul);
+  if (card) { card.classList.toggle('border-danger', hide); card.style.opacity = hide ? '.6' : ''; }
+  // view-Permission auf deny setzen (oder zurücksetzen)
+  const viewDeny  = document.getElementById(`perm_${viewKey}_deny`);
+  const viewAllow = document.getElementById(`perm_${viewKey}_allow`);
+  const viewNone  = document.getElementById(`perm_${viewKey}_none`);
+  if (hide) { if (viewDeny)  viewDeny.checked  = true; }
+  else      { if (viewNone)  viewNone.checked  = true; }
 };
 
 window.rolleSpeichern = async function() {
