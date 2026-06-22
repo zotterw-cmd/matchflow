@@ -1988,6 +1988,16 @@ body.sa-mode .sa-var{display:inline}
     </div>
     <div id="messungenContent"><div class="text-center py-5 text-muted"><div class="spinner-border mb-2"></div><br>Wird geladen…</div></div>
   </div>
+  <!-- Sitzungs-Detailansicht (ersetzt Tab-Navigation beim Öffnen einer Sitzung) -->
+  <div id="leistungPanelSitzungDetail" style="display:none">
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <button class="btn btn-outline-secondary btn-sm" onclick="sitzungZurueck()"><i class="bi bi-arrow-left me-1"></i>Zurück</button>
+      <h5 class="mb-0" id="sitzungDetailTitel">–</h5>
+      <span id="sitzungDetailBadge" class="badge bg-warning text-dark ms-1"></span>
+    </div>
+    <div id="sitzungDetailContent"><div class="text-center py-5 text-muted"><div class="spinner-border mb-2"></div><br>Wird geladen…</div></div>
+  </div>
+
   <div id="leistungPanelTypen" style="display:none">
     <div class="card p-4">
       <div class="d-flex align-items-center justify-content-between mb-3">
@@ -1996,6 +2006,28 @@ body.sa-mode .sa-var{display:inline}
       </div>
       <p class="text-muted small mb-3">Definiert welche Messwerte erfasst werden (z.B. Schussgeschwindigkeit, Sprint 10m). Jeder Typ gehört einer Skill-Kategorie an und hat eine Berechnungsmethode.</p>
       <div id="messungstypenContent"><div class="text-center py-3 text-muted"><div class="spinner-border spinner-border-sm mb-1"></div> Wird geladen…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Spieler-Messung Werte eingeben -->
+<div class="modal fade" id="modalSpielerMessung" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="spielerMessungTitel"><i class="bi bi-pencil-square me-2"></i>Messung erfassen</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="spielerMessungPlayerId">
+        <input type="hidden" id="spielerMessungSitzungId">
+        <div id="spielerMessungError" class="alert alert-danger d-none"></div>
+        <div id="spielerMessungFelder"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Abbrechen</button>
+        <button type="button" class="btn btn-dark btn-sm" onclick="spielerMessungSpeichern()"><i class="bi bi-save me-1"></i>Werte speichern</button>
+      </div>
     </div>
   </div>
 </div>
@@ -8574,9 +8606,174 @@ window.messungSitzungSpeichern = async function() {
   } catch(e) { err.classList.remove('d-none'); err.textContent = 'Fehler: ' + e.message; }
 };
 
-window.openMessungSitzung = function(id) {
-  // Schritt 5: Werte erfassen innerhalb einer Sitzung
-  alert('Werte erfassen wird in Schritt 5 implementiert. Sitzungs-ID: ' + id);
+window.openMessungSitzung = async function(id) {
+  // Tabs ausblenden, Detail-Panel einblenden
+  document.getElementById('leistungPanelMessungen').style.display = 'none';
+  document.getElementById('leistungPanelTypen').style.display     = 'none';
+  document.querySelectorAll('#viewLeistung .nav-tabs').forEach(el => el.style.display = 'none');
+  const detailPanel = document.getElementById('leistungPanelSitzungDetail');
+  detailPanel.style.display = '';
+  document.getElementById('sitzungDetailContent').innerHTML =
+    '<div class="text-center py-5 text-muted"><div class="spinner-border mb-2"></div><br>Wird geladen…</div>';
+  try {
+    const { doc, getDoc, collection, query, where, getDocs } = window._firestoreAPI;
+    const tid = window._currentTenantId;
+    const [sitzSnap, typSnap, messSnap] = await Promise.all([
+      getDoc(doc(window._firestoreDB, 'measurement_sessions', id)),
+      getDocs(query(collection(window._firestoreDB, 'measurement_types'), where('tenant_id', '==', tid))),
+      getDocs(query(collection(window._firestoreDB, 'measurements'), where('session_id', '==', id), where('tenant_id', '==', tid))),
+    ]);
+    if (!sitzSnap.exists()) { document.getElementById('sitzungDetailContent').innerHTML = '<div class="alert alert-danger">Sitzung nicht gefunden.</div>'; return; }
+    const sitzung = { id: sitzSnap.id, ...sitzSnap.data() };
+    const typMap  = {};
+    typSnap.forEach(d => { typMap[d.id] = { id: d.id, ...d.data() }; });
+    const messMap = {}; // playerId → { typId → [values] }
+    messSnap.forEach(d => {
+      const m = d.data();
+      if (!messMap[m.player_id]) messMap[m.player_id] = {};
+      messMap[m.player_id][m.measurement_type_id] = { id: d.id, values: m.values || [] };
+    });
+    document.getElementById('sitzungDetailTitel').textContent = sitzung.name;
+    const badge = document.getElementById('sitzungDetailBadge');
+    badge.textContent  = sitzung.status === 'closed' ? 'Abgeschlossen' : 'Offen';
+    badge.className    = 'badge ms-1 ' + (sitzung.status === 'closed' ? 'bg-success' : 'bg-warning text-dark');
+    renderSitzungDetail(sitzung, typMap, messMap);
+  } catch(e) {
+    document.getElementById('sitzungDetailContent').innerHTML = `<div class="alert alert-danger">Fehler: ${e.message}</div>`;
+  }
+};
+
+window.renderSitzungDetail = function(sitzung, typMap, messMap) {
+  const el = document.getElementById('sitzungDetailContent');
+  const sitzTypIds = sitzung.measurement_type_ids || [];
+  const sitzTypen  = sitzTypIds.map(id => typMap[id]).filter(Boolean);
+  const spieler    = (window.spielerData || []).slice().sort((a, b) =>
+    (a.nachname || '').localeCompare(b.nachname || '', 'de'));
+  if (!spieler.length) {
+    el.innerHTML = '<div class="alert alert-warning">Keine Spieler gefunden. Bitte zuerst Spieler anlegen.</div>';
+    return;
+  }
+  const isClosed = sitzung.status === 'closed';
+  const typHeader = sitzTypen.map(t => `<th class="text-center small">${t.name}<br><span class="text-muted" style="font-size:.75em">${t.unit}</span></th>`).join('');
+  const rows = spieler.map(sp => {
+    const pid = sp.id;
+    const gemessen = sitzTypIds.filter(tid => messMap[pid]?.[tid]?.values?.length > 0).length;
+    const statusBadge = gemessen === 0
+      ? '<span class="badge bg-secondary">–</span>'
+      : gemessen < sitzTypIds.length
+        ? `<span class="badge bg-warning text-dark">${gemessen}/${sitzTypIds.length}</span>`
+        : `<span class="badge bg-success">${gemessen}/${sitzTypIds.length}</span>`;
+    const typCells = sitzTypen.map(t => {
+      const vals = messMap[pid]?.[t.id]?.values || [];
+      const best = vals.length ? Math.max(...vals.map(v => parseFloat(v.value) || 0)) : null;
+      return `<td class="text-center small">${best !== null ? `<strong>${best}</strong> <span class="text-muted">${t.unit}</span>` : '–'}</td>`;
+    }).join('');
+    return `<tr>
+      <td><strong>${sp.nachname || ''}</strong> ${sp.vorname || ''}</td>
+      <td class="text-center">${statusBadge}</td>
+      ${typCells}
+      <td>${isClosed ? '' : `<button class="btn btn-outline-primary btn-sm" onclick="openSpielerMessung('${pid}','${sitzung.id}')"><i class="bi bi-pencil"></i></button>`}</td>
+    </tr>`;
+  }).join('');
+  el.innerHTML = `
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <span class="text-muted small"><i class="bi bi-calendar3 me-1"></i>${sitzung.date ? new Date(sitzung.date).toLocaleDateString('de-AT') : '–'} &nbsp;·&nbsp; ${spieler.length} Spieler &nbsp;·&nbsp; ${sitzTypen.length} Messungstypen</span>
+      ${!isClosed ? `<button class="btn btn-success btn-sm" onclick="sitzungAbschliessen('${sitzung.id}')"><i class="bi bi-check-circle me-1"></i>Sitzung abschließen</button>` : ''}
+    </div>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle">
+        <thead class="table-dark"><tr><th>Spieler</th><th class="text-center">Status</th>${typHeader}<th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  // Referenzen für openSpielerMessung zwischenspeichern
+  window._aktSitzung  = sitzung;
+  window._aktTypMap   = typMap;
+  window._aktMessMap  = messMap;
+};
+
+window.sitzungZurueck = function() {
+  document.getElementById('leistungPanelSitzungDetail').style.display = 'none';
+  document.querySelectorAll('#viewLeistung .nav-tabs').forEach(el => el.style.display = '');
+  showLeistungTab('messungen', document.querySelector('#viewLeistung .nav-link:first-child'));
+};
+
+window.openSpielerMessung = function(playerId, sitzungId) {
+  const sitzung = window._aktSitzung;
+  const typMap  = window._aktTypMap  || {};
+  const messMap = window._aktMessMap || {};
+  const sp = (window.spielerData || []).find(s => s.id === playerId);
+  document.getElementById('spielerMessungTitel').innerHTML =
+    `<i class="bi bi-pencil-square me-2"></i>${sp ? sp.vorname + ' ' + sp.nachname : 'Spieler'}`;
+  document.getElementById('spielerMessungPlayerId').value  = playerId;
+  document.getElementById('spielerMessungSitzungId').value = sitzungId;
+  document.getElementById('spielerMessungError').classList.add('d-none');
+  const sitzTypIds = sitzung.measurement_type_ids || [];
+  const felder = sitzTypIds.map(tid => {
+    const t    = typMap[tid];
+    if (!t) return '';
+    const vals = messMap[playerId]?.[tid]?.values || [];
+    const last = vals.length ? vals[vals.length - 1].value : '';
+    return `<div class="mb-3">
+      <label class="form-label fw-bold">${t.name} <span class="text-muted small fw-normal">(${t.unit})</span></label>
+      <input type="number" step="0.01" class="form-control" id="messWert_${tid}" value="${last}" placeholder="${t.unit}">
+      ${vals.length > 1 ? `<div class="form-text">Bisherige Werte: ${vals.map(v=>v.value).join(', ')} ${t.unit}</div>` : ''}
+    </div>`;
+  }).join('');
+  document.getElementById('spielerMessungFelder').innerHTML = felder || '<p class="text-muted">Keine Messungstypen in dieser Sitzung.</p>';
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSpielerMessung')).show();
+};
+
+window.spielerMessungSpeichern = async function() {
+  const playerId  = document.getElementById('spielerMessungPlayerId').value;
+  const sitzungId = document.getElementById('spielerMessungSitzungId').value;
+  const sitzung   = window._aktSitzung;
+  const typMap    = window._aktTypMap  || {};
+  const messMap   = window._aktMessMap || {};
+  const err       = document.getElementById('spielerMessungError');
+  err.classList.add('d-none');
+  const tid = window._currentTenantId;
+  const { collection, doc, addDoc, updateDoc, serverTimestamp } = window._firestoreAPI;
+  const now = new Date().toISOString();
+  try {
+    for (const typId of (sitzung.measurement_type_ids || [])) {
+      const input = document.getElementById('messWert_' + typId);
+      if (!input) continue;
+      const val = input.value.trim();
+      if (val === '') continue;
+      const existingDoc = messMap[playerId]?.[typId];
+      if (existingDoc) {
+        const newValues = [...(existingDoc.values || []), { value: parseFloat(val), recorded_at: now }];
+        await updateDoc(doc(window._firestoreDB, 'measurements', existingDoc.id), { values: newValues });
+        if (!messMap[playerId]) messMap[playerId] = {};
+        messMap[playerId][typId] = { id: existingDoc.id, values: newValues };
+      } else {
+        const newValues = [{ value: parseFloat(val), recorded_at: now }];
+        const ref = await addDoc(collection(window._firestoreDB, 'measurements'), {
+          session_id: sitzungId, player_id: playerId,
+          measurement_type_id: typId, values: newValues,
+          tenant_id: tid, created_at: serverTimestamp(),
+        });
+        if (!messMap[playerId]) messMap[playerId] = {};
+        messMap[playerId][typId] = { id: ref.id, values: newValues };
+      }
+    }
+    bootstrap.Modal.getInstance(document.getElementById('modalSpielerMessung')).hide();
+    renderSitzungDetail(sitzung, typMap, messMap);
+  } catch(e) { err.classList.remove('d-none'); err.textContent = 'Fehler: ' + e.message; }
+};
+
+window.sitzungAbschliessen = async function(id) {
+  if (!confirm('Sitzung abschließen? Danach können keine Werte mehr eingetragen werden.')) return;
+  try {
+    const { doc, updateDoc } = window._firestoreAPI;
+    await updateDoc(doc(window._firestoreDB, 'measurement_sessions', id), { status: 'closed' });
+    window._aktSitzung.status = 'closed';
+    renderSitzungDetail(window._aktSitzung, window._aktTypMap, window._aktMessMap);
+    const badge = document.getElementById('sitzungDetailBadge');
+    badge.textContent = 'Abgeschlossen';
+    badge.className   = 'badge ms-1 bg-success';
+  } catch(e) { alert('Fehler: ' + e.message); }
 };
 
 window.showLeistungTab = function(tab, el) {
