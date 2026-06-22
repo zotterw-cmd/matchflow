@@ -3004,7 +3004,7 @@ window._afterSave = function(context) {
   window._showSaveToast();
   // Aktive Ansicht neu rendern
   try { if (context === 'camp' || document.getElementById('campPanelDetail')?.style.display !== 'none') { window.renderCampSpieler?.(); window.renderCampListe?.(); } } catch(e) {}
-  try { if (context === 'spieler') { renderSpielerSimple?.(); } } catch(e) {}
+  // spieler: render wird direkt in spielerSimpleSpeichern() aufgerufen (mit Foto-Patch)
   try { if (context === 'training') { renderTrainingsListe?.(); } } catch(e) {}
   try { if (context === 'uebung') { window.renderUebungen?.(); } } catch(e) {}
 };
