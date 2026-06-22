@@ -1965,15 +1965,78 @@ body.sa-mode .sa-var{display:inline}
 
 <!-- ===== LEISTUNGSMESSUNGEN ===== -->
 <div id="viewLeistung" class="container-fluid p-4" style="display:none">
-  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
     <div>
       <h4 class="mb-0"><i class="bi bi-speedometer2 me-2" style="color:#20c997"></i>Leistungsmessungen</h4>
       <p class="text-muted mb-0 mt-1">Messungen erfassen, Spieler zuordnen, Auswertung</p>
     </div>
   </div>
-  <div class="alert alert-info">
-    <i class="bi bi-info-circle me-2"></i>
-    Dieses Modul wird schrittweise aufgebaut. <strong>Schritt 1</strong> ist abgeschlossen: Berechtigungen und Navigation eingerichtet.
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item"><a class="nav-link active" href="#" onclick="showLeistungTab('messungen',this);return false"><i class="bi bi-list-check me-1"></i>Messungen</a></li>
+    <li class="nav-item sa-only"><a class="nav-link" href="#" onclick="showLeistungTab('typen',this);return false"><i class="bi bi-sliders me-1"></i>Messungstypen</a></li>
+  </ul>
+  <div id="leistungPanelMessungen">
+    <div class="alert alert-info mb-0">
+      <i class="bi bi-info-circle me-2"></i>
+      Messungen erfassen wird in Schritt 5 implementiert.
+    </div>
+  </div>
+  <div id="leistungPanelTypen" style="display:none">
+    <div class="card p-4">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h6 class="fw-bold mb-0"><i class="bi bi-sliders me-2 text-primary"></i>Messungstypen</h6>
+        <button class="btn btn-dark btn-sm" onclick="openMessungstypModal(null)"><i class="bi bi-plus-circle me-1"></i>Neuer Typ</button>
+      </div>
+      <p class="text-muted small mb-3">Definiert welche Messwerte erfasst werden (z.B. Schussgeschwindigkeit, Sprint 10m). Jeder Typ gehört einer Skill-Kategorie an und hat eine Berechnungsmethode.</p>
+      <div id="messungstypenContent"><div class="text-center py-3 text-muted"><div class="spinner-border spinner-border-sm mb-1"></div> Wird geladen…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Messungstyp -->
+<div class="modal fade" id="modalMessungstyp" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="messungstypModalTitle"><i class="bi bi-sliders me-2"></i>Messungstyp</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="messungstypId">
+        <div id="messungstypError" class="alert alert-danger d-none"></div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Name <span class="text-danger">*</span></label>
+          <input type="text" id="messungstypName" class="form-control" placeholder="z.B. Schussgeschwindigkeit, Sprint 10m">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Skill-Kategorie <span class="text-danger">*</span></label>
+          <select id="messungstypKatId" class="form-select">
+            <option value="">– wird geladen –</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Einheit <span class="text-danger">*</span></label>
+          <input type="text" id="messungstypUnit" class="form-control" placeholder="z.B. km/h, s, m, Punkte">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Berechnungsmethode <span class="text-danger">*</span></label>
+          <select id="messungstypCalc" class="form-select">
+            <option value="best">Bester Wert (best)</option>
+            <option value="last">Letzter Wert (last)</option>
+            <option value="avg">Durchschnitt (avg)</option>
+          </select>
+          <div class="form-text">Bestimmt wie der Skill-Score aus mehreren Messungen berechnet wird.</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Sortierung</label>
+          <input type="number" id="messungstypSort" class="form-control" value="1" min="1">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Abbrechen</button>
+        <button type="button" class="btn btn-dark btn-sm" onclick="messungstypSpeichern()"><i class="bi bi-save me-1"></i>Speichern</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -3221,8 +3284,8 @@ let quillTD    = null;
 // NAVIGATION
 // ══════════════════════════════════════════════════════════════
 const views  = ['main','spieler','karten','camp','training','uebungen','mannschaften','users','skillcalc','media','leistung'];
-const navMap = { main:'navMain', spieler:'navSpieler', karten:'navKarten', camp:'navCamp', training:'navTraining', uebungen:'navUebungen', mannschaften:'navMannschaften', users:'navUsers', skillcalc:'navSkillcalc', media:'navMedia' };
-const navTitles = { main:'Dashboard', spieler:'Spieler', karten:'Karten', camp:'Camp', training:'Training / Spiel', uebungen:'Übungsbibliothek', mannschaften:'Mannschaften', users:'Benutzer & Rollen', skillcalc:'Skill Calculator', media:'Media Storage' };
+const navMap = { main:'navMain', spieler:'navSpieler', karten:'navKarten', camp:'navCamp', training:'navTraining', uebungen:'navUebungen', mannschaften:'navMannschaften', users:'navUsers', skillcalc:'navSkillcalc', media:'navMedia', leistung:'navLeistung' };
+const navTitles = { main:'Dashboard', spieler:'Spieler', karten:'Karten', camp:'Camp', training:'Training / Spiel', uebungen:'Übungsbibliothek', mannschaften:'Mannschaften', users:'Benutzer & Rollen', skillcalc:'Skill Calculator', media:'Media Storage', leistung:'Leistungsmessungen' };
 let dtSpielerSimple = null;
 let dtTraining      = null;
 let dtUsers         = null;
@@ -3274,6 +3337,7 @@ window.showView = function(view) {
   if (view === 'mannschaften') renderMannschaften();
   if (view === 'skillcalc') scRenderAll();
   if (view === 'media')    mediaTabInit();
+  if (view === 'leistung') renderLeistungView();
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -8361,6 +8425,152 @@ window.skillKatLoeschen = async function(id) {
     const { doc, deleteDoc } = window._firestoreAPI;
     await deleteDoc(doc(window._firestoreDB, 'skill_categories', id));
     renderSkillKatView();
+  } catch(e) { alert('Fehler: ' + e.message); }
+};
+
+// ── Leistungsmessungen-View ───────────────────────────────────
+window.renderLeistungView = function() {
+  // Tab-Sichtbarkeit via sa-only wird bereits durch applyPermissions() gesteuert
+  // Aktiven Tab bestimmen und den passenden Panel laden
+  const activeTab = document.querySelector('#viewLeistung .nav-link.active');
+  const tabName = activeTab ? (activeTab.getAttribute('onclick').match(/'(\w+)'/) || [])[1] : 'messungen';
+  showLeistungTab(tabName, activeTab);
+};
+
+window.showLeistungTab = function(tab, el) {
+  ['Messungen','Typen'].forEach(t => {
+    const p = document.getElementById('leistungPanel' + t);
+    if (p) p.style.display = (t.toLowerCase() === tab) ? '' : 'none';
+  });
+  document.querySelectorAll('#viewLeistung .nav-link').forEach(a => a.classList.remove('active'));
+  if (el) el.classList.add('active');
+  if (tab === 'typen') renderMessungstypenView();
+};
+
+window.renderMessungstypenView = async function() {
+  const el = document.getElementById('messungstypenContent');
+  if (!el) return;
+  el.innerHTML = '<div class="text-center py-3 text-muted"><div class="spinner-border spinner-border-sm mb-1"></div> Wird geladen…</div>';
+  try {
+    const { collection, query, where, getDocs } = window._firestoreAPI;
+    const tid = window._currentTenantId;
+    const [typSnap, katSnap] = await Promise.all([
+      getDocs(query(collection(window._firestoreDB, 'measurement_types'), where('tenant_id', '==', tid))),
+      getDocs(query(collection(window._firestoreDB, 'skill_categories'),  where('tenant_id', '==', tid))),
+    ]);
+    const katMap = {};
+    katSnap.forEach(d => { katMap[d.id] = d.data().name; });
+    const typen = [];
+    typSnap.forEach(d => typen.push({ id: d.id, ...d.data() }));
+    typen.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    if (!typen.length) {
+      el.innerHTML = '<p class="text-muted small py-3 text-center">Noch keine Messungstypen angelegt.</p>';
+      return;
+    }
+    const calcLabel = { best:'Bester Wert', last:'Letzter Wert', avg:'Durchschnitt' };
+    el.innerHTML = `<table class="table table-sm align-middle mb-0">
+      <thead class="table-dark"><tr><th>Name</th><th>Kategorie</th><th>Einheit</th><th>Berechnung</th><th>Status</th><th></th></tr></thead>
+      <tbody>${typen.map(t => `<tr style="${!t.active ? 'opacity:.5' : ''}">
+        <td><strong>${t.name}</strong></td>
+        <td><span class="badge bg-secondary">${katMap[t.skill_category_id] || '–'}</span></td>
+        <td>${t.unit || '–'}</td>
+        <td><span class="badge bg-info text-dark">${calcLabel[t.calc_method] || t.calc_method}</span></td>
+        <td><span class="badge ${t.active ? 'bg-success' : 'bg-secondary'}">${t.active ? 'Aktiv' : 'Inaktiv'}</span></td>
+        <td><div class="d-flex gap-1">
+          <button class="btn btn-outline-secondary btn-sm" onclick="openMessungstypModal('${t.id}')"><i class="bi bi-pencil"></i></button>
+          <button class="btn btn-outline-${t.active ? 'warning' : 'success'} btn-sm" onclick="messungstypToggle('${t.id}',${!t.active})" title="${t.active ? 'Deaktivieren' : 'Aktivieren'}">
+            <i class="bi bi-${t.active ? 'pause-circle' : 'play-circle'}"></i>
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="messungstypLoeschen('${t.id}')"><i class="bi bi-trash-fill"></i></button>
+        </div></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  } catch(e) {
+    el.innerHTML = `<div class="alert alert-danger">Fehler: ${e.message}</div>`;
+  }
+};
+
+window.openMessungstypModal = async function(id) {
+  const titleEl = document.getElementById('messungstypModalTitle');
+  document.getElementById('messungstypError').classList.add('d-none');
+  const tid = window._currentTenantId;
+  // Skill-Kategorien für Dropdown laden
+  const { collection, query, where, getDocs, doc, getDoc } = window._firestoreAPI;
+  const katSnap = await getDocs(query(collection(window._firestoreDB, 'skill_categories'), where('tenant_id', '==', tid), where('active', '==', true)));
+  const kats = [];
+  katSnap.forEach(d => kats.push({ id: d.id, ...d.data() }));
+  kats.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+  const sel = document.getElementById('messungstypKatId');
+  sel.innerHTML = '<option value="">– Kategorie wählen –</option>' +
+    kats.map(k => `<option value="${k.id}">${k.name}</option>`).join('');
+  if (id) {
+    titleEl.innerHTML = '<i class="bi bi-sliders me-2"></i>Messungstyp bearbeiten';
+    const snap = await getDoc(doc(window._firestoreDB, 'measurement_types', id));
+    const t = snap.data();
+    document.getElementById('messungstypId').value   = id;
+    document.getElementById('messungstypName').value  = t.name || '';
+    sel.value = t.skill_category_id || '';
+    document.getElementById('messungstypUnit').value  = t.unit || '';
+    document.getElementById('messungstypCalc').value  = t.calc_method || 'best';
+    document.getElementById('messungstypSort').value  = t.sort_order || 1;
+  } else {
+    titleEl.innerHTML = '<i class="bi bi-sliders me-2"></i>Neuer Messungstyp';
+    document.getElementById('messungstypId').value   = '';
+    document.getElementById('messungstypName').value  = '';
+    sel.value = '';
+    document.getElementById('messungstypUnit').value  = '';
+    document.getElementById('messungstypCalc').value  = 'best';
+    document.getElementById('messungstypSort').value  = '1';
+  }
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalMessungstyp')).show();
+};
+
+window.messungstypSpeichern = async function() {
+  const name   = document.getElementById('messungstypName').value.trim();
+  const katId  = document.getElementById('messungstypKatId').value;
+  const unit   = document.getElementById('messungstypUnit').value.trim();
+  const calc   = document.getElementById('messungstypCalc').value;
+  const sort   = parseInt(document.getElementById('messungstypSort').value) || 1;
+  const err    = document.getElementById('messungstypError');
+  err.classList.add('d-none');
+  if (!name)  { err.classList.remove('d-none'); err.textContent = 'Name ist erforderlich.'; return; }
+  if (!katId) { err.classList.remove('d-none'); err.textContent = 'Skill-Kategorie ist erforderlich.'; return; }
+  if (!unit)  { err.classList.remove('d-none'); err.textContent = 'Einheit ist erforderlich.'; return; }
+  const tid = window._currentTenantId;
+  const { doc, setDoc, collection, addDoc, serverTimestamp } = window._firestoreAPI;
+  const existingId = document.getElementById('messungstypId').value;
+  try {
+    if (existingId) {
+      await setDoc(doc(window._firestoreDB, 'measurement_types', existingId),
+        { name, skill_category_id: katId, unit, calc_method: calc, sort_order: sort, tenant_id: tid },
+        { merge: true });
+    } else {
+      await addDoc(collection(window._firestoreDB, 'measurement_types'), {
+        name, skill_category_id: katId, unit, calc_method: calc,
+        sort_order: sort, active: true,
+        tenant_id: tid, created_at: serverTimestamp(),
+        created_by: window.currentUserDoc?.uid || '',
+      });
+    }
+    bootstrap.Modal.getInstance(document.getElementById('modalMessungstyp')).hide();
+    renderMessungstypenView();
+  } catch(e) { err.classList.remove('d-none'); err.textContent = 'Fehler: ' + e.message; }
+};
+
+window.messungstypToggle = async function(id, active) {
+  try {
+    const { doc, updateDoc } = window._firestoreAPI;
+    await updateDoc(doc(window._firestoreDB, 'measurement_types', id), { active });
+    renderMessungstypenView();
+  } catch(e) { alert('Fehler: ' + e.message); }
+};
+
+window.messungstypLoeschen = async function(id) {
+  if (!confirm('Messungstyp löschen? Vorhandene Messdaten dieses Typs bleiben erhalten, können aber nicht mehr korrekt angezeigt werden.')) return;
+  try {
+    const { doc, deleteDoc } = window._firestoreAPI;
+    await deleteDoc(doc(window._firestoreDB, 'measurement_types', id));
+    renderMessungstypenView();
   } catch(e) { alert('Fehler: ' + e.message); }
 };
 
