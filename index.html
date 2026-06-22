@@ -9597,7 +9597,7 @@ window.benutzerSpeichern = function() {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, collection, addDoc, updateDoc, deleteDoc, getDocs, query, where, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, addDoc, updateDoc, deleteDoc, getDocs, query, where, orderBy, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 window._fbApiKey = "AIzaSyDk5nj3fwQSAu6SzSQ1RDJWACD5Rfb2m64";
 const FIREBASE_CONFIG = { apiKey:"AIzaSyDk5nj3fwQSAu6SzSQ1RDJWACD5Rfb2m64", authDomain:"matchflow-997aa.firebaseapp.com", projectId:"matchflow-997aa", storageBucket:"matchflow-997aa.firebasestorage.app", messagingSenderId:"240206981355", appId:"1:240206981355:web:a19432550a530b767b76ae" };
@@ -9606,7 +9606,7 @@ const auth = getAuth(app);
 const db   = getFirestore(app);
 
 window._firestoreDB  = db;
-window._firestoreAPI = { doc, getDoc, setDoc, collection, addDoc, updateDoc, deleteDoc, getDocs, query, where, serverTimestamp, Timestamp };
+window._firestoreAPI = { doc, getDoc, setDoc, collection, addDoc, updateDoc, deleteDoc, getDocs, query, where, orderBy, serverTimestamp, Timestamp };
 
 const TENANT_ID = 'tenant_atus_baernbach';
 const ALL_PERM_KEYS = [
