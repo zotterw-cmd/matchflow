@@ -1902,7 +1902,6 @@ body.sa-mode .sa-var{display:inline}
     <li class="nav-item"><a class="nav-link" href="#" onclick="showUsersTab('ausstehend',this);return false"><i class="bi bi-hourglass-split me-1"></i>Ausstehend <span id="pendingBadge" class="badge bg-warning text-dark ms-1 d-none">0</span></a></li>
     <li class="nav-item"><a class="nav-link" href="#" onclick="showUsersTab('rollen',this);return false"><i class="bi bi-shield-check me-1"></i>Rollen</a></li>
     <li class="nav-item"><a class="nav-link" href="#" onclick="showUsersTab('registrierung',this);return false"><i class="bi bi-person-plus me-1"></i>Registrierung</a></li>
-    <li class="nav-item sa-only"><a class="nav-link" href="#" onclick="showUsersTab('skillkat',this);return false"><i class="bi bi-tags me-1"></i>Skill-Kategorien</a></li>
   </ul>
   <div id="usersPanelBenutzer">
     <div id="usersBenutzerContent"><div class="text-center py-5 text-muted"><div class="spinner-border mb-2"></div><br>Benutzer werden geladen…</div></div>
@@ -1921,16 +1920,6 @@ body.sa-mode .sa-var{display:inline}
       <div id="regRollenConfig" class="mb-3"></div>
       <button class="btn btn-dark btn-sm" onclick="regKonfigSpeichern()"><i class="bi bi-save me-1"></i>Einstellungen speichern</button>
       <div id="regKonfigInfo" class="alert alert-success d-none mt-2">Gespeichert ✓</div>
-    </div>
-  </div>
-  <div id="usersPanelSkillkat" style="display:none">
-    <div class="card p-4">
-      <div class="d-flex align-items-center justify-content-between mb-3">
-        <h6 class="fw-bold mb-0"><i class="bi bi-tags me-2 text-primary"></i>Skill-Kategorien</h6>
-        <button class="btn btn-dark btn-sm" onclick="openSkillKatModal(null)"><i class="bi bi-plus-circle me-1"></i>Neue Kategorie</button>
-      </div>
-      <p class="text-muted small mb-3">Skill-Kategorien werden für das Mapping von Messungstypen verwendet (z.B. SHOOT, SPEED, JUMP). Nur SuperAdmin kann diese verwalten.</p>
-      <div id="skillKatContent"><div class="text-center py-3 text-muted"><div class="spinner-border spinner-border-sm mb-1"></div> Wird geladen…</div></div>
     </div>
   </div>
 </div>
@@ -1981,6 +1970,7 @@ body.sa-mode .sa-var{display:inline}
   <ul class="nav nav-tabs mb-3">
     <li class="nav-item"><a class="nav-link active" href="#" onclick="showLeistungTab('messungen',this);return false"><i class="bi bi-list-check me-1"></i>Messungen</a></li>
     <li class="nav-item sa-only"><a class="nav-link" href="#" onclick="showLeistungTab('typen',this);return false"><i class="bi bi-sliders me-1"></i>Messungstypen</a></li>
+    <li class="nav-item sa-only"><a class="nav-link" href="#" onclick="showLeistungTab('kategorien',this);return false"><i class="bi bi-tags me-1"></i>Skill-Kategorien</a></li>
   </ul>
   <div id="leistungPanelMessungen">
     <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
@@ -2003,6 +1993,17 @@ body.sa-mode .sa-var{display:inline}
       <span id="sitzungDetailBadge" class="badge bg-warning text-dark ms-1"></span>
     </div>
     <div id="sitzungDetailContent"><div class="text-center py-5 text-muted"><div class="spinner-border mb-2"></div><br>Wird geladen…</div></div>
+  </div>
+
+  <div id="leistungPanelKategorien" style="display:none">
+    <div class="card p-4">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h6 class="fw-bold mb-0"><i class="bi bi-tags me-2 text-primary"></i>Skill-Kategorien</h6>
+        <button class="btn btn-dark btn-sm" onclick="openSkillKatModal(null)"><i class="bi bi-plus-circle me-1"></i>Neue Kategorie</button>
+      </div>
+      <p class="text-muted small mb-3">Skill-Kategorien werden für das Mapping von Messungstypen verwendet (z.B. SHOOT, SPEED, JUMP). Nur SuperAdmin kann diese verwalten.</p>
+      <div id="skillKatContent"><div class="text-center py-3 text-muted"><div class="spinner-border spinner-border-sm mb-1"></div> Wird geladen…</div></div>
+    </div>
   </div>
 
   <div id="leistungPanelTypen" style="display:none">
@@ -3516,7 +3517,7 @@ window.applyPermissions = function() {
 window._cachedRoles = {};
 
 window.showUsersTab = function(tab, el) {
-  ['Benutzer','Ausstehend','Rollen','Registrierung','Skillkat'].forEach(t => {
+  ['Benutzer','Ausstehend','Rollen','Registrierung'].forEach(t => {
     document.getElementById('usersPanel'+t).style.display = (t.toLowerCase() === tab) ? '' : 'none';
   });
   document.querySelectorAll('#viewUsers .nav-link').forEach(a => a.classList.remove('active'));
@@ -3524,7 +3525,6 @@ window.showUsersTab = function(tab, el) {
   if (tab === 'rollen') renderRollenView();
   if (tab === 'ausstehend') renderAusstehendView();
   if (tab === 'registrierung') renderRegKonfigView();
-  if (tab === 'skillkat') renderSkillKatView();
 };
 
 window.renderUsersView = async function() {
@@ -8788,14 +8788,15 @@ window.sitzungAbschliessen = async function(id) {
 };
 
 window.showLeistungTab = function(tab, el) {
-  ['Messungen','Typen'].forEach(t => {
+  ['Messungen','Typen','Kategorien'].forEach(t => {
     const p = document.getElementById('leistungPanel' + t);
     if (p) p.style.display = (t.toLowerCase() === tab) ? '' : 'none';
   });
   document.querySelectorAll('#viewLeistung .nav-link').forEach(a => a.classList.remove('active'));
   if (el) el.classList.add('active');
-  if (tab === 'messungen') renderMessungenView();
-  if (tab === 'typen')     renderMessungstypenView();
+  if (tab === 'messungen')   renderMessungenView();
+  if (tab === 'typen')       renderMessungstypenView();
+  if (tab === 'kategorien')  renderSkillKatView();
 };
 
 window.renderMessungstypenView = async function() {
