@@ -1951,6 +1951,13 @@ body.sa-mode .sa-var{display:inline}
           <input type="text" id="skillKatName" class="form-control" placeholder="z.B. SHOOT, SPEED, JUMP">
         </div>
         <div class="mb-3">
+          <label class="form-label fw-bold">Farbe</label>
+          <div class="d-flex align-items-center gap-2">
+            <input type="color" id="skillKatColor" class="form-control form-control-color" value="#0d6efd" style="width:60px">
+            <span class="text-muted small">Wird für die Zuordnung auf Spielerkarten verwendet</span>
+          </div>
+        </div>
+        <div class="mb-3">
           <label class="form-label fw-bold">Sortierung</label>
           <input type="number" id="skillKatSort" class="form-control" value="1" min="1">
         </div>
@@ -8420,9 +8427,10 @@ window.renderSkillKatView = async function() {
       return;
     }
     el.innerHTML = `<table class="table table-sm align-middle mb-0">
-      <thead class="table-dark"><tr><th>Name</th><th>Sortierung</th><th>Status</th><th></th></tr></thead>
+      <thead class="table-dark"><tr><th>Name</th><th>Farbe</th><th>Sortierung</th><th>Status</th><th></th></tr></thead>
       <tbody>${kats.map(k => `<tr style="${!k.active ? 'opacity:.5' : ''}">
         <td><strong>${k.name}</strong></td>
+        <td><span style="display:inline-block;width:24px;height:24px;border-radius:4px;background:${k.color || '#0d6efd'};border:1px solid rgba(0,0,0,.15)" title="${k.color || '#0d6efd'}"></span></td>
         <td>${k.sort_order || 1}</td>
         <td><span class="badge ${k.active ? 'bg-success' : 'bg-secondary'}">${k.active ? 'Aktiv' : 'Inaktiv'}</span></td>
         <td><div class="d-flex gap-1">
@@ -8447,21 +8455,24 @@ window.openSkillKatModal = async function(id) {
     const { doc, getDoc } = window._firestoreAPI;
     const snap = await getDoc(doc(window._firestoreDB, 'skill_categories', id));
     const k = snap.data();
-    document.getElementById('skillKatId').value = id;
-    document.getElementById('skillKatName').value = k.name || '';
-    document.getElementById('skillKatSort').value = k.sort_order || 1;
+    document.getElementById('skillKatId').value    = id;
+    document.getElementById('skillKatName').value   = k.name || '';
+    document.getElementById('skillKatColor').value  = k.color || '#0d6efd';
+    document.getElementById('skillKatSort').value   = k.sort_order || 1;
   } else {
     titleEl.innerHTML = '<i class="bi bi-tags me-2"></i>Neue Skill-Kategorie';
-    document.getElementById('skillKatId').value = '';
-    document.getElementById('skillKatName').value = '';
-    document.getElementById('skillKatSort').value = '1';
+    document.getElementById('skillKatId').value    = '';
+    document.getElementById('skillKatName').value  = '';
+    document.getElementById('skillKatColor').value = '#0d6efd';
+    document.getElementById('skillKatSort').value  = '1';
   }
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSkillKat')).show();
 };
 
 window.skillKatSpeichern = async function() {
-  const name = document.getElementById('skillKatName').value.trim().toUpperCase();
-  const err  = document.getElementById('skillKatError');
+  const name  = document.getElementById('skillKatName').value.trim().toUpperCase();
+  const color = document.getElementById('skillKatColor').value || '#0d6efd';
+  const err   = document.getElementById('skillKatError');
   err.classList.add('d-none');
   if (!name) { err.classList.remove('d-none'); err.textContent = 'Name ist erforderlich.'; return; }
   const sort = parseInt(document.getElementById('skillKatSort').value) || 1;
@@ -8471,10 +8482,10 @@ window.skillKatSpeichern = async function() {
   try {
     if (existingId) {
       await setDoc(doc(window._firestoreDB, 'skill_categories', existingId),
-        { name, sort_order: sort, tenant_id: tid }, { merge: true });
+        { name, color, sort_order: sort, tenant_id: tid }, { merge: true });
     } else {
       await addDoc(collection(window._firestoreDB, 'skill_categories'), {
-        name, sort_order: sort, active: true,
+        name, color, sort_order: sort, active: true,
         tenant_id: tid, created_at: serverTimestamp(),
         created_by: window.currentUserDoc?.uid || '',
       });
