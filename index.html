@@ -4897,6 +4897,41 @@ function _getAllowedTeams() {
   return myTeams; // leeres Array = keine Spieler sichtbar
 }
 
+function _buildSpielerRow(s) {
+  const nAnzahl = (spielerNotizen[s.id] || []).length;
+  const fotoSrc = s._displayFoto || s.foto;
+  const fotoCell = fotoSrc
+    ? `<img src="${fotoSrc}" style="width:34px;height:34px;object-fit:cover;border-radius:50%;border:2px solid #c0392b">`
+    : `<div style="width:34px;height:34px;border-radius:50%;border:2px dashed #ced4da;display:flex;align-items:center;justify-content:center;color:#adb5bd"><i class="bi bi-person"></i></div>`;
+  const rowStyle = s.softDeleted ? ' style="opacity:.4"' : '';
+  const aktionen = s.softDeleted
+    ? `<div class="edit d-inline-flex gap-1">
+         <button class="btn btn-success btn-sm" onclick="spielerRestore('${s.id}')" title="Wiederherstellen"><i class="bi bi-arrow-counterclockwise"></i></button>
+         <button class="btn btn-danger btn-sm" onclick="spielerHardDelete('${s.id}')" title="Endgültig löschen"><i class="bi bi-trash-fill"></i></button>
+       </div>`
+    : `<div class="edit d-inline-flex gap-1">
+         <button class="btn btn-outline-secondary btn-sm" onclick="openSpielerModalSimple('${s.id}')" title="Bearbeiten"><i class="bi bi-pencil"></i></button>
+         <button class="btn btn-warning btn-sm" onclick="spielerSoftDelete('${s.id}')" title="Ausblenden"><i class="bi bi-trash" style="color:#fff"></i></button>
+         <button class="btn btn-danger btn-sm" onclick="spielerHardDelete('${s.id}')" title="Endgültig löschen"><i class="bi bi-trash-fill"></i></button>
+       </div>`;
+  const slv = playerSLV(s);
+  const skillCell = t => { const v = playerScore(s, t); const c = v>=70?'success':v>=45?'warning':'danger'; return `<td><span class="badge bg-${c}" style="min-width:2rem">${v}</span></td>`; };
+  const tr = document.createElement('tr');
+  if (s.softDeleted) tr.style.opacity = '.4';
+  tr.setAttribute('data-spid', s.id);
+  tr.innerHTML = `
+    <td>${fotoCell}</td><td>${s.rnr}</td>
+    <td><span class="badge bg-secondary">${s.pos}</span></td>
+    <td><strong>${s.nachname}</strong></td><td>${s.vorname}</td>
+    <td data-order="${s.geb || ''}">${s.geb ? new Date(s.geb+'T12:00').toLocaleDateString('de-AT') : '—'}</td>
+    <td><span class="badge bg-dark">${s.team}</span></td>
+    <td><strong>${slv}</strong></td>
+    ${skillCell('speed')}${skillCell('attack')}${skillCell('bonus')}${skillCell('shoot')}${skillCell('skill')}${skillCell('pass')}${skillCell('jump')}
+    <td><span class="badge ${nAnzahl>0?'bg-success':'bg-light text-dark border'}">${nAnzahl} Notiz${nAnzahl!==1?'en':''}</span></td>
+    <td>${aktionen}</td>`;
+  return tr;
+}
+
 function renderSpielerSimple() {
   const filter = document.getElementById('spFilterTeam').value;
   const allowedTeams = _getAllowedTeams();
@@ -4904,45 +4939,22 @@ function renderSpielerSimple() {
     ? spielerData.filter(s => allowedTeams.includes(s.team))
     : spielerData;
   if (filter) data = data.filter(s => s.team === filter);
-  if ($.fn.DataTable.isDataTable('#spielerTableSimple')) {
-    $('#spielerTableSimple').DataTable().destroy();
+
+  if (dtSpielerSimple) {
+    // DataTable existiert: Daten direkt per API aktualisieren (kein Destroy)
+    dtSpielerSimple.clear();
+    data.forEach(s => dtSpielerSimple.row.add(_buildSpielerRow(s)));
+    dtSpielerSimple.draw(false);
+  } else {
+    // Erste Initialisierung
+    document.getElementById('spielerBodySimple').innerHTML = '';
+    data.forEach(s => document.getElementById('spielerBodySimple').appendChild(_buildSpielerRow(s)));
+    dtSpielerSimple = $('#spielerTableSimple').DataTable({
+      responsive: true,
+      language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/de-DE.json' },
+      columnDefs: [{ orderable: false, targets: -1 }]
+    });
   }
-  document.getElementById('spielerBodySimple').innerHTML = data.map(s => {
-    const nAnzahl = (spielerNotizen[s.id] || []).length;
-    const fotoSrc = s._displayFoto || s.foto;
-    const fotoCell = fotoSrc
-      ? `<img src="${fotoSrc}" style="width:34px;height:34px;object-fit:cover;border-radius:50%;border:2px solid #c0392b">`
-      : `<div style="width:34px;height:34px;border-radius:50%;border:2px dashed #ced4da;display:flex;align-items:center;justify-content:center;color:#adb5bd"><i class="bi bi-person"></i></div>`;
-    const rowStyle = s.softDeleted ? ' style="opacity:.4"' : '';
-    const aktionen = s.softDeleted
-      ? `<div class="edit d-inline-flex gap-1">
-           <button class="btn btn-success btn-sm" onclick="spielerRestore('${s.id}')" title="Wiederherstellen"><i class="bi bi-arrow-counterclockwise"></i></button>
-           <button class="btn btn-danger btn-sm" onclick="spielerHardDelete('${s.id}')" title="Endgültig löschen"><i class="bi bi-trash-fill"></i></button>
-         </div>`
-      : `<div class="edit d-inline-flex gap-1">
-           <button class="btn btn-outline-secondary btn-sm" onclick="openSpielerModalSimple('${s.id}')" title="Bearbeiten"><i class="bi bi-pencil"></i></button>
-           <button class="btn btn-warning btn-sm" onclick="spielerSoftDelete('${s.id}')" title="Ausblenden"><i class="bi bi-trash" style="color:#fff"></i></button>
-           <button class="btn btn-danger btn-sm" onclick="spielerHardDelete('${s.id}')" title="Endgültig löschen"><i class="bi bi-trash-fill"></i></button>
-         </div>`;
-    const slv = playerSLV(s);
-    const skillCell = t => { const v = playerScore(s, t); const c = v>=70?'success':v>=45?'warning':'danger'; return `<td><span class="badge bg-${c}" style="min-width:2rem">${v}</span></td>`; };
-    return `<tr${rowStyle} data-spid="${s.id}">
-      <td>${fotoCell}</td><td>${s.rnr}</td>
-      <td><span class="badge bg-secondary">${s.pos}</span></td>
-      <td><strong>${s.nachname}</strong></td><td>${s.vorname}</td>
-      <td data-order="${s.geb || ''}">${s.geb ? new Date(s.geb+'T12:00').toLocaleDateString('de-AT') : '—'}</td>
-      <td><span class="badge bg-dark">${s.team}</span></td>
-      <td><strong>${slv}</strong></td>
-      ${skillCell('speed')}${skillCell('attack')}${skillCell('bonus')}${skillCell('shoot')}${skillCell('skill')}${skillCell('pass')}${skillCell('jump')}
-      <td><span class="badge ${nAnzahl>0?'bg-success':'bg-light text-dark border'}">${nAnzahl} Notiz${nAnzahl!==1?'en':''}</span></td>
-      <td>${aktionen}</td>
-    </tr>`;
-  }).join('');
-  dtSpielerSimple = $('#spielerTableSimple').DataTable({
-    responsive: true,
-    language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/de-DE.json' },
-    columnDefs: [{ orderable: false, targets: -1 }]
-  });
 }
 
 window.openSpielerModalSimple = function(id) {
