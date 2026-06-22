@@ -4725,9 +4725,22 @@ document.addEventListener('DOMContentLoaded', () => {
 // ══════════════════════════════════════════════════════════════
 // SPIELER (vereinfacht)
 // ══════════════════════════════════════════════════════════════
+function _getAllowedTeams() {
+  if (_isSuperAdmin()) return null; // null = alle
+  const userEmail = (window.currentUserDoc?.email || '').toLowerCase();
+  const myTeams = mannschaftenListe
+    .filter(m => (m.verwalter || []).map(v => v.toLowerCase()).includes(userEmail))
+    .map(m => m.name);
+  return myTeams; // leeres Array = keine Spieler sichtbar
+}
+
 function renderSpielerSimple() {
   const filter = document.getElementById('spFilterTeam').value;
-  const data   = filter ? spielerData.filter(s => s.team === filter) : spielerData;
+  const allowedTeams = _getAllowedTeams();
+  let data = allowedTeams !== null
+    ? spielerData.filter(s => allowedTeams.includes(s.team))
+    : spielerData;
+  if (filter) data = data.filter(s => s.team === filter);
   document.getElementById('spielerBodySimple').innerHTML = data.map(s => {
     const nAnzahl = (spielerNotizen[s.id] || []).length;
     const fotoCell = s.foto
