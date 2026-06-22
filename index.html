@@ -3142,7 +3142,7 @@ window.renderUsersView = async function() {
     el.innerHTML = `<div class="card shadow-sm"><div class="table-responsive">
       <table id="usersDataTable" class="table table-striped align-middle w-100 mb-0">
       <thead class="table-dark"><tr>
-        <th>Name</th><th>E-Mail</th><th>Geburtstag</th><th>Mannschaft</th><th>Rollen</th><th>Status</th><th class="text-end">Aktionen</th>
+        <th>Name</th><th>E-Mail</th><th>Geburtstag</th><th>Mannschaft</th><th>Verwalter von</th><th>Rollen</th><th>Status</th><th class="text-end">Aktionen</th>
       </tr></thead>
       <tbody>${users.map(u => {
         const isSA = (u.roleIds||[]).includes('role_superadmin');
@@ -3163,6 +3163,11 @@ window.renderUsersView = async function() {
         const teamCell = linkedPlayers.length
           ? linkedPlayers.map(s=>`<span class="badge bg-dark me-1">${s.team||'—'}</span>`).join('')
           : (u.teamIds||[]).map(t=>`<span class="badge bg-dark me-1">${t}</span>`).join('') || '—';
+        // Mannschaften wo dieser User Verwalter ist
+        const verwalterVon = mannschaftenListe
+          .filter(m => (m.verwalter||[]).map(v=>v.toLowerCase()).includes((u.email||'').toLowerCase()))
+          .map(m => `<span class="badge bg-success me-1"><i class="bi bi-shield-check me-1"></i>${m.name}</span>`)
+          .join('') || '<span class="text-muted small">—</span>';
         const editBtn = hasPermission('users.edit')
           ? `<button class="btn btn-outline-secondary btn-sm" onclick="openBenutzerBearbeiten('${u.id}')" title="Bearbeiten"><i class="bi bi-pencil"></i></button>` : '';
         const deaktBtn = (!isSA && !isSelf && hasPermission('users.edit'))
@@ -3172,6 +3177,7 @@ window.renderUsersView = async function() {
           <td>${u.email||'—'}</td>
           <td>${gebCell}</td>
           <td>${teamCell}</td>
+          <td>${verwalterVon}</td>
           <td>${roleBadges||'—'}</td>
           <td>${statusBadge}</td>
           <td class="text-end"><div class="d-inline-flex gap-1 edit">${editBtn}${deaktBtn}</div></td>
