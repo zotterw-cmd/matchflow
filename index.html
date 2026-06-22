@@ -1162,6 +1162,7 @@ body.sa-mode .sa-var{display:inline}
       <div class="d-flex gap-2 flex-wrap">
         <button class="btn btn-outline-secondary btn-sm" onclick="openCampCsvImport()"><i class="bi bi-upload me-1"></i>CSV Import</button>
         <button class="btn btn-outline-info btn-sm" onclick="campSpielerAusVorigemCamp()"><i class="bi bi-arrow-down-circle me-1"></i>Aus Camp übernehmen</button>
+        <button class="btn btn-outline-primary btn-sm" onclick="openCampMesswerteModal()"><i class="bi bi-speedometer2 me-1"></i>Messwerte eintragen</button>
         <button class="btn btn-success btn-sm" id="btnCampSpeichern" onclick="campManuellSpeichern()"><i class="bi bi-cloud-upload me-1"></i>Speichern</button>
         <button class="btn btn-warning fw-bold" onclick="openCampSpielerModal(null)"><i class="bi bi-person-plus-fill me-1"></i>Neuer Spieler</button>
       </div>
@@ -1397,6 +1398,12 @@ body.sa-mode .sa-var{display:inline}
             <span class="fw-bold"><i class="bi bi-person-check-fill me-2"></i>Zu Spieler speichern</span>
           </div>
           <div class="card-body p-3">
+            <div class="btn-group btn-group-sm w-100 mb-2" role="group">
+              <input type="radio" class="btn-check" name="ssaPlayerMode" id="ssaModeVerein" value="verein" checked onchange="ssaFillPlayerSel()">
+              <label class="btn btn-outline-primary" for="ssaModeVerein"><i class="bi bi-people me-1"></i>Vereinsspieler</label>
+              <input type="radio" class="btn-check" name="ssaPlayerMode" id="ssaModeCamp" value="camp" onchange="ssaFillPlayerSel()">
+              <label class="btn btn-outline-warning" for="ssaModeCamp"><i class="bi bi-trophy me-1"></i>Camp-Spieler</label>
+            </div>
             <label class="form-label small fw-bold">Spieler auswählen</label>
             <select class="form-select form-select-sm mb-2" id="ssaPlayerSel">
               <option value="">— Spieler auswählen —</option>
@@ -2163,6 +2170,54 @@ body.sa-mode .sa-var{display:inline}
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
         <button type="button" class="btn btn-warning fw-bold" onclick="campSpielerSpeichern()"><i class="bi bi-save me-1"></i>Speichern</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: CAMP MESSWERTE EINTRAGEN ===== -->
+<div class="modal fade" id="modalCampMesswerte" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white py-2">
+        <h5 class="modal-title"><i class="bi bi-speedometer2 me-2"></i>Messwerte eintragen</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3">
+        <!-- Typ-Auswahl -->
+        <div class="mb-3">
+          <label class="form-label fw-bold small mb-1">Messtyp</label>
+          <div class="d-flex flex-wrap gap-2" id="campMessTypBtns">
+            <button class="btn btn-sm btn-primary active" onclick="campMessTypWechseln('shoot',this)"><i class="bi bi-lightning-fill me-1"></i>SHOOT (km/h)</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="campMessTypWechseln('speed',this)">SPEED (Sek)</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="campMessTypWechseln('attack',this)">ATTACK (Pkt)</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="campMessTypWechseln('pass',this)">PASS (Anz)</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="campMessTypWechseln('skill',this)">SKILL (Sek)</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="campMessTypWechseln('jump',this)">JUMP (m)</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="campMessTypWechseln('bonus',this)">BONUS (5V)</button>
+          </div>
+          <div class="text-muted small mt-1" id="campMessTypHinweis">Schuss km/h – höher = besser</div>
+        </div>
+        <!-- Spieler-Tabelle -->
+        <div class="table-responsive">
+          <table class="table table-sm table-striped align-middle mb-0">
+            <thead class="table-dark">
+              <tr>
+                <th>Spieler</th>
+                <th style="width:110px">V1</th>
+                <th style="width:110px">V2</th>
+                <th style="width:90px" class="text-end">Bisher</th>
+              </tr>
+            </thead>
+            <tbody id="campMesswerteTbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
+        <button type="button" class="btn btn-primary fw-bold" id="btnCampMessSpeichern" onclick="campMesswerteSpeichern()">
+          <i class="bi bi-save me-1"></i>Alle speichern
+        </button>
       </div>
     </div>
   </div>
@@ -5396,6 +5451,91 @@ window.campManuellSpeichern = async function() {
     alert('Fehler beim Speichern:\n' + e.message);
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-cloud-upload me-1"></i>Speichern'; }
   }
+};
+
+// ── Messwerte-Modal ──────────────────────────────────────────────
+let _campMessTyp = 'shoot';
+const _campMessHinweise = {
+  speed:  'Sprint 10m – Sek., niedriger = besser',
+  attack: 'Dribbling mit Zielschuss – Punkte 0–6',
+  bonus:  'Gaberln – Anzahl (5 Versuche)',
+  shoot:  'Schuss km/h – höher = besser',
+  skill:  'Dribbling + Abschluss – Sek., niedriger = besser',
+  pass:   'Passgenauigkeit – Anzahl',
+  jump:   'Weitsprung in Metern',
+};
+
+window.openCampMesswerteModal = function() {
+  _campMessTyp = 'shoot';
+  // Reset button styles
+  document.querySelectorAll('#campMessTypBtns button').forEach(b => {
+    b.className = b.textContent.trim().startsWith('SHOOT') ? 'btn btn-sm btn-primary active' : 'btn btn-sm btn-outline-secondary';
+  });
+  document.getElementById('campMessTypHinweis').textContent = _campMessHinweise.shoot;
+  _renderCampMesswerteTbody();
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCampMesswerte')).show();
+};
+
+window.campMessTypWechseln = function(typ, btn) {
+  _campMessTyp = typ;
+  document.querySelectorAll('#campMessTypBtns button').forEach(b => {
+    b.className = 'btn btn-sm btn-outline-secondary';
+  });
+  btn.className = 'btn btn-sm btn-primary active';
+  document.getElementById('campMessTypHinweis').textContent = _campMessHinweise[typ] || '';
+  _renderCampMesswerteTbody();
+};
+
+function _campMessBisher(sp, typ) {
+  const arr = (sp[typ] || []).filter(v => v !== null && v !== undefined);
+  if (!arr.length) return '—';
+  const best = typ === 'speed' || typ === 'skill' ? Math.min(...arr) : Math.max(...arr);
+  return best;
+}
+
+function _renderCampMesswerteTbody() {
+  const tbody = document.getElementById('campMesswerteTbody');
+  if (!tbody) return;
+  tbody.innerHTML = campSpielerData.map((sp, i) => {
+    const bisher = _campMessBisher(sp, _campMessTyp);
+    const v1 = (sp[_campMessTyp]||[])[0] ?? '';
+    const v2 = (sp[_campMessTyp]||[])[1] ?? '';
+    return `<tr>
+      <td class="fw-bold small">${sp.nachname} ${sp.vorname}</td>
+      <td><input type="number" step="0.01" class="form-control form-control-sm" id="cmv1_${i}" value="${v1}" placeholder="V1"></td>
+      <td><input type="number" step="0.01" class="form-control form-control-sm" id="cmv2_${i}" value="${v2}" placeholder="V2"></td>
+      <td class="text-end text-muted small">${bisher}</td>
+    </tr>`;
+  }).join('');
+}
+
+window.campMesswerteSpeichern = async function() {
+  const btn = document.getElementById('btnCampMessSpeichern');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Speichert…'; }
+
+  campSpielerData.forEach((sp, i) => {
+    const v1el = document.getElementById(`cmv1_${i}`);
+    const v2el = document.getElementById(`cmv2_${i}`);
+    const toV = el => { const v = el?.value; return (v !== '' && v !== undefined && !isNaN(v)) ? Number(v) : null; };
+    const v1 = toV(v1el), v2 = toV(v2el);
+    if (_campMessTyp === 'bonus') {
+      sp.bonus = [v1, v2, null, null, null];
+    } else if (_campMessTyp === 'pass') {
+      sp.pass = [v1, v2, null];
+    } else {
+      sp[_campMessTyp] = [v1, v2];
+    }
+  });
+
+  _syncCampSpieler();
+  try {
+    await fsSaveCamp(_aktCamp());
+    renderCampSpieler();
+    bootstrap.Modal.getInstance(document.getElementById('modalCampMesswerte')).hide();
+  } catch(e) {
+    alert('Fehler beim Speichern:\n' + e.message);
+  }
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-save me-1"></i>Alle speichern'; }
 };
 
 window.campSpielerAusVorigemCamp = function() {
@@ -9358,10 +9498,20 @@ window.ssaSaveToPlayer = function() {
 window.ssaFillPlayerSel = function() {
   const sel = document.getElementById('ssaPlayerSel');
   if (!sel) return;
-  sel.innerHTML = '<option value="">— Spieler auswählen —</option>' +
-    (spielerData || []).filter(s=>!s.softDeleted).map(s=>
-      `<option value="${s.id}">${s.nachname} ${s.vorname} (#${s.rnr||'?'}, ${s.team||''})</option>`
-    ).join('');
+  const mode = document.querySelector('input[name="ssaPlayerMode"]:checked')?.value || 'verein';
+  if (mode === 'camp') {
+    const camp = _aktCamp();
+    const campName = camp ? camp.name : 'Camp';
+    sel.innerHTML = `<option value="">— Spieler aus ${campName} —</option>` +
+      (campSpielerData || []).map(s =>
+        `<option value="${s.id}">${s.nachname} ${s.vorname}${s.geb ? ' ('+s.geb+')' : ''}</option>`
+      ).join('');
+  } else {
+    sel.innerHTML = '<option value="">— Vereinsspieler auswählen —</option>' +
+      (spielerData || []).filter(s=>!s.softDeleted).map(s=>
+        `<option value="${s.id}">${s.nachname} ${s.vorname} (#${s.rnr||'?'}, ${s.team||''})</option>`
+      ).join('');
+  }
 };
 
 window.ssaConfirmSaveToPlayer = function() {
@@ -10192,7 +10342,7 @@ function captureVideoFrame(videoEl, timeSeconds) {
 async function saveShotMeasurement(data) {
   const db = window._firestoreDB;
   if (!db) return null;
-  const { addDoc, collection, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+  const { addDoc, collection, serverTimestamp } = window._firestoreAPI;
   const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
   const doc = await addDoc(collection(db, 'shot_measurements'), {
     player_id:        data.player_id   || null,
@@ -10212,8 +10362,13 @@ window.ssaConfirmSaveToPlayerWithUpload = async function() {
   if (!ssaLastResult) { alert('Kein Ergebnis vorhanden.'); return; }
   const pid = document.getElementById('ssaPlayerSel')?.value;
   if (!pid) { alert('Bitte Spieler auswählen.'); return; }
-  const sp = spielerData.find(s => s.id === pid);
-  if (!sp) return;
+
+  const mode = document.querySelector('input[name="ssaPlayerMode"]:checked')?.value || 'verein';
+  const isCampMode = mode === 'camp';
+  const sp = isCampMode
+    ? campSpielerData.find(s => s.id === pid)
+    : spielerData.find(s => s.id === pid);
+  if (!sp) { alert('Spieler nicht gefunden.'); return; }
 
   const btn = document.querySelector('#ssaPlayerSaveCard button.btn-success');
   if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Speichern…'; }
@@ -10257,7 +10412,7 @@ window.ssaConfirmSaveToPlayerWithUpload = async function() {
     });
   } catch(e) { console.warn('Firestore/Upload error:', e); }
 
-  // Update local spielerData
+  // Update local player data
   const score = Math.min(100, Math.round((ssaLastResult.speed_kmh / 130) * 100));
   sp.shoot = sp.shoot || [];
   sp.shoot.push(ssaLastResult.speed_kmh);
@@ -10265,7 +10420,15 @@ window.ssaConfirmSaveToPlayerWithUpload = async function() {
   sp.shootKmh.push(ssaLastResult.speed_kmh);
   sp.skillBase = sp.skillBase || {};
   if (score > (sp.skillBase.shoot || 50)) sp.skillBase.shoot = score;
-  renderSpielerSimple?.();
+
+  if (isCampMode) {
+    _syncCampSpieler();
+    fsSaveCamp(_aktCamp()).catch(console.warn);
+    renderCampSpieler?.();
+  } else {
+    renderSpielerSimple?.();
+    fsSaveSpieler?.(sp).catch(console.warn);
+  }
 
   if (btn) {
     const badge = videoUrl
