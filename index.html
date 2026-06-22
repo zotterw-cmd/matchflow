@@ -5554,7 +5554,7 @@ window.campSpielerAusVorigemCamp = function() {
   campSpielerData.push(...neu);
   campCounter = campSpielerData.length;
   _syncCampSpieler();
-  fsSaveCamp(_aktCamp()).catch(console.warn);
+  fsSaveCamp(_aktCamp()).catch(e => { console.error("fsSaveCamp:", e); });
   renderCampSpieler();
   alert(`✓ ${neu.length} Spieler übernommen.`);
 };
@@ -5582,7 +5582,7 @@ window.campUmbenennenSpeichern = function() {
   camp.datum       = document.getElementById('campUmbenennenDatum').value;
   camp.beschreibung= document.getElementById('campUmbenennenBeschreibung').value.trim();
   bootstrap.Modal.getInstance(document.getElementById('modalCampUmbenennen')).hide();
-  fsSaveCamp(camp).catch(console.warn);
+  fsSaveCamp(camp).catch(e => { console.error("fsSaveCamp:", e); });
   // Header aktualisieren wenn Detail-Ansicht offen
   const titelEl = document.getElementById('campDetailTitel');
   if (titelEl) titelEl.innerHTML = `<i class="bi bi-trophy-fill text-warning me-2"></i>${camp.name}`;
@@ -5678,7 +5678,7 @@ window.campCsvImportieren = function() {
     campSpielerData = [...campSpielerData, ..._campCsvParsed];
   }
   _syncCampSpieler();
-  fsSaveCamp(_aktCamp()).catch(console.warn);
+  fsSaveCamp(_aktCamp()).catch(e => { console.error("fsSaveCamp:", e); });
   bootstrap.Modal.getInstance(document.getElementById('modalCampCsvImport')).hide();
   renderCampSpieler();
   alert(`✅ ${_campCsvParsed.length} Spieler importiert (Modus: ${modus === 'ersetzen' ? 'Ersetzen' : 'Hinzufügen'}).`);
@@ -5926,7 +5926,10 @@ window.campSpielerSpeichern = function() {
   }
   bootstrap.Modal.getInstance(document.getElementById('modalCampSpieler')).hide();
   _syncCampSpieler();
-  fsSaveCamp(_aktCamp()).catch(console.warn);
+  fsSaveCamp(_aktCamp()).catch(e => {
+    console.error('fsSaveCamp Fehler:', e);
+    alert('Firestore-Fehler beim Speichern:\n' + e.message);
+  });
   renderCampSpieler();
 };
 
@@ -10113,15 +10116,65 @@ async function seedU12IfEmpty() {
 }
 
 // ══════════════════════════════════════════════════════════════
+// FIRESTORE: Diagnose (nach Login in Konsole: testFirestoreCamp())
+// ══════════════════════════════════════════════════════════════
+window.testFirestoreCamp = async function() {
+  const lines = [];
+  lines.push('=== Firestore Camp Diagnose ===');
+  lines.push('DB: ' + (window._firestoreDB ? 'OK' : 'FEHLT'));
+  lines.push('API: ' + (window._firestoreAPI ? 'OK' : 'FEHLT'));
+  lines.push('TenantId: ' + (window._currentTenantId || 'NICHT GESETZT'));
+  if (!window._firestoreDB || !window._firestoreAPI) { alert(lines.join('\n')); return; }
+  try {
+    const { doc, setDoc, getDoc, deleteDoc, serverTimestamp } = window._firestoreAPI;
+    const testId = '_test_' + Date.now();
+    await setDoc(doc(window._firestoreDB, 'camps', testId), { tenant_id: window._currentTenantId || 'test', name: 'TEST', updated_at: serverTimestamp() });
+    lines.push('Write: OK');
+    await getDoc(doc(window._firestoreDB, 'camps', testId));
+    lines.push('Read: OK');
+    await deleteDoc(doc(window._firestoreDB, 'camps', testId));
+    lines.push('Delete: OK');
+    lines.push('=> Firestore funktioniert korrekt!');
+  } catch(e) {
+    lines.push('FEHLER: ' + e.message);
+    lines.push('=> Wahrscheinlich Firestore Rules falsch. Firebase Console -> Firestore -> Rules prüfen.');
+  }
+  alert(lines.join('\n'));
+};
+
+// ══════════════════════════════════════════════════════════════
 // FIRESTORE: Camps
 // ══════════════════════════════════════════════════════════════
+
+// Bereinigt ein Objekt rekursiv: undefined → null, keine Funktionen, kein Base64 im foto-Feld
+function _cleanCampForFirestore(obj) {
+  if (Array.isArray(obj)) return obj.map(_cleanCampForFirestore);
+  if (obj === undefined) return null;
+  if (obj === null || typeof obj !== 'object') return obj;
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (typeof v === 'function') continue;
+    if (k === 'foto' && typeof v === 'string' && v.startsWith('data:')) {
+      out[k] = ''; // Base64-Fotos nicht in Firestore speichern
+    } else {
+      out[k] = _cleanCampForFirestore(v);
+    }
+  }
+  return out;
+}
+
 async function fsSaveCamp(campObj) {
   const db = window._firestoreDB;
-  if (!db || !campObj?.id) return;
+  if (!db) { console.warn('fsSaveCamp: kein Firestore DB'); return; }
+  if (!campObj?.id) { console.warn('fsSaveCamp: campObj.id fehlt'); return; }
+  if (!window._firestoreAPI) { console.warn('fsSaveCamp: _firestoreAPI nicht initialisiert'); return; }
   const { doc, setDoc, serverTimestamp } = window._firestoreAPI;
   const tid = window._currentTenantId;
+  if (!tid) { console.warn('fsSaveCamp: _currentTenantId nicht gesetzt'); }
+
+  const cleaned = _cleanCampForFirestore(campObj);
   await setDoc(doc(db, 'camps', campObj.id), {
-    ...campObj,
+    ...cleaned,
     tenant_id:  tid || '',
     updated_at: serverTimestamp(),
   }, { merge: true });
@@ -10423,7 +10476,7 @@ window.ssaConfirmSaveToPlayerWithUpload = async function() {
 
   if (isCampMode) {
     _syncCampSpieler();
-    fsSaveCamp(_aktCamp()).catch(console.warn);
+    fsSaveCamp(_aktCamp()).catch(e => { console.error("fsSaveCamp:", e); });
     renderCampSpieler?.();
   } else {
     renderSpielerSimple?.();
