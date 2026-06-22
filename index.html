@@ -4905,8 +4905,9 @@ function renderSpielerSimple() {
   if (filter) data = data.filter(s => s.team === filter);
   document.getElementById('spielerBodySimple').innerHTML = data.map(s => {
     const nAnzahl = (spielerNotizen[s.id] || []).length;
-    const fotoCell = s.foto
-      ? `<img src="${s.foto}" style="width:34px;height:34px;object-fit:cover;border-radius:50%;border:2px solid #c0392b">`
+    const fotoSrc = s._displayFoto || s.foto;
+    const fotoCell = fotoSrc
+      ? `<img src="${fotoSrc}" style="width:34px;height:34px;object-fit:cover;border-radius:50%;border:2px solid #c0392b">`
       : `<div style="width:34px;height:34px;border-radius:50%;border:2px dashed #ced4da;display:flex;align-items:center;justify-content:center;color:#adb5bd"><i class="bi bi-person"></i></div>`;
     const rowStyle = s.softDeleted ? ' style="opacity:.4"' : '';
     const aktionen = s.softDeleted
@@ -5027,6 +5028,9 @@ window.spielerSimpleSpeichern = async function() {
   const newSkillBase = {};
   SKILL_TYPES.forEach(t => { newSkillBase[t] = parseInt(document.getElementById('spSkill_' + t)?.value) || 50; });
   obj.skillBase = newSkillBase;
+  // Blob-URL für sofortige Anzeige (wird bei nächstem Load durch Server-URL ersetzt)
+  if (pendingFotoBase64 && fotoUrl) obj._displayFoto = pendingFotoBase64;
+
   if (editingSpielerID) {
     const idx = spielerData.findIndex(s => s.id === editingSpielerID);
     if (idx !== -1) { const old = spielerData[idx]; obj.skills = old.skills; obj.slv = old.slv; SKILL_TYPES.forEach(t => { obj[t] = old[t] || []; }); spielerData[idx] = obj; }
