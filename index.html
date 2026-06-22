@@ -1924,6 +1924,57 @@ body.sa-mode .sa-var{display:inline}
   </div>
 </div>
 
+<!-- MODAL: Berechnungsmethode -->
+<div class="modal fade" id="modalCalcMethod" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="calcMethodModalTitle"><i class="bi bi-calculator me-2"></i>Berechnungsmethode</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="calcMethodId">
+        <div id="calcMethodError" class="alert alert-danger d-none"></div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Name <span class="text-danger">*</span></label>
+          <input type="text" id="calcMethodName" class="form-control" placeholder="z.B. Sprint – Bestwert gewichtet">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Aggregationsregel <span class="text-danger">*</span></label>
+          <div class="d-flex flex-column gap-2 mt-1">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="calcAggregation" id="calcAggBest" value="best" checked>
+              <label class="form-check-label" for="calcAggBest"><strong>Bester Wert</strong> — höchster Messwert wird verwendet</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="calcAggregation" id="calcAggLast" value="last">
+              <label class="form-check-label" for="calcAggLast"><strong>Letzter Wert</strong> — aktuellste Messung wird verwendet</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="calcAggregation" id="calcAggAvg" value="avg">
+              <label class="form-check-label" for="calcAggAvg"><strong>Durchschnitt</strong> — Mittelwert aller Messungen</label>
+            </div>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Gewichtungsfaktor für Skill Calculator <span class="text-danger">*</span></label>
+          <div class="d-flex align-items-center gap-3">
+            <input type="range" id="calcMethodWeightSlider" class="form-range flex-grow-1" min="0" max="100" step="1" value="50"
+              oninput="document.getElementById('calcMethodWeightNum').value=this.value">
+            <input type="number" id="calcMethodWeightNum" class="form-control" style="width:75px" min="0" max="100" value="50"
+              oninput="document.getElementById('calcMethodWeightSlider').value=this.value">
+          </div>
+          <div class="form-text">0 = nicht im Skill Calculator gewichtet · 100 = maximale Gewichtung</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Abbrechen</button>
+        <button type="button" class="btn btn-dark btn-sm" onclick="calcMethodSpeichern()"><i class="bi bi-save me-1"></i>Speichern</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: Skill-Kategorie -->
 <div class="modal fade" id="modalSkillKat" tabindex="-1">
   <div class="modal-dialog modal-sm">
@@ -1970,6 +2021,7 @@ body.sa-mode .sa-var{display:inline}
   <ul class="nav nav-tabs mb-3">
     <li class="nav-item"><a class="nav-link active" href="#" onclick="showLeistungTab('messungen',this);return false"><i class="bi bi-list-check me-1"></i>Messungen</a></li>
     <li class="nav-item sa-only"><a class="nav-link" href="#" onclick="showLeistungTab('typen',this);return false"><i class="bi bi-sliders me-1"></i>Messungstypen</a></li>
+    <li class="nav-item sa-only"><a class="nav-link" href="#" onclick="showLeistungTab('calcs',this);return false"><i class="bi bi-calculator me-1"></i>Berechnungsmethoden</a></li>
     <li class="nav-item sa-only"><a class="nav-link" href="#" onclick="showLeistungTab('kategorien',this);return false"><i class="bi bi-tags me-1"></i>Skill-Kategorien</a></li>
   </ul>
   <div id="leistungPanelMessungen">
@@ -1993,6 +2045,17 @@ body.sa-mode .sa-var{display:inline}
       <span id="sitzungDetailBadge" class="badge bg-warning text-dark ms-1"></span>
     </div>
     <div id="sitzungDetailContent"><div class="text-center py-5 text-muted"><div class="spinner-border mb-2"></div><br>Wird geladen…</div></div>
+  </div>
+
+  <div id="leistungPanelCalcs" style="display:none">
+    <div class="card p-4">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h6 class="fw-bold mb-0"><i class="bi bi-calculator me-2 text-primary"></i>Berechnungsmethoden</h6>
+        <button class="btn btn-dark btn-sm" onclick="openCalcMethodModal(null)"><i class="bi bi-plus-circle me-1"></i>Neue Methode</button>
+      </div>
+      <p class="text-muted small mb-3">Benannte Methoden kombinieren eine Aggregationsregel (Bestwert / Letzter / Durchschnitt) mit einem Gewichtungsfaktor für den Skill Calculator.</p>
+      <div id="calcMethodenContent"><div class="text-center py-3 text-muted"><div class="spinner-border spinner-border-sm mb-1"></div> Wird geladen…</div></div>
+    </div>
   </div>
 
   <div id="leistungPanelKategorien" style="display:none">
@@ -2101,12 +2164,10 @@ body.sa-mode .sa-var{display:inline}
         </div>
         <div class="mb-3">
           <label class="form-label fw-bold">Berechnungsmethode <span class="text-danger">*</span></label>
-          <select id="messungstypCalc" class="form-select">
-            <option value="best">Bester Wert (best)</option>
-            <option value="last">Letzter Wert (last)</option>
-            <option value="avg">Durchschnitt (avg)</option>
+          <select id="messungstypCalcId" class="form-select">
+            <option value="">– wird geladen –</option>
           </select>
-          <div class="form-text">Bestimmt wie der Skill-Score aus mehreren Messungen berechnet wird.</div>
+          <div class="form-text">Methode aus <em>Berechnungsmethoden</em>-Tab wählen. Bestimmt Aggregation und Gewichtung im Skill Calculator.</div>
         </div>
         <div class="mb-3">
           <label class="form-label fw-bold">Sortierung</label>
@@ -8788,15 +8849,126 @@ window.sitzungAbschliessen = async function(id) {
 };
 
 window.showLeistungTab = function(tab, el) {
-  ['Messungen','Typen','Kategorien'].forEach(t => {
+  ['Messungen','Typen','Calcs','Kategorien'].forEach(t => {
     const p = document.getElementById('leistungPanel' + t);
     if (p) p.style.display = (t.toLowerCase() === tab) ? '' : 'none';
   });
   document.querySelectorAll('#viewLeistung .nav-link').forEach(a => a.classList.remove('active'));
   if (el) el.classList.add('active');
-  if (tab === 'messungen')   renderMessungenView();
-  if (tab === 'typen')       renderMessungstypenView();
-  if (tab === 'kategorien')  renderSkillKatView();
+  if (tab === 'messungen')  renderMessungenView();
+  if (tab === 'typen')      renderMessungstypenView();
+  if (tab === 'calcs')      renderCalcMethodenView();
+  if (tab === 'kategorien') renderSkillKatView();
+};
+
+window.renderCalcMethodenView = async function() {
+  const el = document.getElementById('calcMethodenContent');
+  if (!el) return;
+  el.innerHTML = '<div class="text-center py-3 text-muted"><div class="spinner-border spinner-border-sm mb-1"></div> Wird geladen…</div>';
+  try {
+    const { collection, query, where, getDocs } = window._firestoreAPI;
+    const tid = window._currentTenantId;
+    const snap = await getDocs(query(collection(window._firestoreDB, 'calc_methods'), where('tenant_id', '==', tid)));
+    const methods = [];
+    snap.forEach(d => methods.push({ id: d.id, ...d.data() }));
+    methods.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'de'));
+    if (!methods.length) {
+      el.innerHTML = '<p class="text-muted small py-3 text-center">Noch keine Berechnungsmethoden angelegt.</p>';
+      return;
+    }
+    const aggLabel = { best:'Bester Wert', last:'Letzter Wert', avg:'Durchschnitt' };
+    el.innerHTML = `<table class="table table-sm align-middle mb-0">
+      <thead class="table-dark"><tr><th>Name</th><th>Aggregation</th><th>Gewichtung</th><th>Status</th><th></th></tr></thead>
+      <tbody>${methods.map(m => `<tr style="${!m.active ? 'opacity:.5' : ''}">
+        <td><strong>${m.name}</strong></td>
+        <td><span class="badge bg-secondary">${aggLabel[m.aggregation] || m.aggregation}</span></td>
+        <td>
+          <div class="d-flex align-items-center gap-2">
+            <div style="background:#e9ecef;border-radius:4px;width:80px;height:8px;overflow:hidden">
+              <div style="background:#0d6efd;width:${m.weight || 0}%;height:100%"></div>
+            </div>
+            <span class="small">${m.weight ?? 50}</span>
+          </div>
+        </td>
+        <td><span class="badge ${m.active ? 'bg-success' : 'bg-secondary'}">${m.active ? 'Aktiv' : 'Inaktiv'}</span></td>
+        <td><div class="d-flex gap-1">
+          <button class="btn btn-outline-secondary btn-sm" onclick="openCalcMethodModal('${m.id}')"><i class="bi bi-pencil"></i></button>
+          <button class="btn btn-outline-${m.active ? 'warning' : 'success'} btn-sm" onclick="calcMethodToggle('${m.id}',${!m.active})">
+            <i class="bi bi-${m.active ? 'pause-circle' : 'play-circle'}"></i>
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="calcMethodLoeschen('${m.id}')"><i class="bi bi-trash-fill"></i></button>
+        </div></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  } catch(e) {
+    el.innerHTML = `<div class="alert alert-danger">Fehler: ${e.message}</div>`;
+  }
+};
+
+window.openCalcMethodModal = async function(id) {
+  document.getElementById('calcMethodError').classList.add('d-none');
+  if (id) {
+    document.getElementById('calcMethodModalTitle').innerHTML = '<i class="bi bi-calculator me-2"></i>Methode bearbeiten';
+    const { doc, getDoc } = window._firestoreAPI;
+    const snap = await getDoc(doc(window._firestoreDB, 'calc_methods', id));
+    const m = snap.data();
+    document.getElementById('calcMethodId').value = id;
+    document.getElementById('calcMethodName').value = m.name || '';
+    document.querySelector(`input[name="calcAggregation"][value="${m.aggregation || 'best'}"]`).checked = true;
+    document.getElementById('calcMethodWeightSlider').value = m.weight ?? 50;
+    document.getElementById('calcMethodWeightNum').value    = m.weight ?? 50;
+  } else {
+    document.getElementById('calcMethodModalTitle').innerHTML = '<i class="bi bi-calculator me-2"></i>Neue Berechnungsmethode';
+    document.getElementById('calcMethodId').value   = '';
+    document.getElementById('calcMethodName').value = '';
+    document.querySelector('input[name="calcAggregation"][value="best"]').checked = true;
+    document.getElementById('calcMethodWeightSlider').value = 50;
+    document.getElementById('calcMethodWeightNum').value    = 50;
+  }
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCalcMethod')).show();
+};
+
+window.calcMethodSpeichern = async function() {
+  const name        = document.getElementById('calcMethodName').value.trim();
+  const aggregation = document.querySelector('input[name="calcAggregation"]:checked')?.value || 'best';
+  const weight      = parseInt(document.getElementById('calcMethodWeightNum').value) || 0;
+  const err         = document.getElementById('calcMethodError');
+  err.classList.add('d-none');
+  if (!name) { err.classList.remove('d-none'); err.textContent = 'Name ist erforderlich.'; return; }
+  const tid = window._currentTenantId;
+  const { doc, setDoc, collection, addDoc, serverTimestamp } = window._firestoreAPI;
+  const existingId = document.getElementById('calcMethodId').value;
+  try {
+    if (existingId) {
+      await setDoc(doc(window._firestoreDB, 'calc_methods', existingId),
+        { name, aggregation, weight, tenant_id: tid }, { merge: true });
+    } else {
+      await addDoc(collection(window._firestoreDB, 'calc_methods'), {
+        name, aggregation, weight, active: true,
+        tenant_id: tid, created_at: serverTimestamp(),
+        created_by: window.currentUserDoc?.uid || '',
+      });
+    }
+    bootstrap.Modal.getInstance(document.getElementById('modalCalcMethod')).hide();
+    renderCalcMethodenView();
+  } catch(e) { err.classList.remove('d-none'); err.textContent = 'Fehler: ' + e.message; }
+};
+
+window.calcMethodToggle = async function(id, active) {
+  try {
+    const { doc, updateDoc } = window._firestoreAPI;
+    await updateDoc(doc(window._firestoreDB, 'calc_methods', id), { active });
+    renderCalcMethodenView();
+  } catch(e) { alert('Fehler: ' + e.message); }
+};
+
+window.calcMethodLoeschen = async function(id) {
+  if (!confirm('Berechnungsmethode löschen? Messungstypen die diese Methode verwenden müssen neu zugeordnet werden.')) return;
+  try {
+    const { doc, deleteDoc } = window._firestoreAPI;
+    await deleteDoc(doc(window._firestoreDB, 'calc_methods', id));
+    renderCalcMethodenView();
+  } catch(e) { alert('Fehler: ' + e.message); }
 };
 
 window.renderMessungstypenView = async function() {
@@ -8819,14 +8991,21 @@ window.renderMessungstypenView = async function() {
       el.innerHTML = '<p class="text-muted small py-3 text-center">Noch keine Messungstypen angelegt.</p>';
       return;
     }
+    const calcSnap = await getDocs(query(collection(window._firestoreDB, 'calc_methods'), where('tenant_id', '==', tid)));
+    const calcMap = {};
+    calcSnap.forEach(d => { calcMap[d.id] = d.data(); });
     const calcLabel = { best:'Bester Wert', last:'Letzter Wert', avg:'Durchschnitt' };
     el.innerHTML = `<table class="table table-sm align-middle mb-0">
-      <thead class="table-dark"><tr><th>Name</th><th>Kategorie</th><th>Einheit</th><th>Berechnung</th><th>Status</th><th></th></tr></thead>
-      <tbody>${typen.map(t => `<tr style="${!t.active ? 'opacity:.5' : ''}">
+      <thead class="table-dark"><tr><th>Name</th><th>Kategorie</th><th>Einheit</th><th>Berechnungsmethode</th><th>Status</th><th></th></tr></thead>
+      <tbody>${typen.map(t => {
+        const cm = calcMap[t.calc_method_id];
+        const calcText = cm ? `${cm.name} <span class="text-muted small">(${calcLabel[cm.aggregation]||cm.aggregation}, ${cm.weight??50}%)</span>`
+                            : `<span class="text-muted small">${calcLabel[t.calc_method] || t.calc_method || '–'}</span>`;
+        return `<tr style="${!t.active ? 'opacity:.5' : ''}">
         <td><strong>${t.name}</strong></td>
         <td><span class="badge bg-secondary">${katMap[t.skill_category_id] || '–'}</span></td>
         <td>${t.unit || '–'}</td>
-        <td><span class="badge bg-info text-dark">${calcLabel[t.calc_method] || t.calc_method}</span></td>
+        <td>${calcText}</td>
         <td><span class="badge ${t.active ? 'bg-success' : 'bg-secondary'}">${t.active ? 'Aktiv' : 'Inaktiv'}</span></td>
         <td><div class="d-flex gap-1">
           <button class="btn btn-outline-secondary btn-sm" onclick="openMessungstypModal('${t.id}')"><i class="bi bi-pencil"></i></button>
@@ -8835,7 +9014,7 @@ window.renderMessungstypenView = async function() {
           </button>
           <button class="btn btn-danger btn-sm" onclick="messungstypLoeschen('${t.id}')"><i class="bi bi-trash-fill"></i></button>
         </div></td>
-      </tr>`).join('')}</tbody>
+      </tr>`; }).join('')}</tbody>
     </table>`;
   } catch(e) {
     el.innerHTML = `<div class="alert alert-danger">Fehler: ${e.message}</div>`;
@@ -8846,59 +9025,69 @@ window.openMessungstypModal = async function(id) {
   const titleEl = document.getElementById('messungstypModalTitle');
   document.getElementById('messungstypError').classList.add('d-none');
   const tid = window._currentTenantId;
-  // Skill-Kategorien für Dropdown laden
   const { collection, query, where, getDocs, doc, getDoc } = window._firestoreAPI;
-  const katSnap = await getDocs(query(collection(window._firestoreDB, 'skill_categories'), where('tenant_id', '==', tid), where('active', '==', true)));
+  const [katSnap, calcSnap] = await Promise.all([
+    getDocs(query(collection(window._firestoreDB, 'skill_categories'), where('tenant_id', '==', tid), where('active', '==', true))),
+    getDocs(query(collection(window._firestoreDB, 'calc_methods'),     where('tenant_id', '==', tid), where('active', '==', true))),
+  ]);
   const kats = [];
   katSnap.forEach(d => kats.push({ id: d.id, ...d.data() }));
   kats.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-  const sel = document.getElementById('messungstypKatId');
-  sel.innerHTML = '<option value="">– Kategorie wählen –</option>' +
+  const calcs = [];
+  calcSnap.forEach(d => calcs.push({ id: d.id, ...d.data() }));
+  calcs.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'de'));
+  const aggLabel = { best:'Bester Wert', last:'Letzter Wert', avg:'Durchschnitt' };
+  const selKat  = document.getElementById('messungstypKatId');
+  const selCalc = document.getElementById('messungstypCalcId');
+  selKat.innerHTML  = '<option value="">– Kategorie wählen –</option>' +
     kats.map(k => `<option value="${k.id}">${k.name}</option>`).join('');
+  selCalc.innerHTML = '<option value="">– Methode wählen –</option>' +
+    calcs.map(c => `<option value="${c.id}">${c.name} (${aggLabel[c.aggregation]||c.aggregation}, ${c.weight??50}%)</option>`).join('');
   if (id) {
     titleEl.innerHTML = '<i class="bi bi-sliders me-2"></i>Messungstyp bearbeiten';
     const snap = await getDoc(doc(window._firestoreDB, 'measurement_types', id));
     const t = snap.data();
-    document.getElementById('messungstypId').value   = id;
+    document.getElementById('messungstypId').value    = id;
     document.getElementById('messungstypName').value  = t.name || '';
-    sel.value = t.skill_category_id || '';
+    selKat.value  = t.skill_category_id || '';
+    selCalc.value = t.calc_method_id    || '';
     document.getElementById('messungstypUnit').value  = t.unit || '';
-    document.getElementById('messungstypCalc').value  = t.calc_method || 'best';
     document.getElementById('messungstypSort').value  = t.sort_order || 1;
   } else {
     titleEl.innerHTML = '<i class="bi bi-sliders me-2"></i>Neuer Messungstyp';
-    document.getElementById('messungstypId').value   = '';
+    document.getElementById('messungstypId').value    = '';
     document.getElementById('messungstypName').value  = '';
-    sel.value = '';
+    selKat.value  = '';
+    selCalc.value = '';
     document.getElementById('messungstypUnit').value  = '';
-    document.getElementById('messungstypCalc').value  = 'best';
     document.getElementById('messungstypSort').value  = '1';
   }
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalMessungstyp')).show();
 };
 
 window.messungstypSpeichern = async function() {
-  const name   = document.getElementById('messungstypName').value.trim();
-  const katId  = document.getElementById('messungstypKatId').value;
-  const unit   = document.getElementById('messungstypUnit').value.trim();
-  const calc   = document.getElementById('messungstypCalc').value;
-  const sort   = parseInt(document.getElementById('messungstypSort').value) || 1;
-  const err    = document.getElementById('messungstypError');
+  const name      = document.getElementById('messungstypName').value.trim();
+  const katId     = document.getElementById('messungstypKatId').value;
+  const unit      = document.getElementById('messungstypUnit').value.trim();
+  const calcId    = document.getElementById('messungstypCalcId').value;
+  const sort      = parseInt(document.getElementById('messungstypSort').value) || 1;
+  const err       = document.getElementById('messungstypError');
   err.classList.add('d-none');
-  if (!name)  { err.classList.remove('d-none'); err.textContent = 'Name ist erforderlich.'; return; }
-  if (!katId) { err.classList.remove('d-none'); err.textContent = 'Skill-Kategorie ist erforderlich.'; return; }
-  if (!unit)  { err.classList.remove('d-none'); err.textContent = 'Einheit ist erforderlich.'; return; }
+  if (!name)   { err.classList.remove('d-none'); err.textContent = 'Name ist erforderlich.'; return; }
+  if (!katId)  { err.classList.remove('d-none'); err.textContent = 'Skill-Kategorie ist erforderlich.'; return; }
+  if (!unit)   { err.classList.remove('d-none'); err.textContent = 'Einheit ist erforderlich.'; return; }
+  if (!calcId) { err.classList.remove('d-none'); err.textContent = 'Berechnungsmethode ist erforderlich.'; return; }
   const tid = window._currentTenantId;
   const { doc, setDoc, collection, addDoc, serverTimestamp } = window._firestoreAPI;
   const existingId = document.getElementById('messungstypId').value;
   try {
     if (existingId) {
       await setDoc(doc(window._firestoreDB, 'measurement_types', existingId),
-        { name, skill_category_id: katId, unit, calc_method: calc, sort_order: sort, tenant_id: tid },
+        { name, skill_category_id: katId, unit, calc_method_id: calcId, sort_order: sort, tenant_id: tid },
         { merge: true });
     } else {
       await addDoc(collection(window._firestoreDB, 'measurement_types'), {
-        name, skill_category_id: katId, unit, calc_method: calc,
+        name, skill_category_id: katId, unit, calc_method_id: calcId,
         sort_order: sort, active: true,
         tenant_id: tid, created_at: serverTimestamp(),
         created_by: window.currentUserDoc?.uid || '',
