@@ -226,6 +226,9 @@ body{background:#f5f6fa;margin:0}
 /* FOTO */
 .foto-vorschau{width:60px;height:60px;object-fit:cover;border-radius:50%;border:2px solid #c0392b}
 .foto-placeholder-sm{width:60px;height:60px;border-radius:50%;border:2px dashed #ced4da;display:flex;align-items:center;justify-content:center;color:#adb5bd;font-size:1.4rem}
+/* SUPERADMIN: Variablen-Badges (nur sichtbar wenn body.sa-mode) */
+.sa-var{display:none;font-size:.65rem;font-family:monospace;background:#fff3cd;color:#856404;border:1px solid #ffc107;border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:middle;cursor:default;user-select:all}
+body.sa-mode .sa-var{display:inline}
 </style>
 </head>
 <body>
@@ -262,25 +265,25 @@ body{background:#f5f6fa;margin:0}
     </button>
 
     <div class="sb-section-label mt-1">Spieler &amp; Teams</div>
+    <button id="navMannschaften" class="sb-item" onclick="showView('mannschaften')">
+      <i class="bi bi-diagram-3-fill" style="color:#0dcaf0"></i> Mannschaften
+    </button>
     <button id="navSpieler" class="sb-item" onclick="showView('spieler')">
       <i class="bi bi-people-fill"></i> Spieler
     </button>
     <button id="navKarten" class="sb-item" onclick="showView('karten')">
       <i class="bi bi-person-badge-fill"></i> Karten
     </button>
-    <button id="navMannschaften" class="sb-item" onclick="showView('mannschaften')">
-      <i class="bi bi-diagram-3-fill" style="color:#0dcaf0"></i> Mannschaften
-    </button>
 
     <div class="sb-section-label mt-1">Aktivitäten</div>
     <button id="navTraining" class="sb-item" onclick="showView('training')">
       <i class="bi bi-calendar-plus"></i> Training / Spiel
     </button>
-    <button id="navCamp" class="sb-item" onclick="showView('camp')">
-      <i class="bi bi-trophy-fill" style="color:#ffc107"></i> Camp
-    </button>
     <button id="navUebungen" class="sb-item" onclick="showView('uebungen')">
       <i class="bi bi-journal-bookmark-fill"></i> Übungsbibliothek
+    </button>
+    <button id="navCamp" class="sb-item" onclick="showView('camp')">
+      <i class="bi bi-trophy-fill" style="color:#ffc107"></i> Skills &amp; Camp
     </button>
 
     <div class="sb-section-label mt-1">Tools</div>
@@ -296,6 +299,9 @@ body{background:#f5f6fa;margin:0}
     <div class="sb-section-label">Verwaltung</div>
     <button id="navUsers" class="sb-item" onclick="showView('users')">
       <i class="bi bi-shield-lock-fill" style="color:#ffc107"></i> Benutzer &amp; Rollen
+    </button>
+    <button id="navMedia" class="sb-item" onclick="showView('media')">
+      <i class="bi bi-hdd-network-fill" style="color:#0dcaf0"></i> Media Storage
     </button>
   </nav>
 
@@ -458,10 +464,10 @@ body{background:#f5f6fa;margin:0}
       <div class="col-md-4">
         <div class="fw-bold small text-warning mb-2"><i class="bi bi-hourglass-split me-1"></i>Nächste Schritte</div>
         <ul class="list-unstyled small mb-0">
-          <li class="mb-1">⏳ Spieler-Modell Split (players / player_seasons)</li>
-          <li class="mb-1">⏳ Go-Live: Firestore-Migration (Spieler, Training, Camp)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7</span> Spieler-Modell Split (players / player_seasons) – Firestore-Struktur &amp; Funktionen</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7</span> Media Server: Spielerfotos, Vereinslogos, Übungsbilder via API (kein Firebase Storage)</li>
+          <li class="mb-1">⏳ Go-Live: Firestore-Migration (Datenmigration Spieler, Training, Camp)</li>
           <li class="mb-1">⏳ PPTX-Vorlage mit <code>{{variablen}}</code> fertigstellen &amp; testen</li>
-          <li class="mb-1">⏳ Firebase Storage (Spielerfotos)</li>
         </ul>
       </div>
       <div class="col-md-4">
@@ -993,7 +999,14 @@ body{background:#f5f6fa;margin:0}
               <input type="file" id="pptxTemplateInput" class="form-control form-control-sm" accept=".pptx">
             </div>
             <div id="pptxTemplateStatus" class="alert alert-secondary py-2 small d-none"></div>
-            <button class="btn btn-sm btn-outline-secondary mb-3" onclick="pptxTemplateSpeichern()"><i class="bi bi-cloud-download me-1"></i>Vorlage übernehmen & speichern</button>
+            <div class="d-flex gap-2 flex-wrap mb-3">
+              <button class="btn btn-sm btn-outline-secondary" onclick="pptxTemplateSpeichern()"><i class="bi bi-cloud-download me-1"></i>Vorlage übernehmen & speichern</button>
+              <button class="btn btn-sm btn-outline-success" onclick="pptxStarterGenerieren()"><i class="bi bi-magic me-1"></i>Starter-Vorlage generieren</button>
+            </div>
+            <div class="alert alert-info py-2 small mb-3">
+              <i class="bi bi-lightbulb-fill me-1"></i>
+              <strong>Tipp:</strong> Starter-Vorlage herunterladen → in PowerPoint Design anpassen → hier wieder hochladen.
+            </div>
             <div id="pptxTemplateName" class="small text-muted mb-3"></div>
             <hr>
             <h6 class="fw-bold mb-2"><i class="bi bi-download me-1"></i>Exportieren</h6>
@@ -1146,6 +1159,7 @@ body{background:#f5f6fa;margin:0}
       <li class="nav-item"><button class="nav-link" id="campTabKartenBtn" onclick="showCampTab('karten')"><i class="bi bi-person-badge-fill me-1"></i>Karten</button></li>
       <li class="nav-item"><button class="nav-link" id="campTabTeamsBtn" onclick="showCampTab('teams')"><i class="bi bi-heart-fill text-danger me-1"></i>Teams</button></li>
       <li class="nav-item"><button class="nav-link" id="campTabFarbenBtn" onclick="showCampTab('farben')"><i class="bi bi-palette-fill me-1"></i>Farben</button></li>
+      <li class="nav-item"><button class="nav-link" id="campTabSchussBtn" onclick="showCampTab('schuss')"><i class="bi bi-lightning-fill text-warning me-1"></i>Schuss-Analyse</button></li>
     </ul>
 
     <!-- Spieler-Tab -->
@@ -1184,6 +1198,292 @@ body{background:#f5f6fa;margin:0}
   </div>
 
   <!-- Farben-Tab -->
+  <!-- ══ SCHUSS-ANALYSE PANEL ══════════════════════════════════ -->
+  <div id="campPanelSchuss" style="display:none">
+    <div class="row g-3">
+
+      <!-- LINKE SPALTE: Video + Player + Marker -->
+      <div class="col-lg-7">
+
+        <!-- Upload / Kamera Card -->
+        <div class="card shadow-sm mb-3">
+          <div class="card-header bg-dark text-white py-2 d-flex justify-content-between align-items-center">
+            <span class="fw-bold"><i class="bi bi-camera-video-fill me-2"></i>Video laden</span>
+            <span class="badge bg-warning text-dark">Mobile-freundlich</span>
+          </div>
+          <div class="card-body p-3">
+            <div id="ssaUploadPrompt" class="text-center py-4" style="border:2px dashed #dee2e6;border-radius:10px;cursor:pointer" onclick="document.getElementById('ssaFileInput').click()">
+              <div style="font-size:2.5rem">🎥</div>
+              <div class="fw-bold mt-1">Video tippen zum Hochladen</div>
+              <div class="text-muted small">oder Kamera verwenden</div>
+              <input type="file" id="ssaFileInput" accept="video/*" style="display:none" onchange="ssaHandleFile(this)">
+            </div>
+            <div class="d-flex gap-2 mt-2 flex-wrap">
+              <button class="btn btn-dark btn-sm flex-fill" onclick="document.getElementById('ssaFileInput').click()">
+                <i class="bi bi-upload me-1"></i>Video hochladen
+              </button>
+              <button class="btn btn-outline-dark btn-sm flex-fill" onclick="ssaStartCamera()">
+                <i class="bi bi-camera-fill me-1"></i>Kamera öffnen
+              </button>
+              <button id="ssaRecordBtn" class="btn btn-danger btn-sm flex-fill" style="display:none" onclick="ssaToggleRecord()">
+                <i class="bi bi-record-circle me-1"></i>Aufnahme starten
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Video Player Card -->
+        <div id="ssaVideoWrap" class="card shadow-sm mb-3" style="display:none">
+          <div class="card-header bg-dark text-white py-2">
+            <span class="fw-bold"><i class="bi bi-play-circle-fill me-2"></i>Video Player</span>
+          </div>
+          <div class="card-body p-2">
+            <!-- Video -->
+            <div style="position:relative;background:#000;border-radius:8px;overflow:hidden">
+              <video id="ssaVideo" style="width:100%;max-height:320px;display:block;object-fit:contain"
+                ontimeupdate="ssaOnTimeUpdate()" onloadedmetadata="ssaOnLoaded()"></video>
+              <!-- Zoom Overlay -->
+              <div id="ssaZoomOverlay" style="display:none;position:absolute;inset:0;cursor:zoom-in;background:rgba(0,0,0,.5);align-items:center;justify-content:center">
+                <span style="color:#fff;font-size:.8rem">🔍 Zoom aktiv – scrollen zum Zoomen</span>
+              </div>
+            </div>
+
+            <!-- Timeline Canvas -->
+            <div class="mt-2 px-1">
+              <canvas id="ssaTimeline" height="32" style="width:100%;border-radius:4px;cursor:pointer" onclick="ssaTimelineClick(event)"></canvas>
+              <div class="d-flex justify-content-between mt-1">
+                <span id="ssaCurrentTime" class="text-muted" style="font-size:.72rem">0.000s / 0.000s</span>
+                <span id="ssaDuration" class="text-muted" style="font-size:.72rem"></span>
+              </div>
+            </div>
+
+            <!-- Slider -->
+            <input type="range" id="ssaSlider" class="form-range mt-1" min="0" max="100" step="0.1" value="0" oninput="ssaSeek(this)">
+
+            <!-- Controls Row 1: Play + Frame + Speed -->
+            <div class="d-flex align-items-center gap-2 mt-2 flex-wrap">
+              <button class="btn btn-sm btn-outline-secondary" onclick="ssaFrameStep(-1)" title="1 Frame zurück"><i class="bi bi-skip-backward-fill"></i></button>
+              <button class="btn btn-sm btn-dark" id="ssaPlayBtn" onclick="ssaTogglePlay()"><i class="bi bi-play-fill"></i></button>
+              <button class="btn btn-sm btn-outline-secondary" onclick="ssaFrameStep(1)" title="1 Frame vor"><i class="bi bi-skip-forward-fill"></i></button>
+              <div class="vr mx-1"></div>
+              <span class="text-muted small">Speed:</span>
+              <button class="btn btn-xs btn-outline-dark ssa-speed-btn py-0 px-2" style="font-size:.72rem" data-rate="0.25" onclick="ssaSetSpeed(0.25)">0.25×</button>
+              <button class="btn btn-xs btn-outline-dark ssa-speed-btn py-0 px-2" style="font-size:.72rem" data-rate="0.5" onclick="ssaSetSpeed(0.5)">0.5×</button>
+              <button class="btn btn-xs btn-dark ssa-speed-btn py-0 px-2" style="font-size:.72rem" data-rate="1" onclick="ssaSetSpeed(1)">1×</button>
+              <button class="btn btn-xs btn-outline-dark ssa-speed-btn py-0 px-2" style="font-size:.72rem" data-rate="2" onclick="ssaSetSpeed(2)">2×</button>
+              <div class="vr mx-1"></div>
+              <button class="btn btn-sm btn-outline-secondary" onclick="ssaToggleZoom()" title="Zoom"><i class="bi bi-zoom-in"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Marker Card -->
+        <div id="ssaMarkerCard" class="card shadow-sm mb-3" style="display:none">
+          <div class="card-header bg-dark text-white py-2 d-flex justify-content-between align-items-center">
+            <span class="fw-bold"><i class="bi bi-flag-fill me-2"></i>Marker setzen</span>
+            <button id="ssaAutoBtn" class="btn btn-warning btn-sm" onclick="ssaAutoDetect()">
+              <i class="bi bi-robot me-1"></i>Auto Detect
+            </button>
+          </div>
+          <div class="card-body p-3">
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <button class="btn btn-success w-100" onclick="ssaSetMarker('start')">
+                  <i class="bi bi-record-fill me-1"></i>⚽ Ballkontakt setzen
+                </button>
+                <div class="d-flex align-items-center gap-2 mt-1">
+                  <span id="ssaMarkerStartBadge" class="badge bg-secondary">nicht gesetzt</span>
+                  <span id="ssaMarkerStartDisp" class="small text-muted">—</span>
+                </div>
+              </div>
+              <div class="col-6">
+                <button class="btn btn-danger w-100" onclick="ssaSetMarker('end')">
+                  <i class="bi bi-record-fill me-1"></i>🥅 Tor/Netz setzen
+                </button>
+                <div class="d-flex align-items-center gap-2 mt-1">
+                  <span id="ssaMarkerEndBadge" class="badge bg-secondary">nicht gesetzt</span>
+                  <span id="ssaMarkerEndDisp" class="small text-muted">—</span>
+                </div>
+              </div>
+            </div>
+            <!-- Distanz + Berechnen -->
+            <div class="d-flex gap-2 align-items-end flex-wrap">
+              <div class="flex-fill" style="min-width:140px">
+                <label class="form-label small fw-bold mb-1">Distanz</label>
+                <select class="form-select form-select-sm" id="ssaDistSel" onchange="ssaUpdateDist()">
+                  <option value="11">11m (Elfmeter)</option>
+                  <option value="16.5">16.5m (Strafraum)</option>
+                  <option value="20">20m</option>
+                  <option value="custom">Eigene Distanz</option>
+                </select>
+              </div>
+              <div id="ssaDistCustomWrap" style="display:none;min-width:90px">
+                <label class="form-label small fw-bold mb-1">Meter</label>
+                <input type="number" id="ssaDistCustom" class="form-control form-control-sm" value="11" min="1" max="50" onchange="ssaUpdateDist()">
+              </div>
+              <button class="btn btn-dark" onclick="ssaCalculate()">
+                <i class="bi bi-lightning-fill me-1"></i>Berechnen
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RECHTE SPALTE: Ergebnis + Guide + History -->
+      <div class="col-lg-5">
+
+        <!-- Ergebnis Card -->
+        <div id="ssaResultWrap" class="card shadow-sm mb-3" style="display:none">
+          <div class="card-header py-2" style="background:linear-gradient(135deg,#1a1a2e,#c0392b);color:#fff">
+            <span class="fw-bold"><i class="bi bi-speedometer2 me-2"></i>Ergebnis</span>
+          </div>
+          <div class="card-body p-3 text-center">
+            <div style="font-size:3.5rem;font-weight:900;line-height:1" id="ssaResultSpeed" class="text-danger">—</div>
+            <div class="text-muted fw-bold mb-2">km/h</div>
+            <!-- Gauge -->
+            <div style="height:12px;background:#e9ecef;border-radius:6px;overflow:hidden;margin-bottom:8px">
+              <div id="ssaGaugeBar" style="height:100%;width:0%;background:#198754;border-radius:6px;transition:width .6s ease"></div>
+            </div>
+            <div class="d-flex justify-content-center gap-1 mb-1" style="font-size:.65rem;color:#adb5bd">
+              <span>0</span><span class="mx-auto">75</span><span>150</span>
+            </div>
+            <div class="mb-2">
+              <span class="text-muted small">Zeit: </span>
+              <span id="ssaResultTime" class="fw-bold small">—</span>
+            </div>
+            <div class="mb-3">
+              <span class="text-muted small">Konfidenz: </span>
+              <span id="ssaConfBadge" class="badge bg-secondary">—</span>
+            </div>
+            <div class="d-flex gap-2 justify-content-center flex-wrap">
+              <button id="ssaSaveToCalcBtn" class="btn btn-success btn-sm" onclick="ssaSaveToCalc()" style="display:none">
+                <i class="bi bi-calculator-fill me-1"></i>→ Skill Calculator
+              </button>
+              <button id="ssaSaveToPlayerBtn" class="btn btn-dark btn-sm" onclick="ssaSaveToPlayer()" style="display:none">
+                <i class="bi bi-person-check-fill me-1"></i>→ Zu Spieler
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Versuche History -->
+        <div class="card shadow-sm mb-3">
+          <div class="card-header bg-dark text-white py-2 d-flex justify-content-between align-items-center">
+            <span class="fw-bold"><i class="bi bi-list-ol me-2"></i>Versuche</span>
+            <button class="btn btn-outline-light btn-sm py-0" onclick="ssaAttempts=[];ssaRenderAttempts()">Reset</button>
+          </div>
+          <div class="card-body p-2" id="ssaAttemptsList">
+            <p class="text-muted small p-2 mb-0">Noch keine Versuche. Berechne deine erste Schussgeschwindigkeit!</p>
+          </div>
+        </div>
+
+        <!-- Save to Player -->
+        <div class="card shadow-sm mb-3" id="ssaPlayerSaveCard" style="display:none">
+          <div class="card-header bg-success text-white py-2">
+            <span class="fw-bold"><i class="bi bi-person-check-fill me-2"></i>Zu Spieler speichern</span>
+          </div>
+          <div class="card-body p-3">
+            <label class="form-label small fw-bold">Spieler auswählen</label>
+            <select class="form-select form-select-sm mb-2" id="ssaPlayerSel">
+              <option value="">— Spieler auswählen —</option>
+            </select>
+            <button class="btn btn-success w-100 btn-sm" onclick="ssaConfirmSaveToPlayerWithUpload()">
+              <i class="bi bi-save me-1"></i>SHOOT-Wert speichern
+            </button>
+          </div>
+        </div>
+
+        <!-- Visual Guide Card -->
+        <div class="card shadow-sm">
+          <div class="card-header py-2" style="background:#1a2e4a;color:#fff">
+            <span class="fw-bold"><i class="bi bi-camera-fill me-2"></i>So filmst du richtig</span>
+          </div>
+          <div class="card-body p-3">
+
+            <!-- SVG Top-Down Field Guide -->
+            <svg viewBox="0 0 340 220" style="width:100%;border-radius:8px;background:#2d8a4e;display:block">
+              <!-- Field lines -->
+              <rect x="20" y="10" width="300" height="200" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="1.5" rx="2"/>
+              <!-- Center line -->
+              <line x1="20" y1="110" x2="320" y2="110" stroke="rgba(255,255,255,.3)" stroke-width="1" stroke-dasharray="4,4"/>
+              <!-- Center circle -->
+              <circle cx="170" cy="110" r="28" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1"/>
+              <!-- Goal (top) -->
+              <rect x="140" y="10" width="60" height="14" fill="#fff" opacity=".9" rx="2"/>
+              <text x="170" y="21" text-anchor="middle" font-size="7" fill="#1a1a2e" font-weight="700">TOR</text>
+              <!-- Penalty area -->
+              <rect x="100" y="10" width="140" height="44" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="1"/>
+              <!-- Penalty spot -->
+              <circle cx="170" cy="65" r="2.5" fill="#fff" opacity=".8"/>
+
+              <!-- Ball trajectory (11m shot) -->
+              <line x1="170" y1="165" x2="170" y2="24" stroke="#ffd700" stroke-width="2.5" stroke-dasharray="5,3" marker-end="url(#arrowGold)"/>
+              <!-- Ball icon -->
+              <circle cx="170" cy="168" r="8" fill="#fff" stroke="#333" stroke-width="1.5"/>
+              <circle cx="170" cy="168" r="5" fill="none" stroke="#555" stroke-width=".8"/>
+
+              <!-- Player -->
+              <circle cx="170" cy="185" r="7" fill="#e74c3c" stroke="#fff" stroke-width="1.5"/>
+              <text x="170" y="189" text-anchor="middle" font-size="7" fill="#fff" font-weight="700">P</text>
+
+              <!-- ✅ BEST: Side Camera (90°) -->
+              <g>
+                <rect x="328" y="155" width="10" height="7" fill="#2ecc71" rx="1.5"/>
+                <polygon points="338,156.5 344,154 344,164 338,161.5" fill="#2ecc71"/>
+                <line x1="338" y1="159" x2="170" y2="168" stroke="#2ecc71" stroke-width="1" stroke-dasharray="3,3" opacity=".7"/>
+                <text x="344" y="152" font-size="7" fill="#2ecc71" font-weight="700">🥇 90°</text>
+                <!-- Angle arc -->
+                <path d="M170,168 L175,140 A5,5 0 0,1 185,168" fill="none" stroke="#2ecc71" stroke-width="1" opacity=".5"/>
+              </g>
+
+              <!-- ✅ OK: Behind goal -->
+              <g>
+                <rect x="165" y="2" width="10" height="7" fill="#f39c12" rx="1.5"/>
+                <polygon points="165,3 159,1 159,8 165,6" fill="#f39c12"/>
+                <line x1="165" y1="5.5" x2="170" y2="24" stroke="#f39c12" stroke-width="1" stroke-dasharray="3,3" opacity=".7"/>
+                <text x="182" y="9" font-size="7" fill="#f39c12" font-weight="700">🥈 hinter Tor</text>
+              </g>
+
+              <!-- ❌ BAD: Angled -->
+              <g>
+                <rect x="4" y="70" width="10" height="7" fill="#e74c3c" rx="1.5"/>
+                <polygon points="14,71 20,68 20,79 14,76" fill="#e74c3c"/>
+                <line x1="14" y1="74" x2="170" y2="168" stroke="#e74c3c" stroke-width="1" stroke-dasharray="2,4" opacity=".6"/>
+                <text x="2" y="66" font-size="7" fill="#e74c3c" font-weight="700">❌ schräg</text>
+              </g>
+
+              <!-- Arrow defs -->
+              <defs>
+                <marker id="arrowGold" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                  <polygon points="0,0 6,3 0,6" fill="#ffd700"/>
+                </marker>
+              </defs>
+            </svg>
+
+            <!-- Legend -->
+            <div class="mt-2 row g-1">
+              <div class="col-12">
+                <div class="alert alert-success py-1 px-2 mb-1" style="font-size:.75rem">
+                  <strong>🥇 Beste Position:</strong> Kamera <strong>seitlich (90°)</strong> zur Schussrichtung — misst Distanz und Flugzeit exakt.
+                </div>
+                <div class="alert alert-warning py-1 px-2 mb-1" style="font-size:.75rem">
+                  <strong>🥈 Alternative:</strong> Hinter dem Tor — sieht Torschuss gut, aber Distanz-Schätzung ungenauer.
+                </div>
+                <div class="alert alert-danger py-1 px-2 mb-0" style="font-size:.75rem">
+                  <strong>❌ Schlecht:</strong> Schräger Winkel — verfälscht die gemessene Distanz deutlich.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div><!-- /visual guide -->
+
+      </div><!-- /rechte spalte -->
+    </div><!-- /row -->
+
+    <!-- Hidden Canvas for Motion Detection -->
+    <canvas id="ssaMotionCanvas" style="display:none"></canvas>
+  </div><!-- /campPanelSchuss -->
+
   <div id="campPanelFarben" style="display:none">
     <div class="card shadow-sm p-4">
       <div class="d-flex justify-content-between align-items-center mb-3">
@@ -1244,7 +1544,7 @@ body{background:#f5f6fa;margin:0}
     <div class="card shadow-sm p-4 mb-4">
       <div class="row g-3">
         <div class="col-md-3">
-          <label class="form-label fw-bold">Datum</label>
+          <label class="form-label fw-bold">Datum<span class="sa-var">{{datum}}</span></label>
           <input type="date" id="trDatum" class="form-control" oninput="updateTrainingsName()">
         </div>
         <div class="col-md-3">
@@ -1261,7 +1561,7 @@ body{background:#f5f6fa;margin:0}
           </div>
         </div>
         <div class="col-md-6">
-          <label class="form-label fw-bold">Name</label>
+          <label class="form-label fw-bold">Name<span class="sa-var">{{schwerpunkt}}</span></label>
           <input type="text" id="trName" class="form-control" placeholder="Training – Mi, 17.06.2026">
         </div>
 
@@ -1288,11 +1588,11 @@ body{background:#f5f6fa;margin:0}
         </div>
 
         <div class="col-md-3">
-          <label class="form-label fw-bold"><i class="bi bi-clock-fill text-success me-1"></i>Beginn</label>
+          <label class="form-label fw-bold"><i class="bi bi-clock-fill text-success me-1"></i>Beginn<span class="sa-var">{{beginn}}</span> <span class="sa-var">{{beginn_ende}}</span></label>
           <div class="time-input-group"><i class="bi bi-play-fill"></i><input type="text" id="trBeginn" class="form-control" placeholder="18:00"></div>
         </div>
         <div class="col-md-3">
-          <label class="form-label fw-bold"><i class="bi bi-clock-fill text-danger me-1"></i>Ende</label>
+          <label class="form-label fw-bold"><i class="bi bi-clock-fill text-danger me-1"></i>Ende<span class="sa-var">{{ende}}</span></label>
           <div class="time-input-group"><i class="bi bi-stop-fill"></i><input type="text" id="trEnde" class="form-control" placeholder="20:00"></div>
         </div>
         <div class="col-md-3">
@@ -1304,11 +1604,11 @@ body{background:#f5f6fa;margin:0}
           <div class="time-input-group"><i class="bi bi-flag-fill"></i><input type="text" id="trVorEnde" class="form-control" placeholder="20:30"></div>
         </div>
         <div class="col-md-4">
-          <label class="form-label fw-bold"><i class="bi bi-geo-alt-fill text-warning me-1"></i>Ort / Platz</label>
+          <label class="form-label fw-bold"><i class="bi bi-geo-alt-fill text-warning me-1"></i>Ort / Platz<span class="sa-var">{{ort}}</span></label>
           <input type="text" id="trOrt" class="form-control" placeholder="Stadion Bärnbach">
         </div>
         <div class="col-md-2">
-          <label class="form-label fw-bold">Belastung</label>
+          <label class="form-label fw-bold">Belastung<span class="sa-var">{{belastung}}</span></label>
           <select id="trBelastung" class="form-select">
             <option value="">—</option>
             <option value="leicht">Leicht</option>
@@ -1317,15 +1617,15 @@ body{background:#f5f6fa;margin:0}
           </select>
         </div>
         <div class="col-md-3">
-          <label class="form-label fw-bold"><i class="bi bi-person-fill me-1"></i>Trainer (kommagetrennt)</label>
+          <label class="form-label fw-bold"><i class="bi bi-person-fill me-1"></i>Trainer (kommagetrennt)<span class="sa-var">{{trainer}}</span></label>
           <input type="text" id="trTrainer" class="form-control" placeholder="W. Zotter, L. Rabitsch">
         </div>
         <div class="col-md-3">
-          <label class="form-label fw-bold">Sonstiges</label>
+          <label class="form-label fw-bold">Sonstiges<span class="sa-var">{{sonstiges}}</span></label>
           <input type="text" id="trSonstiges" class="form-control" placeholder="z.B. Geburtstag Ferdi">
         </div>
         <div class="col-12">
-          <label class="form-label fw-bold">Notiz zum Training</label>
+          <label class="form-label fw-bold">Notiz zum Training<span class="sa-var">{{notiz}}</span></label>
           <textarea id="trNotiz" class="form-control" rows="2" placeholder="Allgemeine Notizen, Besonderheiten …"></textarea>
         </div>
         <div class="col-12">
@@ -1344,6 +1644,7 @@ body{background:#f5f6fa;margin:0}
           <button class="btn btn-outline-secondary btn-sm" onclick="openAbschnittModal()"><i class="bi bi-plus-circle"></i> Abschnitt</button>
           <button class="btn btn-outline-secondary btn-sm" onclick="openUebungPicker()"><i class="bi bi-journal-bookmark-fill me-1"></i>Aus Bibliothek</button>
           <button class="btn btn-dark btn-sm" onclick="openUebungEditorFuerTraining()"><i class="bi bi-plus-circle-fill"></i> Neue Übung</button>
+          <button class="btn btn-outline-warning btn-sm" onclick="createMustertraining()"><i class="bi bi-stars me-1"></i>Mustertraining</button>
         </div>
       </div>
       <div id="abschnitteChips" class="mb-3 d-flex flex-wrap gap-1"></div>
@@ -1360,7 +1661,7 @@ body{background:#f5f6fa;margin:0}
     <!-- ANWESENHEIT -->
     <div class="card shadow-sm p-3 mt-3" id="trAnwesenheitCard">
       <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <h5 class="mb-0"><i class="bi bi-person-check-fill me-2 text-success"></i>Anwesenheit</h5>
+        <h5 class="mb-0"><i class="bi bi-person-check-fill me-2 text-success"></i>Anwesenheit<span class="sa-var">{{spieleranzahl}}</span></h5>
         <div class="d-flex gap-2 align-items-center">
           <span class="badge bg-success" id="anwBadgeJa">0 ✔</span>
           <span class="badge bg-warning text-dark" id="anwBadgeUnklar">0 ❓</span>
@@ -1496,6 +1797,89 @@ body{background:#f5f6fa;margin:0}
   <div id="usersPanelRollen" style="display:none">
     <div class="d-flex justify-content-end mb-3"><div class="edit"><button class="btn btn-dark btn-sm" onclick="openRolleModal(null)"><i class="bi bi-plus-circle me-1"></i>Neue Rolle</button></div></div>
     <div id="usersRollenContent"><div class="text-center py-5 text-muted"><div class="spinner-border mb-2"></div><br>Rollen werden geladen…</div></div>
+  </div>
+</div>
+
+<!-- ===== MEDIA STORAGE ===== -->
+<div id="viewMedia" class="container-fluid p-4" style="display:none">
+  <div class="d-flex align-items-center mb-4 gap-3">
+    <div>
+      <h4 class="mb-0"><i class="bi bi-hdd-network-fill text-info me-2"></i>Media Storage</h4>
+      <p class="text-muted mb-0 mt-1">Eigener Medienserver für Videos, Thumbnails &amp; Spielerbilder</p>
+    </div>
+  </div>
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-dark text-white d-flex align-items-center gap-2">
+          <i class="bi bi-gear-fill"></i><span class="fw-bold">Server Einstellungen</span>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Server URL</label>
+            <input type="url" id="mediaServerUrl" class="form-control" placeholder="http://localhost:4000">
+            <div class="form-text">z.B. <code>https://media.deinserver.at</code> — ohne abschließenden /</div>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-dark" onclick="mediaServerSave()"><i class="bi bi-save me-1"></i>Speichern</button>
+            <button class="btn btn-outline-info" onclick="mediaServerTest()"><i class="bi bi-wifi me-1"></i>Verbindung testen</button>
+            <button class="btn btn-outline-secondary" onclick="mediaServerCheckFolders()"><i class="bi bi-folder-check me-1"></i>Ordner prüfen</button>
+          </div>
+          <div id="mediaServerStatus" class="mt-3"></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-dark text-white d-flex align-items-center gap-2">
+          <i class="bi bi-bar-chart-fill"></i><span class="fw-bold">Speicher-Statistiken</span>
+        </div>
+        <div class="card-body">
+          <div id="mediaStorageStats" class="text-muted small">Noch nicht geladen.</div>
+          <button class="btn btn-outline-secondary btn-sm mt-3" onclick="mediaLoadStats()"><i class="bi bi-arrow-clockwise me-1"></i>Statistiken laden</button>
+        </div>
+      </div>
+    </div>
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-dark text-white d-flex align-items-center gap-2">
+          <i class="bi bi-terminal-fill"></i><span class="fw-bold">Setup &amp; Deployment</span>
+        </div>
+        <div class="card-body small">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <h6 class="fw-bold">1. Media Server starten</h6>
+              <pre class="bg-dark text-light rounded p-2 small">cd media-server
+npm install
+npm start</pre>
+              <p class="text-muted">Server läuft dann auf Port 4000 (oder via <code>PORT</code> env).</p>
+            </div>
+            <div class="col-md-6">
+              <h6 class="fw-bold">2. Umgebungsvariablen</h6>
+              <pre class="bg-dark text-light rounded p-2 small">BASE_URL=https://media.example.at
+CORS_ORIGIN=https://matchflow.example.at
+PORT=4000</pre>
+            </div>
+            <div class="col-md-6">
+              <h6 class="fw-bold">3. Firebase Cloud Function deployen</h6>
+              <pre class="bg-dark text-light rounded p-2 small">cd functions && npm install
+firebase deploy --only functions
+firebase functions:config:set \
+  media.server_url="https://media.example.at"</pre>
+            </div>
+            <div class="col-md-6">
+              <h6 class="fw-bold">4. Funktionsweise</h6>
+              <ul class="text-muted mb-0">
+                <li>Videos werden nach <strong>48 Stunden</strong> automatisch gelöscht</li>
+                <li>Screenshots bleiben dauerhaft gespeichert</li>
+                <li>Täglicher Cron-Job um 03:00 Uhr (Server) und Firebase Function (24h)</li>
+                <li>Firestore Collection: <code>shot_measurements</code></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2010,15 +2394,15 @@ body{background:#f5f6fa;margin:0}
       <div class="modal-body">
         <div class="row g-3">
           <div class="col-md-4">
-            <label class="form-label fw-bold">Abschnitt</label>
+            <label class="form-label fw-bold">Abschnitt<span class="sa-var">{{uN_abschnitt}}</span></label>
             <select id="tdAbschnitt" class="form-select"></select>
           </div>
           <div class="col-md-6">
-            <label class="form-label fw-bold">Übungsname</label>
+            <label class="form-label fw-bold">Übungsname<span class="sa-var">{{uN_name}}</span></label>
             <input type="text" id="tdName" class="form-control" placeholder="z. B. Passen in Dreiecken">
           </div>
           <div class="col-md-2">
-            <label class="form-label fw-bold">Dauer (Min)</label>
+            <label class="form-label fw-bold">Dauer (Min)<span class="sa-var">{{uN_dauer}}</span></label>
             <input type="number" id="tdDauer" class="form-control" value="10" min="1">
           </div>
 
@@ -2037,7 +2421,7 @@ body{background:#f5f6fa;margin:0}
 
           <!-- Externe Links -->
           <div class="col-12">
-            <label class="form-label fw-bold"><i class="bi bi-link-45deg me-1"></i>Externe Links <small class="text-muted fw-normal">(z. B. advance.football)</small></label>
+            <label class="form-label fw-bold"><i class="bi bi-link-45deg me-1"></i>Externe Links <small class="text-muted fw-normal">(z. B. advance.football)</small><span class="sa-var">{{uN_link}}</span></label>
             <div id="tdLinksContainer">
               <div class="input-group mb-2">
                 <input type="url" class="form-control td-link-input" placeholder="https://training.advance.football/…">
@@ -2060,7 +2444,7 @@ body{background:#f5f6fa;margin:0}
 
           <!-- Beschreibung WYSIWYG -->
           <div class="col-12">
-            <label class="form-label fw-bold"><i class="bi bi-pencil-square me-1"></i>Beschreibung</label>
+            <label class="form-label fw-bold"><i class="bi bi-pencil-square me-1"></i>Beschreibung<span class="sa-var">{{uN_beschreibung}}</span></label>
             <div id="quillTDEditor" style="min-height:140px"></div>
           </div>
 
@@ -2513,6 +2897,7 @@ body{background:#f5f6fa;margin:0}
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/de.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 
 <script>
 // ══════════════════════════════════════════════════════════════
@@ -2560,10 +2945,12 @@ let trainingsListe = [
     heimMode:true, heimName:'ATUS Bärnbach', gastName:'',
     notiz:'Fokus auf Passgenauigkeit und Gegenpressing.',
     details:[
-      { id:'td1', abschnitt:'Einleitung',    name:'Aufwärmen – Kreisspiel',   dauer:10, youtubeUrl:'', beschreibung:'<p>Kreisspiel mit 1-2 Kontakten. Alle Spieler im Kreis, ein Ball. Variation: 3 Kontakte erlaubt.</p>', links:[], fileBlobUrl:null, fileName:null, tkItems:[] },
-      { id:'td2', abschnitt:'Hauptteil (1)', name:'Passen in Dreiecken',      dauer:15, youtubeUrl:'', beschreibung:'', links:['https://training.advance.football/programs/wettrennen-auf-2-gegen-1'], fileBlobUrl:null, fileName:null, tkItems:[] },
-      { id:'td3', abschnitt:'Technik',       name:'Dribbling mit Hütchen',    dauer:20, youtubeUrl:'https://www.youtube.com/watch?v=dQw4w9WgXcQ', beschreibung:'<p>Parcours mit 6 Hütchen, Slalom, dann Abschluss auf Tor.</p>', links:[], fileBlobUrl:null, fileName:null, tkItems:[] },
-      { id:'td4', abschnitt:'Ende',          name:'Abschluss-Spiel 4 vs 4',   dauer:15, youtubeUrl:'', beschreibung:'<p>Freies Spiel auf zwei Minitore. Fokus auf schnelles Umschalten.</p>', links:[], fileBlobUrl:null, fileName:null, tkItems:[] },
+      { id:'td1', abschnitt:'Einleitung',    name:'Passspiel in Dreiecken',    dauer:15, youtubeUrl:'', beschreibung:'<p>3 Spieler bilden ein Dreieck und passen sich den Ball zu. Variation: 1-2 Kontakte.</p>', links:['https://training.advance.football/programs/passspiel-dreiecke'], fileBlobUrl:null, fileName:null, tkItems:[] },
+      { id:'td2', abschnitt:'Einleitung',    name:'Dribbling durch Hütchengasse', dauer:10, youtubeUrl:'', beschreibung:'<p>Spieler dribbeln im Slalom durch aufgestellte Hütchen. Variation: linker/rechter Fuß abwechselnd.</p>', links:[], fileBlobUrl:null, fileName:null, tkItems:[] },
+      { id:'td3', abschnitt:'Hauptteil (1)', name:'4 gegen 2 Rondo',           dauer:15, youtubeUrl:'https://www.youtube.com/watch?v=9bZkp7q19f0', beschreibung:'<p>4 Spieler außen gegen 2 in der Mitte. Die Außenspieler halten den Ball. Wer verliert, geht in die Mitte.</p>', links:[], fileBlobUrl:null, fileName:null, tkItems:[] },
+      { id:'td4', abschnitt:'Hauptteil (1)', name:'Sprinttreppen – 30m',       dauer:12, youtubeUrl:'', beschreibung:'<p>Spieler sprinten auf Signal 30m. Pause 60 Sek. 5-8 Wiederholungen.</p>', links:[], fileBlobUrl:null, fileName:null, tkItems:[] },
+      { id:'td5', abschnitt:'Hauptteil (2)', name:'Torabschluss nach Flanke',  dauer:20, youtubeUrl:'https://www.youtube.com/watch?v=dQw4w9WgXcQ', beschreibung:'<p>Flanke von der Seite, Stürmer schließt per Kopf oder Volley ab. Flanke links und rechts abwechseln.</p>', links:['https://training.advance.football/programs/flanke-und-abschluss'], fileBlobUrl:null, fileName:null, tkItems:[] },
+      { id:'td6', abschnitt:'Ende',          name:'5 gegen 5 Kleinfeld',       dauer:20, youtubeUrl:'', beschreibung:'<p>Kleinfeldspiel mit normalen Regeln. Tore nur nach Kombination gültig (mind. 3 Pässe).</p>', links:[], fileBlobUrl:null, fileName:null, tkItems:[] },
     ]
   },
   {
@@ -2588,11 +2975,11 @@ let tdFileName    = null;
 
 // ── Übungsbibliothek ──────────────────────────────────────────
 let uebungsDB = [
-  { id:'ue1', name:'Passspiel in Dreiecken', kategorie:'Passspiel', schwierigkeit:'Leicht', alter:'U10', dauer:15, spielerMin:6, spielerMax:12, feld:'15×15m', tags:['Passen','Ballkontrolle'], beschreibung:'3 Spieler bilden ein Dreieck und passen sich den Ball zu. Variation: 1-2 Kontakte.', coaching:'Auf schnelle Ballabgabe und korrektes Anbieten achten.', youtube:'', link:'', verwendungen:0, zuletzt:null },
+  { id:'ue1', name:'Passspiel in Dreiecken', kategorie:'Passspiel', schwierigkeit:'Leicht', alter:'U10', dauer:15, spielerMin:6, spielerMax:12, feld:'15×15m', tags:['Passen','Ballkontrolle'], beschreibung:'3 Spieler bilden ein Dreieck und passen sich den Ball zu. Variation: 1-2 Kontakte.', coaching:'Auf schnelle Ballabgabe und korrektes Anbieten achten.', youtube:'', link:'https://training.advance.football/programs/passspiel-dreiecke', verwendungen:0, zuletzt:null },
   { id:'ue2', name:'Dribbling durch Hütchengasse', kategorie:'Technik', schwierigkeit:'Leicht', alter:'U8', dauer:10, spielerMin:4, spielerMax:16, feld:'20×5m', tags:['Dribbling','Technik'], beschreibung:'Spieler dribbeln im Slalom durch aufgestellte Hütchen. Variation: linker/rechter Fuß abwechselnd.', coaching:'Enges Führen, Blick heben.', youtube:'', link:'', verwendungen:0, zuletzt:null },
-  { id:'ue3', name:'4 gegen 2 Rondo', kategorie:'Taktik', schwierigkeit:'Mittel', alter:'U12', dauer:15, spielerMin:6, spielerMax:9, feld:'10×10m', tags:['Pressing','Ballbesitz','Rondo'], beschreibung:'4 Spieler außen gegen 2 in der Mitte. Die Außenspieler halten den Ball. Wer verliert, geht in die Mitte.', coaching:'Schnelles Umschalten, Kommunikation.', youtube:'', link:'', verwendungen:0, zuletzt:null },
+  { id:'ue3', name:'4 gegen 2 Rondo', kategorie:'Taktik', schwierigkeit:'Mittel', alter:'U12', dauer:15, spielerMin:6, spielerMax:9, feld:'10×10m', tags:['Pressing','Ballbesitz','Rondo'], beschreibung:'4 Spieler außen gegen 2 in der Mitte. Die Außenspieler halten den Ball. Wer verliert, geht in die Mitte.', coaching:'Schnelles Umschalten, Kommunikation.', youtube:'https://www.youtube.com/watch?v=9bZkp7q19f0', link:'', verwendungen:0, zuletzt:null },
   { id:'ue4', name:'Sprinttreppen – 30m', kategorie:'Kondition', schwierigkeit:'Mittel', alter:'Alle', dauer:12, spielerMin:2, spielerMax:20, feld:'30m Linie', tags:['Sprint','Kondition','Schnelligkeit'], beschreibung:'Spieler sprinten auf Signal 30m. Pause 60 Sek. 5-8 Wiederholungen.', coaching:'Startposition, Armeinsatz.', youtube:'', link:'', verwendungen:0, zuletzt:null },
-  { id:'ue5', name:'Torabschluss nach Flanke', kategorie:'Torschuss', schwierigkeit:'Mittel', alter:'U12', dauer:20, spielerMin:6, spielerMax:14, feld:'Strafraum', tags:['Torschuss','Flanke','Kopfball'], beschreibung:'Flanke von der Seite, Stürmer schließt per Kopf oder Volley ab. Flanke links und rechts abwechseln.', coaching:'Timing des Einlaufens, Abstimmung Flanker-Stürmer.', youtube:'', link:'', verwendungen:0, zuletzt:null },
+  { id:'ue5', name:'Torabschluss nach Flanke', kategorie:'Torschuss', schwierigkeit:'Mittel', alter:'U12', dauer:20, spielerMin:6, spielerMax:14, feld:'Strafraum', tags:['Torschuss','Flanke','Kopfball'], beschreibung:'Flanke von der Seite, Stürmer schließt per Kopf oder Volley ab. Flanke links und rechts abwechseln.', coaching:'Timing des Einlaufens, Abstimmung Flanker-Stürmer.', youtube:'https://www.youtube.com/watch?v=dQw4w9WgXcQ', link:'https://training.advance.football/programs/flanke-und-abschluss', verwendungen:0, zuletzt:null },
   { id:'ue6', name:'5 gegen 5 Kleinfeld', kategorie:'Spiel', schwierigkeit:'Leicht', alter:'Alle', dauer:20, spielerMin:10, spielerMax:12, feld:'30×20m', tags:['Spiel','Kleinfeld','SSG'], beschreibung:'Kleinfeldspiel mit normalen Regeln. Tore nur nach Kombination gültig (mind. 3 Pässe).', coaching:'Spielfreude fördern, Pressing trainieren.', youtube:'', link:'', verwendungen:0, zuletzt:null },
 ];
 let uebCounter = uebungsDB.length;
@@ -2611,9 +2998,9 @@ let quillTD    = null;
 // ══════════════════════════════════════════════════════════════
 // NAVIGATION
 // ══════════════════════════════════════════════════════════════
-const views  = ['main','spieler','karten','camp','training','uebungen','mannschaften','users','skillcalc'];
-const navMap = { main:'navMain', spieler:'navSpieler', karten:'navKarten', camp:'navCamp', training:'navTraining', uebungen:'navUebungen', mannschaften:'navMannschaften', users:'navUsers', skillcalc:'navSkillcalc' };
-const navTitles = { main:'Dashboard', spieler:'Spieler', karten:'Karten', camp:'Camp', training:'Training / Spiel', uebungen:'Übungsbibliothek', mannschaften:'Mannschaften', users:'Benutzer & Rollen', skillcalc:'Skill Calculator' };
+const views  = ['main','spieler','karten','camp','training','uebungen','mannschaften','users','skillcalc','media'];
+const navMap = { main:'navMain', spieler:'navSpieler', karten:'navKarten', camp:'navCamp', training:'navTraining', uebungen:'navUebungen', mannschaften:'navMannschaften', users:'navUsers', skillcalc:'navSkillcalc', media:'navMedia' };
+const navTitles = { main:'Dashboard', spieler:'Spieler', karten:'Karten', camp:'Camp', training:'Training / Spiel', uebungen:'Übungsbibliothek', mannschaften:'Mannschaften', users:'Benutzer & Rollen', skillcalc:'Skill Calculator', media:'Media Storage' };
 let dtSpielerSimple = null;
 let dtTraining      = null;
 let dtUsers         = null;
@@ -2663,6 +3050,7 @@ window.showView = function(view) {
   if (view === 'uebungen') renderUebungen();
   if (view === 'users')    renderUsersView();
   if (view === 'skillcalc') scRenderAll();
+  if (view === 'media')    mediaTabInit();
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -2740,6 +3128,7 @@ window.applyPermissions = function() {
   // SuperAdmin-spezifische UI-Elemente
   const isSA = _isSuperAdmin();
   document.getElementById('saAdminTools')?.classList.toggle('d-none', !isSA);
+  document.body.classList.toggle('sa-mode', isSA);
   window._updateTWAdminUI?.();
   // Anzeige des eingeloggten Benutzers in Sidebar + TopBar
   const displayName = window.currentUserDoc ? (window.currentUserDoc.displayName || window.currentUserDoc.email || '') : '';
@@ -3634,6 +4023,7 @@ window.uebungEditorSpeichern = function() {
     const idx = uebungsDB.findIndex(x=>x.id===editingUeID);
     if (idx!==-1) uebungsDB[idx] = obj; else uebungsDB.push(obj);
   } else { uebungsDB.push(obj); }
+  fsSaveUebung(obj).catch(console.warn);
   const cb = _uebEdOnSave; // vor abbrechen sichern
   uebungEditorAbbrechen();
   if (cb) cb(obj);
@@ -4113,8 +4503,14 @@ window.taktikWerkzeugSpeichern = async function() {
   } else if (kat === 'custom') {
     const file = document.getElementById('twAddFile')?.files[0];
     if (!file) { alert('Bitte ein Bild auswählen.'); return; }
-    if (file.size > 200*1024) { alert('Bild zu groß (max 200KB).'); return; }
-    item.src = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result); r.readAsDataURL(file); });
+    if (file.size > 5*1024*1024) { alert('Bild zu groß (max 5 MB).'); return; }
+    // Try media server upload; fallback to base64 if not configured
+    try {
+      const uebId = 'ueb_' + Date.now();
+      item.src = await uploadToMediaServer(file, 'uebung', uebId);
+    } catch(e) {
+      item.src = await new Promise(res => { const r=new FileReader(); r.onload=ev=>res(ev.target.result); r.readAsDataURL(file); });
+    }
   }
 
   // Erst lokal speichern, dann Firestore (non-blocking)
@@ -4292,6 +4688,7 @@ function _taktikPreviewSVG(objekte) {
 window.uebungLoeschen = function(id) {
   if (!confirm('Übung wirklich löschen?')) return;
   uebungsDB = uebungsDB.filter(x=>x.id!==id);
+  fsDeleteUebung(id).catch(console.warn);
   renderUebungen();
 };
 
@@ -4465,24 +4862,37 @@ window.openSpielerModalSimple = function(id) {
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSpieler')).show();
 };
 
-window.spielerSimpleSpeichern = function() {
+window.spielerSimpleSpeichern = async function() {
   const nachname = document.getElementById('spNachname').value.trim();
   const vorname  = document.getElementById('spVorname').value.trim();
   const err      = document.getElementById('spError');
   if (!nachname || !vorname) { err.classList.remove('d-none'); err.textContent='Vor- und Nachname erforderlich.'; return; }
   err.classList.add('d-none');
+
+  const spId      = editingSpielerID || ('p'+(++spielerCounter));
   const existFoto = editingSpielerID ? (spielerData.find(s=>s.id===editingSpielerID)?.foto||'') : '';
+
+  // Upload foto to media server if a new file was selected
+  let fotoUrl = pendingFotoBase64 !== null ? existFoto : existFoto; // default: keep existing
+  if (pendingFotoFile) {
+    try {
+      fotoUrl = await uploadToMediaServer(pendingFotoFile, 'player', spId);
+    } catch(e) {
+      console.warn('Foto-Upload fehlgeschlagen, kein Bild gespeichert:', e.message);
+      fotoUrl = ''; // no base64 fallback – URL or nothing
+    }
+  }
+
   const obj = {
-    id:       editingSpielerID || ('p'+(++spielerCounter)),
+    id:       spId,
     rnr:      parseInt(document.getElementById('spRNr').value)||0,
     pos:      document.getElementById('spPosition').value,
     nachname, vorname,
     geb:      document.getElementById('spGebDatum').value,
     team:     document.getElementById('spTeam').value,
-    foto:     pendingFotoBase64 !== null ? pendingFotoBase64 : existFoto,
+    foto:     fotoUrl,
     skills:{}, slv:60,
   };
-  // Read skill base values from modal inputs
   const newSkillBase = {};
   SKILL_TYPES.forEach(t => { newSkillBase[t] = parseInt(document.getElementById('spSkill_' + t)?.value) || 50; });
   obj.skillBase = newSkillBase;
@@ -4493,6 +4903,8 @@ window.spielerSimpleSpeichern = function() {
     spielerData.push(obj);
     spielerNotizen[obj.id] = [];
   }
+  // Persist to Firestore (players + player_seasons)
+  await fsSaveSpieler(obj);
   renderSpielerSimple();
   bootstrap.Modal.getInstance(document.getElementById('modalSpieler')).hide();
 };
@@ -4514,20 +4926,18 @@ window.spielerHardDelete = function(id) {
 window.handleFotoUpload = function(event) {
   const file = event.target.files[0];
   if (!file) return;
-  if (file.size > 2*1024*1024) { alert('Bild zu groß (max. 2 MB).'); return; }
-  const reader = new FileReader();
-  reader.onload = e => {
-    pendingFotoBase64 = e.target.result;
-    document.getElementById('spFotoPreview').src = pendingFotoBase64;
-    document.getElementById('spFotoPreview').classList.remove('d-none');
-    document.getElementById('spFotoPlaceholder').classList.add('d-none');
-    document.getElementById('spFotoRemoveBtn').style.display = '';
-  };
-  reader.readAsDataURL(file);
+  if (file.size > 5*1024*1024) { alert('Bild zu groß (max. 5 MB).'); return; }
+  pendingFotoFile    = file;
+  pendingFotoBase64  = URL.createObjectURL(file); // preview only
+  document.getElementById('spFotoPreview').src = pendingFotoBase64;
+  document.getElementById('spFotoPreview').classList.remove('d-none');
+  document.getElementById('spFotoPlaceholder').classList.add('d-none');
+  document.getElementById('spFotoRemoveBtn').style.display = '';
   event.target.value = '';
 };
 window.removeFoto = function() {
   pendingFotoBase64 = null;
+  pendingFotoFile   = null;
   document.getElementById('spFotoPreview').classList.add('d-none');
   document.getElementById('spFotoPreview').src = '';
   document.getElementById('spFotoPlaceholder').classList.remove('d-none');
@@ -4883,8 +5293,9 @@ window.renderCampListe = function() {
 window.neuesCampErstellen = function() {
   const id = 'camp' + String(++campListeCounter).padStart(2,'0');
   const name = `Neues Camp ${campListeCounter}`;
-  campListe.push({ id, name, datum: new Date().toISOString().split('T')[0], beschreibung: '', spieler: [] });
-  // Gleich öffnen und umbenennen
+  const newCamp = { id, name, datum: new Date().toISOString().split('T')[0], beschreibung: '', spieler: [] };
+  campListe.push(newCamp);
+  fsSaveCamp(newCamp).catch(console.warn);
   openCamp(id);
   setTimeout(() => campUmbenennen(id), 100);
 };
@@ -4928,6 +5339,7 @@ window.campUmbenennenSpeichern = function() {
   camp.datum       = document.getElementById('campUmbenennenDatum').value;
   camp.beschreibung= document.getElementById('campUmbenennenBeschreibung').value.trim();
   bootstrap.Modal.getInstance(document.getElementById('modalCampUmbenennen')).hide();
+  fsSaveCamp(camp).catch(console.warn);
   // Header aktualisieren wenn Detail-Ansicht offen
   const titelEl = document.getElementById('campDetailTitel');
   if (titelEl) titelEl.innerHTML = `<i class="bi bi-trophy-fill text-warning me-2"></i>${camp.name}`;
@@ -4939,6 +5351,7 @@ window.campLoeschen = function(id) {
   if (!camp) return;
   if (!confirm(`Camp "${camp.name}" mit ${camp.spieler?.length || 0} Spielern wirklich löschen?`)) return;
   campListe = campListe.filter(c => c.id !== id);
+  fsDeleteCamp(id).catch(console.warn);
   if (currentCampId === id) {
     currentCampId = campListe[0]?.id || null;
     campSpielerData = _aktCamp()?.spieler || [];
@@ -5022,6 +5435,7 @@ window.campCsvImportieren = function() {
     campSpielerData = [...campSpielerData, ..._campCsvParsed];
   }
   _syncCampSpieler();
+  fsSaveCamp(_aktCamp()).catch(console.warn);
   bootstrap.Modal.getInstance(document.getElementById('modalCampCsvImport')).hide();
   renderCampSpieler();
   alert(`✅ ${_campCsvParsed.length} Spieler importiert (Modus: ${modus === 'ersetzen' ? 'Ersetzen' : 'Hinzufügen'}).`);
@@ -5125,13 +5539,16 @@ window.showCampTab = function(tab) {
   document.getElementById('campPanelKarten').style.display  = tab === 'karten'  ? 'block' : 'none';
   document.getElementById('campPanelTeams').style.display   = tab === 'teams'   ? 'block' : 'none';
   document.getElementById('campPanelFarben').style.display  = tab === 'farben'  ? 'block' : 'none';
+  document.getElementById('campPanelSchuss').style.display  = tab === 'schuss'  ? 'block' : 'none';
   document.getElementById('campTabSpielerBtn').className = 'nav-link' + (tab === 'spieler' ? ' active' : '');
   document.getElementById('campTabKartenBtn').className  = 'nav-link' + (tab === 'karten'  ? ' active' : '');
   document.getElementById('campTabTeamsBtn').className   = 'nav-link' + (tab === 'teams'   ? ' active' : '');
   document.getElementById('campTabFarbenBtn').className  = 'nav-link' + (tab === 'farben'  ? ' active' : '');
+  document.getElementById('campTabSchussBtn').className  = 'nav-link' + (tab === 'schuss'  ? ' active' : '');
   if (tab === 'karten') renderCampKarten();
   if (tab === 'teams')  renderHerzTeams();
   if (tab === 'farben') renderCampFarben();
+  if (tab === 'schuss') ssaInit();
 };
 
 window.renderCampSpieler = function() {
@@ -5266,6 +5683,7 @@ window.campSpielerSpeichern = function() {
   }
   bootstrap.Modal.getInstance(document.getElementById('modalCampSpieler')).hide();
   _syncCampSpieler();
+  fsSaveCamp(_aktCamp()).catch(console.warn);
   renderCampSpieler();
 };
 
@@ -5340,16 +5758,25 @@ window.vereinHinzufuegen = function() {
   updateHauptvereinDropdowns();
 };
 
-window.uploadVereinLogo = function(event, name) {
+window.uploadVereinLogo = async function(event, name) {
   const file = event.target.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    customVereinLogos[name] = e.target.result;
-    renderHerzTeams();
-  };
-  reader.readAsDataURL(file);
   event.target.value = '';
+  // Optimistic preview via blob URL
+  const blobUrl = URL.createObjectURL(file);
+  customVereinLogos[name] = blobUrl;
+  renderHerzTeams();
+  try {
+    const id  = 'logo_' + name.toLowerCase().replace(/[^a-z0-9]/g,'_');
+    const url = await uploadToMediaServer(file, 'logo', id);
+    customVereinLogos[name] = url;
+    // Persist logo URL to Firestore
+    await fsSaveVereinLogo(name, url);
+    renderHerzTeams();
+  } catch(e) {
+    console.warn('Logo-Upload fehlgeschlagen:', e.message);
+    // Keep blob URL as fallback for this session
+  }
 };
 
 window.loescheCustomLogo = function(name) {
@@ -5632,6 +6059,7 @@ window.trainingSpeichern = function() {
   } else {
     trainingsListe.push(obj);
   }
+  fsSaveTraining(obj).catch(console.warn);
   zurueckZurListe();
 };
 
@@ -5643,15 +6071,16 @@ window.zurueckZurListe = function() {
 
 window.trainingSoftDelete = function(id) {
   const t = trainingsListe.find(x => x.id === id);
-  if (t) { t.softDeleted = true; renderTrainingsListe(); }
+  if (t) { t.softDeleted = true; fsSaveTraining(t).catch(console.warn); renderTrainingsListe(); }
 };
 window.trainingRestore = function(id) {
   const t = trainingsListe.find(x => x.id === id);
-  if (t) { t.softDeleted = false; renderTrainingsListe(); }
+  if (t) { t.softDeleted = false; fsSaveTraining(t).catch(console.warn); renderTrainingsListe(); }
 };
 window.trainingHardDelete = function(id) {
   if (!confirm('Endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) return;
   trainingsListe = trainingsListe.filter(t => t.id !== id);
+  fsDeleteTraining(id).catch(console.warn);
   renderTrainingsListe();
 };
 
@@ -7400,6 +7829,163 @@ function _stripHtml(html) {
   return (html || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').trim();
 }
 
+// ── Mustertraining aus Übungsbibliothek ───────────────────────
+window.createMustertraining = function() {
+  if (trainingDetails.length && !confirm('Bestehende Übungen durch Mustertraining aus der Bibliothek ersetzen?')) return;
+  const sects = trainingsAbschnitte.length ? trainingsAbschnitte : ['Einleitung','Hauptteil','Ende'];
+  trainingDetails = uebungsDB.slice(0, 10).map((u, i) => ({
+    id: 'td_mut_' + i,
+    abschnitt: sects[Math.min(i, sects.length - 2)] || sects[0],
+    name: u.name,
+    dauer: u.dauer,
+    youtubeUrl: u.youtube || '',
+    beschreibung: u.beschreibung ? `<p>${u.beschreibung}</p>` : '',
+    links: u.link ? [u.link] : [],
+    fileBlobUrl: null,
+    fileName: null,
+    tkItems: u.taktikObjekte || [],
+  }));
+  tdCounter = trainingDetails.length;
+  renderTrainingDetails();
+  renderAbschnitteChips();
+};
+
+// ── PPTX QR-Code Generierung ──────────────────────────────────
+async function _generateQRBase64(text) {
+  if (!text || !window.QRCode) return null;
+  try {
+    const canvas = document.createElement('canvas');
+    await QRCode.toCanvas(canvas, text, { width: 256, margin: 1, color: { dark:'#000000', light:'#FFFFFF' } });
+    return canvas.toDataURL('image/png');
+  } catch(e) { console.warn('QR gen:', e); return null; }
+}
+
+// ── YouTube Video-ID extrahieren ──────────────────────────────
+function _extractYouTubeId(url) {
+  const m = url?.match(/(?:v=|youtu\.be\/|shorts\/)([a-zA-Z0-9_-]{11})/);
+  return m?.[1] || null;
+}
+
+// ── Bild-URL → base64 via Canvas (CORS-proxy) ────────────────
+function _fetchImageAsBase64(url) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const c = document.createElement('canvas');
+        c.width = img.naturalWidth || 320; c.height = img.naturalHeight || 240;
+        c.getContext('2d').drawImage(img, 0, 0);
+        resolve(c.toDataURL('image/jpeg', 0.85));
+      } catch { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+// ── Taktik-Objekte → SVG-String (groß, für PPTX) ─────────────
+function _taktikSVGLarge(objekte, w=480, h=320) {
+  if (!objekte?.length) return null;
+  const sx = w / 640, sy = h / 480;
+  const items = objekte.map(obj => {
+    if (obj.type === 'hutchen') {
+      const px = obj.x * sx, py = obj.y * sy;
+      return `<polygon points="${px},${py-14} ${px-9},${py+3} ${px+9},${py+3}" fill="${obj.farbe||'#ff6600'}"/>`;
+    }
+    if (obj.type === 'pfeil') {
+      return `<line x1="${obj.x1*sx}" y1="${obj.y1*sy}" x2="${obj.x2*sx}" y2="${obj.y2*sy}" stroke="#fff" stroke-width="3" marker-end="url(#ah)"/>`;
+    }
+    if (obj.type === 'spieler' || obj.type === 'kreis') {
+      return `<circle cx="${obj.x*sx}" cy="${obj.y*sy}" r="14" fill="${obj.farbe||'#c0392b'}" stroke="#fff" stroke-width="2"/><text x="${obj.x*sx}" y="${obj.y*sy+5}" text-anchor="middle" fill="#fff" font-size="12" font-family="Arial" font-weight="bold">${obj.nr||''}</text>`;
+    }
+    return '';
+  }).join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><defs><marker id="ah" markerWidth="12" markerHeight="12" refX="10" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L0,6 L10,3 z" fill="#fff"/></marker></defs><rect width="${w}" height="${h}" fill="#2d7a3a"/><rect x="3" y="3" width="${w-6}" height="${h-6}" fill="none" stroke="#fff" stroke-width="2" opacity="0.3"/>${items}</svg>`;
+}
+
+// ── SVG-String → base64 PNG (via Blob+Image+Canvas) ──────────
+function _svgToBase64PNG(svgStr, w, h) {
+  return new Promise(resolve => {
+    const blob = new Blob([svgStr], {type:'image/svg+xml'});
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL('image/png'));
+      } catch { URL.revokeObjectURL(url); resolve(null); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+
+// ── PPTX Slide: Text-Shape {{varName}} durch <p:pic> ersetzen ─
+// Gibt das geänderte XML-String zurück; aktualisiert außerdem relsXml-Objekt
+function _pptxReplaceShapeWithImage(xml, relsHolder, varName, imgBase64, mediaName) {
+  const marker = `{{${varName}}}`;
+  const idx = xml.indexOf(marker);
+  if (idx === -1) return xml;
+
+  const imgData = imgBase64.split(',').pop();
+  // relsHolder.zip.file(...) wird vom Aufrufer gesetzt
+
+  const usedIds = [...relsHolder.xml.matchAll(/Id="rId(\d+)"/g)].map(m => parseInt(m[1]));
+  const nextRid = usedIds.length ? Math.max(...usedIds) + 1 : 10;
+  const rId = `rId${nextRid}`;
+
+  relsHolder.xml = relsHolder.xml.replace('</Relationships>',
+    `<Relationship Id="${rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/${mediaName}"/></Relationships>`);
+  relsHolder.mediaFiles[mediaName] = imgData;
+
+  let spStart = xml.lastIndexOf('<p:sp>', idx);
+  if (spStart === -1) spStart = xml.lastIndexOf('<p:sp ', idx);
+  const spEnd = xml.indexOf('</p:sp>', idx) + '</p:sp>'.length;
+  if (spStart === -1 || spEnd <= idx) return xml;
+
+  const spXml = xml.slice(spStart, spEnd);
+  const xm = spXml.match(/x="(\d+)"/), ym = spXml.match(/y="(\d+)"/);
+  const cxm = spXml.match(/cx="(\d+)"/), cym = spXml.match(/cy="(\d+)"/);
+  const px = xm?.[1]||'5800000', py = ym?.[1]||'480000';
+  const pcx = cxm?.[1]||'2900000', pcy = cym?.[1]||'2700000';
+  const picId = nextRid + 200;
+  const pic = `<p:pic><p:nvPicPr><p:cNvPr id="${picId}" name="${mediaName}"/><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="${rId}"/><a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr><a:xfrm><a:off x="${px}" y="${py}"/><a:ext cx="${pcx}" cy="${pcy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>`;
+  return xml.slice(0, spStart) + pic + xml.slice(spEnd);
+}
+
+// ── PPTX Slide: Klickbare Hyperlinks für URL-Texte hinzufügen ─
+function _pptxAddHyperlinkToText(xml, relsHolder, urlText) {
+  if (!urlText || !urlText.startsWith('http')) return xml;
+  const esc = urlText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const atIdx = xml.indexOf(`<a:t>${esc}</a:t>`);
+  if (atIdx === -1) return xml;
+
+  const rEnd = xml.indexOf('</a:r>', atIdx) + '</a:r>'.length;
+  const rStart = xml.lastIndexOf('<a:r>', atIdx);
+  if (rStart === -1) return xml;
+
+  const usedIds = [...relsHolder.xml.matchAll(/Id="rId(\d+)"/g)].map(m => parseInt(m[1]));
+  const nextRid = usedIds.length ? Math.max(...usedIds) + 1 : 20;
+  const rId = `rId${nextRid}`;
+  const safeUrl = urlText.replace(/&/g,'&amp;');
+  relsHolder.xml = relsHolder.xml.replace('</Relationships>',
+    `<Relationship Id="${rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="${safeUrl}" TargetMode="External"/></Relationships>`);
+
+  const rXml = xml.slice(rStart, rEnd);
+  let newR;
+  const rPrFull = rXml.match(/(<a:rPr[^>]*>)([\s\S]*?)(<\/a:rPr>)/);
+  if (rPrFull) {
+    newR = rXml.replace(/(<a:rPr[^>]*>)([\s\S]*?)(<\/a:rPr>)/, `$1<a:hlinkClick r:id="${rId}"/>$2$3`);
+  } else {
+    newR = rXml.replace(/(<a:rPr[^/]*?)(\/>)/, `$1><a:hlinkClick r:id="${rId}"/></a:rPr>`);
+  }
+  return xml.slice(0, rStart) + newR + xml.slice(rEnd);
+}
+
 // Ersetzt {{variable}}-Platzhalter im PPTX XML
 // Hinweis: PowerPoint kann Text-Runs splitten → wir mergen zuerst benachbarte <a:r> gleicher Formatierung
 function _applyPPTXVars(xmlStr, vars) {
@@ -7491,19 +8077,86 @@ window.exportTrainingPPTX = async function() {
   }
 
   try {
+    statusEl.innerHTML = '<span class="text-muted">⏳ Bilder & QR-Codes werden generiert…</span>';
+
+    // ── Bilder & QR-Codes vorberechnen ──────────────────────────
+    const imageMap = {}; // { 'u1_qr': base64, 'u1_bild': base64, ... }
+    for (let i = 1; i <= 10; i++) {
+      const d = details[i-1];
+      if (!d) continue;
+      const linkUrl = d.youtubeUrl || d.links?.[0] || '';
+      // QR Code
+      if (linkUrl) {
+        const qrB64 = await _generateQRBase64(linkUrl);
+        if (qrB64) imageMap[`u${i}_qr`] = qrB64;
+      }
+      // Bild: YouTube-Thumbnail → fileBlobUrl → Taktikfeld-SVG
+      let bildB64 = null;
+      if (d.youtubeUrl) {
+        const ytId = _extractYouTubeId(d.youtubeUrl);
+        if (ytId) bildB64 = await _fetchImageAsBase64(`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`);
+      }
+      if (!bildB64 && d.fileBlobUrl) bildB64 = await _fetchImageAsBase64(d.fileBlobUrl);
+      if (!bildB64) {
+        const tkItems = d.tkItems?.length ? d.tkItems : (uebungsDB.find(u=>u.name===d.name)?.taktikObjekte || []);
+        if (tkItems.length) {
+          const svg = _taktikSVGLarge(tkItems, 480, 320);
+          if (svg) bildB64 = await _svgToBase64PNG(svg, 480, 320);
+        }
+      }
+      if (bildB64) imageMap[`u${i}_bild`] = bildB64;
+    }
+
+    statusEl.innerHTML = '<span class="text-muted">⏳ PPTX wird zusammengebaut…</span>';
+
     // PPTX als ZIP laden und XML bearbeiten
     const buf = _b64ToArrayBuffer(_pptxTemplateBase64);
     const zip = await JSZip.loadAsync(buf);
+
+    // Content Types: PNG/JPEG hinzufügen falls nötig
+    let ctXml = await zip.file('[Content_Types].xml').async('string');
+    if (!ctXml.includes('image/png')) {
+      ctXml = ctXml.replace('</Types>', '<Default Extension="png" ContentType="image/png"/><Default Extension="jpeg" ContentType="image/jpeg"/><Default Extension="jpg" ContentType="image/jpeg"/></Types>');
+      zip.file('[Content_Types].xml', ctXml);
+    }
 
     // Alle Slide-XMLs bearbeiten
     const slideFiles = Object.keys(zip.files).filter(f => f.match(/^ppt\/slides\/slide\d+\.xml$/));
     for (const slideFile of slideFiles) {
       let xml = await zip.file(slideFile).async('string');
+      const relsPath = slideFile.replace(/slides\/slide(\d+)\.xml$/, 'slides/_rels/slide$1.xml.rels');
+      const relsHolder = {
+        xml: (await zip.file(relsPath)?.async('string')) ||
+          '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/></Relationships>',
+        mediaFiles: {},
+      };
+
+      // 1. Bilder einbetten (ersetzt {{uN_qr}} und {{uN_bild}} Text-Shapes durch p:pic)
+      for (const [varName, imgB64] of Object.entries(imageMap)) {
+        if (!xml.includes(`{{${varName}}}`)) continue;
+        const ext = imgB64.includes('image/jpeg') ? 'jpg' : 'png';
+        const mediaName = `mf_${varName}.${ext}`;
+        xml = _pptxReplaceShapeWithImage(xml, relsHolder, varName, imgB64, mediaName);
+      }
+
+      // 2. Text-Variablen ersetzen
       xml = _applyPPTXVars(xml, vars);
+
+      // 3. Klickbare Hyperlinks für Links
+      for (let i = 1; i <= 10; i++) {
+        const linkUrl = vars[`u${i}_link`];
+        if (linkUrl) xml = _pptxAddHyperlinkToText(xml, relsHolder, linkUrl);
+      }
+
+      // Mediendateien in ZIP schreiben
+      for (const [name, data] of Object.entries(relsHolder.mediaFiles)) {
+        zip.file(`ppt/media/${name}`, data, {base64: true});
+      }
       zip.file(slideFile, xml);
+      zip.file(relsPath, relsHolder.xml);
     }
 
-    // Auch Notizen-Slides bearbeiten falls vorhanden
+    // Notizen-Slides bearbeiten falls vorhanden
     const noteFiles = Object.keys(zip.files).filter(f => f.match(/^ppt\/notesSlides\//));
     for (const nf of noteFiles) {
       let xml = await zip.file(nf).async('string');
@@ -7666,6 +8319,7 @@ onAuthStateChanged(auth, async user => {
       const userDoc = await loadOrCreateUserDoc(user);
       window.currentUserDoc    = userDoc;
       window.currentPermissions = userDoc.effectivePermissions || {};
+      window._currentTenantId  = userDoc.tenantId || TENANT_ID;
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('dashboard').style.display   = 'block';
       applyPermissions();
@@ -7673,6 +8327,8 @@ onAuthStateChanged(auth, async user => {
       campFarbenLaden();
       // Tools aus Firestore laden (non-blocking, fällt auf localStorage-Defaults zurück)
       loadToolsFromFirestore().catch(console.warn);
+      // Daten aus Firestore laden (non-blocking, fällt auf lokale Defaults zurück)
+      _loadAllFromFirestore().catch(console.warn);
       if (userDoc.mustSetPassword) {
         document.getElementById('erstEmail').value = user.email || '';
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalErstanmeldung')).show();
@@ -7713,7 +8369,7 @@ const SC_DEFAULT_SKILLS = [
 ];
 let scMeasurements = JSON.parse(JSON.stringify(SC_DEFAULT_MEASUREMENTS));
 let scSkills       = JSON.parse(JSON.stringify(SC_DEFAULT_SKILLS));
-let scValues       = {};
+window.scValues    = {};
 let scMCounter = 7, scSCounter = 6;
 
 // ── Formel-Berechnung ──────────────────────────────────────────
@@ -7741,7 +8397,7 @@ function scCalcSkillScore(skill) {
   for (const mp of skill.mappings) {
     const m = scMeasurements.find(x => x.id === mp.mId);
     if (!m) continue;
-    const raw = scValues[m.id];
+    const raw = window.scValues[m.id];
     if (raw === undefined || raw === '') continue;
     const s = scCalcMeasScore(m, raw);
     if (s === null) continue;
@@ -7808,8 +8464,8 @@ window.scRenderMeasurements = function() {
   if (!el) return;
   if (!scMeasurements.length) { el.innerHTML = '<p class="text-muted small p-2">Keine Messungen definiert.</p>'; return; }
   el.innerHTML = scMeasurements.map(m => {
-    const score = scValues[m.id] !== undefined && scValues[m.id] !== ''
-      ? scCalcMeasScore(m, scValues[m.id]) : null;
+    const score = window.scValues[m.id] !== undefined && window.scValues[m.id] !== ''
+      ? scCalcMeasScore(m, window.scValues[m.id]) : null;
     const scoreBadge = score !== null
       ? `<span class="badge ms-1" style="background:${score>=70?'#198754':score>=40?'#d4ac0d':'#dc3545'}">${score}</span>` : '';
     return `<div class="card mb-2 border-0 shadow-sm" style="border-left:3px solid #6c757d!important">
@@ -7883,17 +8539,16 @@ window.scRenderSkillMapping = function() {
       ? `<span class="badge ms-1" style="background:${score>=70?'#198754':score>=40?'#d4ac0d':'#dc3545'};min-width:2rem">${score}</span>` : '';
 
     const mappingRows = sk.mappings.map((mp, mi) => {
-      const m = scMeasurements.find(x => x.id === mp.mId);
       return `<div class="d-flex align-items-center gap-1 mb-1">
         <select class="form-select form-select-sm flex-grow-1 py-0" style="font-size:.75rem"
-          onchange="scSkills.find(x=>x.id==='${sk.id}').mappings[${mi}].mId=this.value;scRenderAll()">
+          onchange="scUpdateMappingMid('${sk.id}',${mi},this.value)">
           ${scMeasurements.map(x=>`<option value="${x.id}" ${x.id===mp.mId?'selected':''}>${x.name}</option>`).join('')}
         </select>
         <input type="number" class="form-control form-control-sm py-0" style="width:60px;font-size:.75rem" step="0.1" min="0" max="1" value="${mp.weight}"
-          onchange="scSkills.find(x=>x.id==='${sk.id}').mappings[${mi}].weight=parseFloat(this.value)||0;scRenderAll()"
+          onchange="scUpdateMappingWeight('${sk.id}',${mi},this.value)"
           title="Gewichtung (0–1)">
         <button class="btn btn-sm btn-outline-danger py-0 px-1"
-          onclick="scSkills.find(x=>x.id==='${sk.id}').mappings.splice(${mi},1);scRenderAll()">
+          onclick="scDeleteMapping('${sk.id}',${mi})">
           <i class="bi bi-x" style="font-size:.65rem"></i>
         </button>
       </div>`;
@@ -7927,72 +8582,101 @@ window.scRenderSkillMapping = function() {
 };
 
 // ── Render: Live Kalkulator (Rechts) ────────────────────────
+// Inputs nur einmal bauen; Ergebnisse separat aktualisieren
 window.scRenderLiveCalc = function() {
   const el = document.getElementById('scLiveCalc');
   if (!el) return;
-  const scores = scAllSkillScores();
-  const hasAny = scores.some(s => s.score !== null);
 
   const inputs = scMeasurements.map(m => {
-    const score = scValues[m.id] !== undefined && scValues[m.id] !== ''
-      ? scCalcMeasScore(m, scValues[m.id]) : null;
-    const badge = score !== null
-      ? `<span class="badge" style="background:${score>=70?'#198754':score>=40?'#d4ac0d':'#dc3545'};min-width:2.2rem;font-size:.75rem">${score}</span>` : '';
-    return `<div class="mb-2">
+    return `<div class="mb-2" id="scInRow_${m.id}">
       <div class="d-flex justify-content-between align-items-center mb-1">
         <label class="form-label mb-0 fw-bold" style="font-size:.78rem">${m.name} <span class="text-muted fw-normal">(${m.unit})</span></label>
-        ${badge}
+        <span id="scInBadge_${m.id}" style="min-width:2.2rem"></span>
       </div>
       <div class="d-flex align-items-center gap-2">
         <input type="number" class="form-control form-control-sm" step="0.01"
           placeholder="${m.higherBetter?'z.B. '+m.max:'z.B. '+m.min} (${m.min}–${m.max})"
-          value="${scValues[m.id]??''}"
-          oninput="scValues['${m.id}']=this.value;scRenderLiveCalc();scRenderSkillMapping();scRenderMeasurements()">
+          value="${window.scValues[m.id]??''}"
+          oninput="scSetValue('${m.id}',this.value)">
         <button class="btn btn-sm btn-outline-secondary py-0 px-1" title="Löschen"
-          onclick="scValues['${m.id}']='';this.previousElementSibling.value='';scRenderLiveCalc();scRenderSkillMapping();scRenderMeasurements()">
+          onclick="scClearValue('${m.id}',this.previousElementSibling)">
           <i class="bi bi-x" style="font-size:.75rem"></i>
         </button>
       </div>
     </div>`;
   }).join('');
 
-  const bars = scores.map(sk => {
-    const v = sk.score ?? 0;
-    const displayed = sk.score !== null ? sk.score : '—';
-    const pct = Math.min(120, v);
-    const extra = v > 100 ? `<span class="badge bg-warning text-dark ms-1" style="font-size:.65rem">+${v-100}</span>` : '';
-    return `<div class="d-flex align-items-center gap-2 mb-2">
-      <span style="width:58px;font-size:.75rem;font-weight:700;color:${sk.color}">${sk.name}</span>
-      <div style="flex:1;background:#e9ecef;border-radius:4px;height:16px;overflow:hidden;position:relative">
-        <div style="width:${pct/1.2}%;height:100%;background:${sk.color};border-radius:4px;transition:width .25s;opacity:${sk.score!==null?1:.25}"></div>
-        ${v>100?`<div style="position:absolute;right:0;top:0;height:100%;width:${(pct-100)/1.2}%;background:repeating-linear-gradient(45deg,rgba(255,193,7,.6),rgba(255,193,7,.6) 4px,transparent 4px,transparent 8px)"></div>`:''}
-      </div>
-      <span style="width:36px;text-align:right;font-size:.8rem;font-weight:700;color:${sk.score!==null?sk.color:'#adb5bd'}">${displayed}</span>
-      ${extra}
-    </div>`;
-  }).join('');
-
-  const slv = hasAny ? Math.round(scores.filter(s=>s.score!==null).reduce((a,s)=>a+s.score,0)/scores.filter(s=>s.score!==null).length) : null;
-
   el.innerHTML = `
     <div class="mb-3 pb-3 border-bottom">
       <div class="fw-bold mb-2" style="font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:#6c757d">Messwerte eingeben</div>
       ${inputs}
-      <button class="btn btn-sm btn-outline-warning w-100 mt-1" onclick="scValues={};scRenderAll()">
+      <button class="btn btn-sm btn-outline-warning w-100 mt-1" onclick="window.scValues={};scRenderLiveCalc()">
         <i class="bi bi-eraser me-1"></i>Alle Werte löschen
       </button>
     </div>
     <div class="mb-3">
       <div class="d-flex justify-content-between align-items-center mb-2">
         <div class="fw-bold" style="font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:#6c757d">Skill-Werte</div>
-        ${slv!==null?`<span class="badge bg-dark fs-6 px-3">SLV ${slv}</span>`:''}
+        <span id="scSlvBadge"></span>
       </div>
-      ${bars}
+      <div id="scSkillBars"></div>
     </div>
     <div>
       <div class="fw-bold mb-2" style="font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:#6c757d">Radar Chart</div>
-      ${scRadarSVG(scores)}
+      <div id="scRadarWrap">${scRadarSVG(scAllSkillScores())}</div>
     </div>`;
+
+  scUpdateLiveResults();
+};
+
+// Nur Ergebnisse aktualisieren — Inputs bleiben unberührt
+window.scUpdateLiveResults = function() {
+  const scores = scAllSkillScores();
+  const hasAny = scores.some(s => s.score !== null);
+
+  // Badges pro Messung
+  scMeasurements.forEach(m => {
+    const badge = document.getElementById('scInBadge_' + m.id);
+    if (!badge) return;
+    const score = window.scValues[m.id] !== undefined && window.scValues[m.id] !== ''
+      ? scCalcMeasScore(m, window.scValues[m.id]) : null;
+    if (score !== null) {
+      badge.innerHTML = `<span class="badge" style="background:${score>=70?'#198754':score>=40?'#d4ac0d':'#dc3545'};font-size:.75rem">${score}</span>`;
+    } else {
+      badge.innerHTML = '';
+    }
+  });
+
+  // Skill-Balken
+  const barsEl = document.getElementById('scSkillBars');
+  if (barsEl) {
+    barsEl.innerHTML = scores.map(sk => {
+      const v = sk.score ?? 0;
+      const displayed = sk.score !== null ? sk.score : '—';
+      const pct = Math.min(120, v);
+      const extra = v > 100 ? `<span class="badge bg-warning text-dark ms-1" style="font-size:.65rem">+${v-100}</span>` : '';
+      return `<div class="d-flex align-items-center gap-2 mb-2">
+        <span style="width:58px;font-size:.75rem;font-weight:700;color:${sk.color}">${sk.name}</span>
+        <div style="flex:1;background:#e9ecef;border-radius:4px;height:16px;overflow:hidden;position:relative">
+          <div style="width:${pct/1.2}%;height:100%;background:${sk.color};border-radius:4px;transition:width .25s;opacity:${sk.score!==null?1:.25}"></div>
+          ${v>100?`<div style="position:absolute;right:0;top:0;height:100%;width:${(pct-100)/1.2}%;background:repeating-linear-gradient(45deg,rgba(255,193,7,.6),rgba(255,193,7,.6) 4px,transparent 4px,transparent 8px)"></div>`:''}
+        </div>
+        <span style="width:36px;text-align:right;font-size:.8rem;font-weight:700;color:${sk.score!==null?sk.color:'#adb5bd'}">${displayed}</span>
+        ${extra}
+      </div>`;
+    }).join('');
+  }
+
+  // SLV-Badge
+  const slvEl = document.getElementById('scSlvBadge');
+  if (slvEl) {
+    const slv = hasAny ? Math.round(scores.filter(s=>s.score!==null).reduce((a,s)=>a+s.score,0)/scores.filter(s=>s.score!==null).length) : null;
+    slvEl.innerHTML = slv !== null ? `<span class="badge bg-dark fs-6 px-3">SLV ${slv}</span>` : '';
+  }
+
+  // Radar Chart
+  const radarEl = document.getElementById('scRadarWrap');
+  if (radarEl) radarEl.innerHTML = scRadarSVG(scores);
 };
 
 // ── Render: Spieler Vergleich ────────────────────────────────
@@ -8127,6 +8811,24 @@ window.scAddMapping = function(skillId) {
   sk.mappings.push({ mId: next.id, weight: 0.0 });
   scRenderSkillMapping();
 };
+window.scDeleteMapping = function(skillId, mi) {
+  const sk = scSkills.find(s => s.id === skillId);
+  if (!sk) return;
+  sk.mappings.splice(mi, 1);
+  scRenderAll();
+};
+window.scUpdateMappingMid = function(skillId, mi, val) {
+  const sk = scSkills.find(s => s.id === skillId);
+  if (!sk) return;
+  sk.mappings[mi].mId = val;
+  scRenderAll();
+};
+window.scUpdateMappingWeight = function(skillId, mi, val) {
+  const sk = scSkills.find(s => s.id === skillId);
+  if (!sk) return;
+  sk.mappings[mi].weight = parseFloat(val) || 0;
+  scRenderAll();
+};
 
 // ── Persistenz ────────────────────────────────────────────────
 window.scSaveToLS = function() {
@@ -8143,23 +8845,470 @@ window.scLoadFromLS = function() {
   if (s) scSkills       = JSON.parse(s);
   scMCounter = parseInt(localStorage.getItem('scMCounter')||'7');
   scSCounter = parseInt(localStorage.getItem('scSCounter')||'6');
-  scValues   = {};
+  window.scValues = {};
   scRenderAll();
 };
 window.scReset = function() {
   if (!confirm('Konfiguration auf Standard zurücksetzen?')) return;
   scMeasurements = JSON.parse(JSON.stringify(SC_DEFAULT_MEASUREMENTS));
   scSkills       = JSON.parse(JSON.stringify(SC_DEFAULT_SKILLS));
-  scMCounter = 7; scSCounter = 6; scValues = {};
+  scMCounter = 7; scSCounter = 6; window.scValues = {};
   scRenderAll();
 };
 
 // ── Haupt-Render ──────────────────────────────────────────────
+window.scSetValue = function(id, val) {
+  window.scValues[id] = val;
+  scUpdateLiveResults();
+};
+window.scClearValue = function(id, inputEl) {
+  window.scValues[id] = '';
+  if (inputEl) inputEl.value = '';
+  scUpdateLiveResults();
+};
+
 window.scRenderAll = function() {
   scRenderMeasurements();
   scRenderSkillMapping();
   scRenderLiveCalc();
   scRenderVergleichSelects();
+};
+
+// ══════════════════════════════════════════════════════════════
+// SCHUSS-ANALYSE (Shot Speed Analyzer)
+// ══════════════════════════════════════════════════════════════
+let ssaMarkerStart = null;
+let ssaMarkerEnd   = null;
+let ssaDistance    = 11;
+let ssaAttempts    = [];
+let ssaStream      = null;
+let ssaMediaRec    = null;
+let ssaRecChunks   = [];
+let ssaAutoRunning = false;
+let ssaLastResult  = null;
+let ssaZoomActive  = false;
+let ssaZoomLevel   = 1;
+let ssaCurrentFile = null; // exposed for upload
+
+window.ssaInit = function() {
+  const v = document.getElementById('ssaVideo');
+  if (v && !v._ssaInited) {
+    v.addEventListener('timeupdate', ssaOnTimeUpdate);
+    v.addEventListener('loadedmetadata', ssaOnLoaded);
+    v._ssaInited = true;
+  }
+  ssaFillPlayerSel();
+};
+
+window.ssaHandleFile = function(input) {
+  const file = input.files[0];
+  if (!file) return;
+  ssaCurrentFile = file;
+  const url = URL.createObjectURL(file);
+  const v = document.getElementById('ssaVideo');
+  v.src = url; v.load();
+  document.getElementById('ssaUploadPrompt').style.display = 'none';
+  document.getElementById('ssaVideoWrap').style.display = 'block';
+  document.getElementById('ssaMarkerCard').style.display = 'block';
+  ssaMarkerStart = ssaMarkerEnd = null;
+  ssaResetMarkerUI();
+};
+
+window.ssaStartCamera = async function() {
+  try {
+    ssaStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode:'environment', width:{ideal:1280}, height:{ideal:720} }, audio:false
+    });
+    const v = document.getElementById('ssaVideo');
+    v.srcObject = ssaStream; v.play();
+    document.getElementById('ssaUploadPrompt').style.display = 'none';
+    document.getElementById('ssaVideoWrap').style.display = 'block';
+    document.getElementById('ssaRecordBtn').style.display  = 'inline-flex';
+  } catch(e) { alert('Kamera: ' + e.message); }
+};
+
+window.ssaToggleRecord = function() {
+  const btn = document.getElementById('ssaRecordBtn');
+  if (ssaMediaRec && ssaMediaRec.state === 'recording') {
+    ssaMediaRec.stop();
+    btn.innerHTML = '<i class="bi bi-record-circle me-1"></i>Aufnahme starten';
+    btn.className = btn.className.replace('btn-warning','btn-danger');
+  } else {
+    ssaRecChunks = [];
+    ssaMediaRec = new MediaRecorder(ssaStream, {mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm'});
+    ssaMediaRec.ondataavailable = e => { if (e.data.size > 0) ssaRecChunks.push(e.data); };
+    ssaMediaRec.onstop = () => {
+      const blob = new Blob(ssaRecChunks, {type:'video/webm'});
+      ssaCurrentFile = new File([blob], `camera_${Date.now()}.webm`, {type:'video/webm'});
+      const v = document.getElementById('ssaVideo');
+      v.srcObject = null; v.src = URL.createObjectURL(blob); v.load();
+      if (ssaStream) { ssaStream.getTracks().forEach(t=>t.stop()); ssaStream = null; }
+      document.getElementById('ssaRecordBtn').style.display = 'none';
+      document.getElementById('ssaMarkerCard').style.display = 'block';
+    };
+    ssaMediaRec.start();
+    btn.innerHTML = '<i class="bi bi-stop-fill me-1"></i>Stop & Speichern';
+    btn.className = btn.className.replace('btn-danger','btn-warning');
+  }
+};
+
+window.ssaTogglePlay = function() {
+  const v = document.getElementById('ssaVideo');
+  if (!v) return;
+  if (v.paused) { v.play(); document.getElementById('ssaPlayBtn').innerHTML = '<i class="bi bi-pause-fill"></i>'; }
+  else          { v.pause(); document.getElementById('ssaPlayBtn').innerHTML = '<i class="bi bi-play-fill"></i>'; }
+};
+
+window.ssaFrameStep = function(dir) {
+  const v = document.getElementById('ssaVideo');
+  if (!v) return;
+  v.pause();
+  document.getElementById('ssaPlayBtn').innerHTML = '<i class="bi bi-play-fill"></i>';
+  v.currentTime = Math.max(0, Math.min(v.duration || 0, v.currentTime + dir * (1/30)));
+};
+
+window.ssaSetSpeed = function(rate) {
+  const v = document.getElementById('ssaVideo');
+  if (v) v.playbackRate = rate;
+  document.querySelectorAll('.ssa-speed-btn').forEach(b => {
+    const isActive = parseFloat(b.dataset.rate) === rate;
+    b.className = 'btn btn-xs py-0 px-2 ssa-speed-btn ' + (isActive ? 'btn-dark' : 'btn-outline-dark');
+    b.style.fontSize = '.72rem';
+  });
+};
+
+window.ssaSeek = function(input) {
+  const v = document.getElementById('ssaVideo');
+  if (v && v.duration) v.currentTime = (input.value / 100) * v.duration;
+};
+
+window.ssaTimelineClick = function(evt) {
+  const v = document.getElementById('ssaVideo');
+  const canvas = document.getElementById('ssaTimeline');
+  if (!v || !v.duration || !canvas) return;
+  const rect = canvas.getBoundingClientRect();
+  const pct = (evt.clientX - rect.left) / rect.width;
+  v.currentTime = pct * v.duration;
+};
+
+window.ssaOnTimeUpdate = function() {
+  const v = document.getElementById('ssaVideo');
+  if (!v) return;
+  const slider = document.getElementById('ssaSlider');
+  if (slider && v.duration) slider.value = (v.currentTime / v.duration) * 100;
+  const el = document.getElementById('ssaCurrentTime');
+  if (el) el.textContent = ssaFmtTime(v.currentTime) + ' / ' + ssaFmtTime(v.duration||0);
+  ssaDrawTimeline();
+};
+
+window.ssaOnLoaded = function() {
+  const v = document.getElementById('ssaVideo');
+  if (!v) return;
+  const canvas = document.getElementById('ssaTimeline');
+  if (canvas) canvas.width = canvas.offsetWidth * (window.devicePixelRatio || 1);
+  ssaDrawTimeline();
+};
+
+function ssaFmtTime(s) {
+  return s.toFixed(3) + 's';
+}
+
+window.ssaDrawTimeline = function() {
+  const canvas = document.getElementById('ssaTimeline');
+  if (!canvas) return;
+  const v = document.getElementById('ssaVideo');
+  const dur = v?.duration || 1;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.offsetWidth * dpr, H = 32 * dpr;
+  if (canvas.width !== W) { canvas.width = W; canvas.height = H; }
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+
+  // BG
+  ctx.fillStyle = '#343a40'; ctx.fillRect(0,0,W,H);
+
+  // Marker range highlight
+  if (ssaMarkerStart !== null && ssaMarkerEnd !== null) {
+    const x1 = (Math.min(ssaMarkerStart,ssaMarkerEnd)/dur)*W;
+    const x2 = (Math.max(ssaMarkerStart,ssaMarkerEnd)/dur)*W;
+    ctx.fillStyle = 'rgba(25,135,84,.4)'; ctx.fillRect(x1,0,x2-x1,H);
+  }
+
+  // Marker lines
+  const drawMarker = (t, color, emoji) => {
+    const x = (t/dur)*W;
+    ctx.strokeStyle = color; ctx.lineWidth = 2*dpr;
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+    ctx.font = `${10*dpr}px sans-serif`;
+    ctx.fillText(emoji, x + 2*dpr, H - 4*dpr);
+  };
+  if (ssaMarkerStart !== null) drawMarker(ssaMarkerStart, '#198754', '⚽');
+  if (ssaMarkerEnd   !== null) drawMarker(ssaMarkerEnd,   '#dc3545', '🥅');
+
+  // Playhead
+  if (v && v.duration) {
+    const x = (v.currentTime/dur)*W;
+    ctx.strokeStyle = '#0d6efd'; ctx.lineWidth = 2*dpr;
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+  }
+};
+
+window.ssaSetMarker = function(type) {
+  const v = document.getElementById('ssaVideo');
+  if (!v || (!v.src && !v.srcObject)) { alert('Bitte zuerst ein Video laden!'); return; }
+  const t = v.currentTime;
+  if (type === 'start') {
+    ssaMarkerStart = t;
+    document.getElementById('ssaMarkerStartBadge').className = 'badge bg-success';
+    document.getElementById('ssaMarkerStartBadge').textContent = '⚽ gesetzt';
+    document.getElementById('ssaMarkerStartDisp').textContent = t.toFixed(3) + 's';
+  } else {
+    ssaMarkerEnd = t;
+    document.getElementById('ssaMarkerEndBadge').className = 'badge bg-danger';
+    document.getElementById('ssaMarkerEndBadge').textContent = '🥅 gesetzt';
+    document.getElementById('ssaMarkerEndDisp').textContent = t.toFixed(3) + 's';
+  }
+  ssaDrawTimeline();
+};
+
+window.ssaResetMarkerUI = function() {
+  ['Start','End'].forEach(s => {
+    document.getElementById('ssaMarker'+s+'Badge').className = 'badge bg-secondary';
+    document.getElementById('ssaMarker'+s+'Badge').textContent = 'nicht gesetzt';
+    document.getElementById('ssaMarker'+s+'Disp').textContent = '—';
+  });
+  ssaDrawTimeline();
+};
+
+window.ssaUpdateDist = function() {
+  const sel = document.getElementById('ssaDistSel').value;
+  const customWrap = document.getElementById('ssaDistCustomWrap');
+  if (sel === 'custom') {
+    customWrap.style.display = 'block';
+    ssaDistance = parseFloat(document.getElementById('ssaDistCustom').value) || 11;
+  } else {
+    customWrap.style.display = 'none';
+    ssaDistance = parseFloat(sel);
+  }
+};
+
+window.ssaCalculate = function() {
+  if (ssaMarkerStart === null || ssaMarkerEnd === null) {
+    alert('Bitte beide Marker (⚽ Ballkontakt + 🥅 Tor) setzen!'); return;
+  }
+  const timeSec = Math.abs(ssaMarkerEnd - ssaMarkerStart);
+  if (timeSec < 0.001) { alert('Zeitspanne zu kurz — bitte Marker korrigieren.'); return; }
+
+  const speed_kmh = Math.round((ssaDistance / timeSec) * 3.6);
+  const timeMs    = Math.round(timeSec * 1000);
+
+  let confColor, confLabel;
+  if (timeSec < 0.04)       { confColor='danger';  confLabel='⚠️ Sehr niedrig (Marker prüfen)'; }
+  else if (timeSec < 0.15)  { confColor='success'; confLabel='✅ Hoch'; }
+  else if (timeSec < 0.4)   { confColor='warning'; confLabel='🟡 Mittel'; }
+  else                      { confColor='secondary';confLabel='ℹ️ Niedrig (lange Zeit)'; }
+
+  ssaLastResult = { speed_kmh, timeMs, timeSec, confColor, confLabel, distance: ssaDistance, ts: new Date() };
+
+  // Ergebnis zeigen
+  document.getElementById('ssaResultWrap').style.display = 'block';
+  document.getElementById('ssaResultSpeed').textContent  = speed_kmh;
+  document.getElementById('ssaResultTime').textContent   = timeMs + ' ms (' + timeSec.toFixed(3) + 's)';
+  document.getElementById('ssaConfBadge').className      = 'badge bg-' + confColor;
+  document.getElementById('ssaConfBadge').textContent    = confLabel;
+
+  // Gauge
+  const pct = Math.min(100, (speed_kmh / 150) * 100);
+  const gaugeBar = document.getElementById('ssaGaugeBar');
+  if (gaugeBar) {
+    gaugeBar.style.width = '0%';
+    gaugeBar.style.background = speed_kmh > 100 ? '#dc3545' : speed_kmh > 70 ? '#d4ac0d' : '#198754';
+    setTimeout(() => { gaugeBar.style.width = pct + '%'; }, 50);
+  }
+
+  // Save-Buttons einblenden
+  document.getElementById('ssaSaveToCalcBtn').style.display  = 'inline-flex';
+  document.getElementById('ssaSaveToPlayerBtn').style.display = 'inline-flex';
+  document.getElementById('ssaPlayerSaveCard').style.display  = 'block';
+
+  // History
+  ssaAttempts.unshift(ssaLastResult);
+  ssaRenderAttempts();
+};
+
+window.ssaRenderAttempts = function() {
+  const el = document.getElementById('ssaAttemptsList');
+  if (!el) return;
+  if (!ssaAttempts.length) {
+    el.innerHTML = '<p class="text-muted small p-2 mb-0">Noch keine Versuche.</p>'; return;
+  }
+  const best = Math.max(...ssaAttempts.map(a=>a.speed_kmh));
+  const avg  = Math.round(ssaAttempts.reduce((s,a)=>s+a.speed_kmh,0)/ssaAttempts.length);
+  el.innerHTML = `
+    <div class="d-flex gap-2 mb-2 text-center px-1">
+      <div class="flex-fill p-2 rounded bg-light"><div class="small text-muted" style="font-size:.7rem">Bestwert</div><div class="fw-bold text-success">${best} km/h</div></div>
+      <div class="flex-fill p-2 rounded bg-light"><div class="small text-muted" style="font-size:.7rem">Schnitt</div><div class="fw-bold">${avg} km/h</div></div>
+      <div class="flex-fill p-2 rounded bg-light"><div class="small text-muted" style="font-size:.7rem">Versuche</div><div class="fw-bold">${ssaAttempts.length}</div></div>
+    </div>
+    ${ssaAttempts.map((a,i)=>`
+      <div class="d-flex align-items-center gap-2 mb-1 px-2 py-1 rounded ${a.speed_kmh===best?'bg-success bg-opacity-10 border border-success':'bg-light'}">
+        <span class="badge bg-secondary" style="min-width:22px;font-size:.65rem">#${i+1}</span>
+        <span class="fw-bold ${a.speed_kmh===best?'text-success':''}">${a.speed_kmh} km/h</span>
+        <span class="text-muted small">${a.timeMs}ms | ${a.distance}m</span>
+        <span class="badge bg-${a.confColor} ms-auto" style="font-size:.6rem">${a.confLabel}</span>
+      </div>`).join('')}`;
+};
+
+window.ssaSaveToCalc = function() {
+  if (!ssaLastResult) return;
+  window.scValues['scm2'] = String(ssaLastResult.speed_kmh);
+  // Input im LiveCalc aktualisieren
+  const inp = document.querySelector('#scLiveCalc input[oninput*="scm2"]');
+  if (inp) inp.value = ssaLastResult.speed_kmh;
+  scUpdateLiveResults();
+  // Visuelles Feedback
+  const btn = document.getElementById('ssaSaveToCalcBtn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Gespeichert!';
+  btn.className = btn.className.replace('btn-success','btn-outline-success');
+  setTimeout(() => { btn.innerHTML = orig; btn.className = btn.className.replace('btn-outline-success','btn-success'); }, 2000);
+};
+
+window.ssaSaveToPlayer = function() {
+  document.getElementById('ssaPlayerSaveCard').scrollIntoView({behavior:'smooth', block:'nearest'});
+};
+
+window.ssaFillPlayerSel = function() {
+  const sel = document.getElementById('ssaPlayerSel');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Spieler auswählen —</option>' +
+    (spielerData || []).filter(s=>!s.softDeleted).map(s=>
+      `<option value="${s.id}">${s.nachname} ${s.vorname} (#${s.rnr||'?'}, ${s.team||''})</option>`
+    ).join('');
+};
+
+window.ssaConfirmSaveToPlayer = function() {
+  if (!ssaLastResult) { alert('Kein Ergebnis zum Speichern vorhanden.'); return; }
+  const pid = document.getElementById('ssaPlayerSel')?.value;
+  if (!pid) { alert('Bitte zuerst einen Spieler auswählen.'); return; }
+  const sp = spielerData.find(s=>s.id===pid);
+  if (!sp) return;
+  // Schussgeschwindigkeit als Shoot-Messung speichern
+  // Konvertierung: km/h → normalisierter Score (max 130 km/h = 100 Punkte)
+  const score = Math.min(100, Math.round((ssaLastResult.speed_kmh / 130) * 100));
+  sp.shoot = sp.shoot || [];
+  sp.shoot.push(ssaLastResult.speed_kmh);
+  sp.shootKmh = sp.shootKmh || [];
+  sp.shootKmh.push(ssaLastResult.speed_kmh);
+  // Skill-Basewert für SHOOT aktualisieren
+  sp.skillBase = sp.skillBase || {};
+  const currentBase = sp.skillBase.shoot || 50;
+  if (score > currentBase) sp.skillBase.shoot = score;
+  renderSpielerSimple?.();
+  const btn = document.querySelector('#ssaPlayerSaveCard button.btn-success');
+  if (btn) { const o=btn.innerHTML; btn.innerHTML='<i class="bi bi-check-lg me-1"></i>✅ Gespeichert!'; setTimeout(()=>btn.innerHTML=o,2000); }
+};
+
+// ── Toggle Zoom ──────────────────────────────────────────────
+window.ssaToggleZoom = function() {
+  ssaZoomActive = !ssaZoomActive;
+  const v = document.getElementById('ssaVideo');
+  if (!v) return;
+  if (ssaZoomActive) {
+    ssaZoomLevel = 2;
+    v.style.transform = 'scale(2)';
+    v.style.transformOrigin = 'center center';
+    v.style.cursor = 'zoom-out';
+    v.style.transition = 'transform .2s';
+    v.addEventListener('mousemove', ssaHandleZoomPan);
+    v.addEventListener('wheel', ssaHandleZoomWheel, {passive:true});
+  } else {
+    ssaZoomLevel = 1;
+    v.style.transform = '';
+    v.style.cursor = '';
+    v.removeEventListener('mousemove', ssaHandleZoomPan);
+    v.removeEventListener('wheel', ssaHandleZoomWheel);
+  }
+};
+
+function ssaHandleZoomPan(e) {
+  const v = document.getElementById('ssaVideo');
+  const rect = v.getBoundingClientRect();
+  const xPct = ((e.clientX - rect.left) / rect.width  * 100).toFixed(1);
+  const yPct = ((e.clientY - rect.top)  / rect.height * 100).toFixed(1);
+  v.style.transformOrigin = xPct + '% ' + yPct + '%';
+}
+
+function ssaHandleZoomWheel(e) {
+  const v = document.getElementById('ssaVideo');
+  ssaZoomLevel = Math.max(1, Math.min(4, ssaZoomLevel + (e.deltaY < 0 ? 0.25 : -0.25)));
+  v.style.transform = ssaZoomLevel > 1 ? `scale(${ssaZoomLevel})` : '';
+  if (ssaZoomLevel <= 1) ssaZoomActive = false;
+}
+
+// ── Auto Detect (Motion Detection) ────────────────────────────
+window.ssaAutoDetect = async function() {
+  const v = document.getElementById('ssaVideo');
+  if (!v || !v.duration) { alert('Bitte zuerst ein Video hochladen.'); return; }
+  if (ssaAutoRunning) return;
+  ssaAutoRunning = true;
+
+  const btn = document.getElementById('ssaAutoBtn');
+  btn.innerHTML = '<div class="spinner-border spinner-border-sm me-1" style="width:.9rem;height:.9rem"></div>Analysiere…';
+  btn.disabled = true;
+
+  const canvas = document.getElementById('ssaMotionCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = 160, H = 90;
+  canvas.width = W; canvas.height = H;
+
+  const wasPaused = v.paused;
+  v.pause();
+
+  const motionFrames = [];
+  const step = Math.max(1/30, v.duration / 120); // max 120 frames
+
+  const seek = t => new Promise(r => {
+    v.currentTime = t;
+    v.addEventListener('seeked', r, {once:true});
+  });
+
+  let prevData = null;
+  for (let t = 0; t < v.duration; t += step) {
+    await seek(t);
+    ctx.drawImage(v, 0, 0, W, H);
+    const cur = ctx.getImageData(0, 0, W, H).data;
+    if (prevData) {
+      let diff = 0;
+      for (let i = 0; i < cur.length; i += 16) diff += Math.abs(cur[i] - prevData[i]);
+      motionFrames.push({ t, diff: diff / (W * H / 4) });
+    }
+    prevData = Uint8ClampedArray.from(cur);
+  }
+
+  // Stärkstes Motion-Event = Ballkick
+  const sorted = [...motionFrames].sort((a,b) => b.diff - a.diff);
+  const kickT = sorted[0]?.t ?? 0;
+  // Nächst-stärkstes NACH dem Kick (mind. 50ms später) = Netz/Tor
+  const afterKick = motionFrames.filter(f => f.t > kickT + 0.05).sort((a,b) => b.diff - a.diff);
+  const netT = afterKick[0]?.t ?? (kickT + 0.3);
+
+  ssaMarkerStart = kickT;
+  ssaMarkerEnd   = netT;
+  document.getElementById('ssaMarkerStartBadge').className  = 'badge bg-success';
+  document.getElementById('ssaMarkerStartBadge').textContent = '⚽ auto';
+  document.getElementById('ssaMarkerStartDisp').textContent  = kickT.toFixed(3) + 's';
+  document.getElementById('ssaMarkerEndBadge').className    = 'badge bg-danger';
+  document.getElementById('ssaMarkerEndBadge').textContent   = '🥅 auto';
+  document.getElementById('ssaMarkerEndDisp').textContent    = netT.toFixed(3) + 's';
+
+  ssaDrawTimeline();
+  ssaCalculate();
+
+  if (!wasPaused) v.play();
+  ssaAutoRunning = false;
+  btn.innerHTML = '<i class="bi bi-robot me-1"></i>Auto Detect';
+  btn.disabled = false;
 };
 
 window.doLoginEnter = function() {
@@ -8174,6 +9323,652 @@ window.doLogin = async function() {
   catch(e) { err.classList.remove('d-none'); err.textContent = 'Falsche E-Mail oder falsches Passwort.'; }
 };
 window.doLogout = () => signOut(auth);
+
+// ══════════════════════════════════════════════════════════════
+// PPTX STARTER-VORLAGE GENERATOR
+// Erzeugt eine fertige .pptx mit allen {{variablen}} via JSZip
+// ══════════════════════════════════════════════════════════════
+window.pptxStarterGenerieren = async function() {
+  if (!window.JSZip) { alert('JSZip nicht geladen – bitte Seite neu laden.'); return; }
+
+  const btn = event?.target;
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Generiere…'; }
+
+  // EMU helpers – 16:9 slide: 9144000 × 5143500
+  const SW = 9144000, SH = 5143500;
+  const MX = 457200, MY = 400000; // margins
+  const CW = SW - MX * 2;        // content width
+
+  function rgb(hex) { return `<a:solidFill><a:srgbClr val="${hex}"/></a:solidFill>`; }
+
+  function sp(id, name, x, y, w, h, runs, bgHex) {
+    const fill = bgHex ? `<a:solidFill><a:srgbClr val="${bgHex}"/></a:solidFill>` : '<a:noFill/>';
+    return `<p:sp><p:nvSpPr><p:cNvPr id="${id}" name="${name}"/><p:cNvSpPr txBox="1"><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="${x}" y="${y}"/><a:ext cx="${w}" cy="${h}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom>${fill}</p:spPr><p:txBody><a:bodyPr wrap="square" rtlCol="0" anchor="ctr"/><a:lstStyle/>${runs}</p:txBody></p:sp>`;
+  }
+
+  function run(text, sz, bold, colorHex, align) {
+    const b = bold ? ' b="1"' : '';
+    const al = align ? `<a:pPr algn="${align}"/>` : '';
+    return `<a:p>${al}<a:r><a:rPr lang="de-AT" sz="${sz}"${b} dirty="0">${rgb(colorHex)}</a:rPr><a:t>${text}</a:t></a:r></a:p>`;
+  }
+
+  function labelVal(id, x, y, w, label, varName, labelSz=900, valSz=1400) {
+    const labelRun = run(label, labelSz, false, '888888');
+    const valRun   = run(varName, valSz, true, '1a1a2e');
+    return sp(id, label, x, y, w, 600000, labelRun + valRun);
+  }
+
+  function slide(shapes) {
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>${shapes.join('')}</p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>`;
+  }
+
+  const slideRel = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/></Relationships>`;
+
+  // ── Slide 1: Titelfolie ───────────────────────────────────────
+  const s1 = slide([
+    sp(2,'BG',0,0,SW,SH, run('',100,false,'ffffff'), '1a1d2e'),
+    sp(3,'Accent',0,SH-18000,SW,18000, run('',100,false,'ffffff'), 'c0392b'),
+    sp(4,'Club',MX,MY,2000000,600000, run('ATUS Bärnbach',1400,true,'ffffff'), null),
+    sp(5,'Title',MX,MY+400000,CW,1400000, run('{{schwerpunkt}}',3600,true,'ffffff','l'), null),
+    sp(6,'Datum',MX,MY+1900000,CW,500000, run('{{datum}}',1800,false,'e0e0e0','l'), null),
+    sp(7,'Trainer',MX,MY+2450000,CW,500000, run('Trainer: {{trainer}}',1400,false,'adb5bd','l'), null),
+  ]);
+
+  // ── Slide 2: Trainingsübersicht ───────────────────────────────
+  const COL = CW / 2 - 100000;
+  const s2 = slide([
+    sp(2,'Header',0,0,SW,420000, run('  Trainingsdetails',1800,true,'ffffff','l'), '1a1d2e'),
+    labelVal(3, MX,         500000, COL, 'Beginn – Ende',       '{{beginn_ende}}'),
+    labelVal(4, MX+COL+200000, 500000, COL, 'Ort / Platz',      '{{ort}}'),
+    labelVal(5, MX,         1200000, COL, 'Belastung',           '{{belastung}}'),
+    labelVal(6, MX+COL+200000, 1200000, COL, 'Spieleranzahl',   '{{spieleranzahl}}'),
+    labelVal(7, MX,         1900000, CW,  'Sonstiges',           '{{sonstiges}}', 900, 1200),
+    sp(8,'NotizLabel',MX,2600000,CW,250000, run('Notiz',900,false,'888888'), null),
+    sp(9,'Notiz',MX,2880000,CW,2000000, run('{{notiz}}',1200,false,'1a1a2e'), null),
+  ]);
+
+  // ── Slides 3–12: Übungen u1–u10 ──────────────────────────────
+  function uebungSlide(n) {
+    const u = `u${n}`;
+    // Linke Spalte (60 %): Text, rechte Spalte (37 %): Bild + QR
+    const LC = Math.round(CW * 0.60);            // ~5055600
+    const RC_W = Math.round(CW * 0.37);          // ~3108600
+    const RC_X = SW - RC_W - MX;                  // x-Start rechte Spalte
+    const QR_SZ = Math.round(RC_W * 0.62);        // QR-Code Größe (quadratisch)
+    const QR_X = RC_X + Math.round((RC_W - QR_SZ) / 2); // zentriert
+    return slide([
+      sp(2,'Header',0,0,SW,420000, run(`  Übung ${n}`,1800,true,'ffffff','l'), 'c0392b'),
+      // Linke Spalte
+      sp(3,'Abschnitt',MX,480000,LC,280000, run(`{{${u}_abschnitt}}`,900,false,'888888'), null),
+      sp(4,'Name',MX,760000,LC,680000, run(`{{${u}_name}}`,2200,true,'1a1d2e'), null),
+      sp(5,'Dauer',MX,1490000,900000,350000, run(`{{${u}_dauer}} min`,1200,false,'c0392b'), 'fff0ee'),
+      sp(6,'BeschLabel',MX,1960000,LC,230000, run('Beschreibung / Ablauf',900,false,'888888'), null),
+      sp(7,'Beschreibung',MX,2200000,LC,2350000, run(`{{${u}_beschreibung}}`,1100,false,'1a1a2e'), null),
+      sp(8,'Link',MX,4680000,LC,350000, run(`{{${u}_link}}`,900,false,'0d6efd'), null),
+      // Rechte Spalte: Bild (Taktikfeld / YouTube-Thumbnail)
+      sp(9,'Bild',RC_X,460000,RC_W,2700000, run(`{{${u}_bild}}`,800,false,'ffffff','ctr'), '2d7a3a'),
+      // Rechte Spalte: QR-Code
+      sp(10,'QRCode',QR_X,3280000,QR_SZ,QR_SZ, run(`{{${u}_qr}}`,700,false,'999999','ctr'), 'f8f9fa'),
+      sp(11,'QRLabel',RC_X,3280000+QR_SZ+40000,RC_W,200000, run('QR-Code scannen',650,false,'888888','ctr'), null),
+    ]);
+  }
+
+  // ── Minimale Slide Master + Layout + Theme ────────────────────
+  const master = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sldMaster xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr></p:spTree></p:cSld><p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" hlink="hlink" folHlink="folHlink"/><p:sldLayoutIdLst><p:sldLayoutId id="2147483649" r:id="rId1"/></p:sldLayoutIdLst><p:txStyles><p:titleStyle><a:lvl1pPr><a:defRPr lang="de-AT"/></a:lvl1pPr></p:titleStyle><p:bodyStyle><a:lvl1pPr><a:defRPr lang="de-AT"/></a:lvl1pPr></p:bodyStyle><p:otherStyle><a:lvl1pPr><a:defRPr lang="de-AT"/></a:lvl1pPr></p:otherStyle></p:txStyles></p:sldMaster>`;
+
+  const masterRel = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="../theme/theme1.xml"/></Relationships>`;
+
+  const layout = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" type="blank"><p:cSld name="Blank"><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr></p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sldLayout>`;
+
+  const layoutRel = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="../slideMasters/slideMaster1.xml"/></Relationships>`;
+
+  const theme = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="MatchFlow"><a:themeElements><a:clrScheme name="MF"><a:dk1><a:srgbClr val="1a1d2e"/></a:dk1><a:lt1><a:srgbClr val="FFFFFF"/></a:lt1><a:dk2><a:srgbClr val="c0392b"/></a:dk2><a:lt2><a:srgbClr val="f5f6fa"/></a:lt2><a:accent1><a:srgbClr val="c0392b"/></a:accent1><a:accent2><a:srgbClr val="0d6efd"/></a:accent2><a:accent3><a:srgbClr val="198754"/></a:accent3><a:accent4><a:srgbClr val="ffc107"/></a:accent4><a:accent5><a:srgbClr val="0dcaf0"/></a:accent5><a:accent6><a:srgbClr val="6f42c1"/></a:accent6><a:hlink><a:srgbClr val="0d6efd"/></a:hlink><a:folHlink><a:srgbClr val="6f42c1"/></a:folHlink></a:clrScheme><a:fontScheme name="MF"><a:majorFont><a:latin typeface="Calibri"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont><a:minorFont><a:latin typeface="Calibri"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont></a:fontScheme><a:fmtScheme name="MF"><a:fillStyleLst><a:noFill/><a:noFill/><a:noFill/></a:fillStyleLst><a:lnStyleLst><a:ln w="6350"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:ln><a:ln w="12700"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:ln><a:ln w="19050"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:ln></a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle></a:effectStyleLst><a:bgFillStyleLst><a:noFill/><a:noFill/><a:noFill/></a:bgFillStyleLst></a:fmtScheme></a:themeElements></a:theme>`;
+
+  // ── Presentation XML ──────────────────────────────────────────
+  const slideCount = 12; // slide1=Titel, slide2=Details, slide3-12=Übungen
+  const sldIdList = Array.from({length: slideCount}, (_,i) =>
+    `<p:sldId id="${256+i}" r:id="rId${i+2}"/>`).join('');
+
+  const presentation = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" saveSubsetFonts="1"><p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/></p:sldMasterIdLst><p:sldSz cx="${SW}" cy="${SH}" type="screen16x9"/><p:notesSz cx="6858000" cy="9144000"/><p:sldIdLst>${sldIdList}</p:sldIdLst></p:presentation>`;
+
+  const presRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="slideMasters/slideMaster1.xml"/>${Array.from({length: slideCount}, (_,i) => `<Relationship Id="rId${i+2}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${i+1}.xml"/>`).join('')}</Relationships>`;
+
+  const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/></Relationships>`;
+
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/><Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/><Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/><Override PartName="/ppt/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>${Array.from({length: slideCount}, (_,i) => `<Override PartName="/ppt/slides/slide${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`).join('')}</Types>`;
+
+  // ── Build ZIP ─────────────────────────────────────────────────
+  const zip = new JSZip();
+  zip.file('[Content_Types].xml', contentTypes);
+  zip.file('_rels/.rels', rels);
+  zip.file('ppt/presentation.xml', presentation);
+  zip.file('ppt/_rels/presentation.xml.rels', presRels);
+  zip.file('ppt/slideMasters/slideMaster1.xml', master);
+  zip.file('ppt/slideMasters/_rels/slideMaster1.xml.rels', masterRel);
+  zip.file('ppt/slideLayouts/slideLayout1.xml', layout);
+  zip.file('ppt/slideLayouts/_rels/slideLayout1.xml.rels', layoutRel);
+  zip.file('ppt/theme/theme1.xml', theme);
+  zip.file('ppt/slides/slide1.xml', s1);
+  zip.file('ppt/slides/slide2.xml', s2);
+  for (let i = 1; i <= 10; i++) {
+    zip.file(`ppt/slides/slide${i+2}.xml`, uebungSlide(i));
+    zip.file(`ppt/slides/_rels/slide${i+2}.xml.rels`, slideRel);
+  }
+  zip.file('ppt/slides/_rels/slide1.xml.rels', slideRel);
+  zip.file('ppt/slides/_rels/slide2.xml.rels', slideRel);
+
+  const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'matchflow-vorlage-starter.pptx'; a.click();
+  URL.revokeObjectURL(url);
+
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-magic me-1"></i>Starter-Vorlage generieren'; }
+
+  // Status im Modal anzeigen
+  const st = document.getElementById('pptxTemplateStatus');
+  if (st) {
+    st.className = 'alert alert-success py-2 small';
+    st.classList.remove('d-none');
+    st.innerHTML = '<i class="bi bi-check-circle me-1"></i>Vorlage heruntergeladen! In PowerPoint öffnen, Design anpassen, dann hier hochladen.';
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+// FIRESTORE: Spieler-Modell-Split (players / player_seasons)
+// ══════════════════════════════════════════════════════════════
+// Aktuell aktive Saison (kann später per UI wählbar gemacht werden)
+window.currentSeason = localStorage.getItem('mf_season') || '2024/25';
+
+// Trennung der Spieler-Daten in zwei Collections:
+//   players/{id}          → Stammdaten (unveränderlich)
+//   player_seasons/{id}   → Saisondaten (team, skills, camp, etc.)
+//   Der Dokument-Key in player_seasons ist "{playerId}_{saison}"
+//     z.B. "p1_2024-25"
+
+function seasonKey(season) {
+  return season.replace(/\//g, '-');
+}
+
+async function fsSaveSpieler(obj) {
+  const db = window._firestoreDB;
+  if (!db) return;
+  try {
+    const { doc, setDoc, serverTimestamp } = window._firestoreAPI;
+    const tid = window._currentTenantId;
+
+    // players/{id} — Stammdaten
+    const playerRef = doc(db, 'players', obj.id);
+    await setDoc(playerRef, {
+      id:         obj.id,
+      vorname:    obj.vorname,
+      nachname:   obj.nachname,
+      geb:        obj.geb || '',
+      foto_url:   obj.foto || '',
+      tenant_id:  tid || '',
+      updated_at: serverTimestamp(),
+    }, { merge: true });
+
+    // player_seasons/{id}_{season} — Saisondaten
+    const sk = seasonKey(window.currentSeason);
+    const seasonRef = doc(db, 'player_seasons', `${obj.id}_${sk}`);
+    await setDoc(seasonRef, {
+      player_id:    obj.id,
+      season:       window.currentSeason,
+      tenant_id:    tid || '',
+      rnr:          obj.rnr || 0,
+      pos:          obj.pos || '',
+      team:         obj.team || '',
+      skillBase:    obj.skillBase || {},
+      campScore:    obj.campScore || {},
+      lieblingsverein: obj.lieblingsverein || [],
+      hauptverein:  obj.hauptverein || '',
+      softDeleted:  obj.softDeleted || false,
+      updated_at:   serverTimestamp(),
+    }, { merge: true });
+  } catch(e) {
+    console.warn('fsSaveSpieler:', e.message);
+  }
+}
+
+async function fsLoadSpieler() {
+  const db = window._firestoreDB;
+  if (!db) return null;
+  try {
+    const { collection, query, where, getDocs } = window._firestoreAPI;
+    const tid = window._currentTenantId;
+    const sk  = seasonKey(window.currentSeason);
+
+    // Load player base data
+    const pSnap = await getDocs(query(collection(db, 'players'), where('tenant_id', '==', tid)));
+    const players = {};
+    pSnap.forEach(d => { players[d.id] = d.data(); });
+
+    // Load season data for current season
+    const sSnap = await getDocs(query(
+      collection(db, 'player_seasons'),
+      where('tenant_id', '==', tid),
+      where('season',    '==', window.currentSeason)
+    ));
+    const result = [];
+    sSnap.forEach(d => {
+      const sd = d.data();
+      const pd = players[sd.player_id] || {};
+      result.push({
+        id:              sd.player_id,
+        vorname:         pd.vorname    || '',
+        nachname:        pd.nachname   || '',
+        geb:             pd.geb        || '',
+        foto:            pd.foto_url   || '',
+        rnr:             sd.rnr        || 0,
+        pos:             sd.pos        || '',
+        team:            sd.team       || '',
+        skillBase:       sd.skillBase  || {},
+        campScore:       sd.campScore  || {},
+        lieblingsverein: sd.lieblingsverein || [],
+        hauptverein:     sd.hauptverein || '',
+        softDeleted:     sd.softDeleted || false,
+        skills: {}, slv: 60,
+      });
+    });
+    return result.length ? result : null;
+  } catch(e) {
+    console.warn('fsLoadSpieler:', e.message);
+    return null;
+  }
+}
+
+async function fsSaveVereinLogo(name, url) {
+  const db = window._firestoreDB;
+  if (!db) return;
+  try {
+    const { doc, setDoc, serverTimestamp } = window._firestoreAPI;
+    const tid = window._currentTenantId;
+    const safeId = 'logo_' + name.toLowerCase().replace(/[^a-z0-9]/g,'_');
+    await setDoc(doc(db, 'verein_logos', safeId), {
+      name, url, tenant_id: tid || '', updated_at: serverTimestamp(),
+    }, { merge: true });
+  } catch(e) {
+    console.warn('fsSaveVereinLogo:', e.message);
+  }
+}
+
+async function fsLoadVereinLogos() {
+  const db = window._firestoreDB;
+  if (!db) return;
+  try {
+    const { collection, query, where, getDocs } = window._firestoreAPI;
+    const tid = window._currentTenantId;
+    const snap = await getDocs(query(collection(db, 'verein_logos'), where('tenant_id', '==', tid)));
+    snap.forEach(d => {
+      const { name, url } = d.data();
+      if (name && url) customVereinLogos[name] = url;
+    });
+  } catch(e) {
+    console.warn('fsLoadVereinLogos:', e.message);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// FIRESTORE: Trainings
+// ══════════════════════════════════════════════════════════════
+async function fsSaveTraining(obj) {
+  const db = window._firestoreDB;
+  if (!db || !obj?.id) return;
+  try {
+    const { doc, setDoc, serverTimestamp } = window._firestoreAPI;
+    const tid = window._currentTenantId;
+    await setDoc(doc(db, 'trainings', obj.id), {
+      ...obj,
+      tenant_id:  tid || '',
+      updated_at: serverTimestamp(),
+    }, { merge: true });
+  } catch(e) { console.warn('fsSaveTraining:', e.message); }
+}
+
+async function fsLoadTrainings() {
+  const db = window._firestoreDB;
+  if (!db) return null;
+  try {
+    const { collection, query, where, getDocs } = window._firestoreAPI;
+    const tid = window._currentTenantId;
+    const snap = await getDocs(query(collection(db, 'trainings'), where('tenant_id', '==', tid)));
+    if (snap.empty) return null;
+    return snap.docs
+      .map(d => ({ ...d.data(), id: d.id }))
+      .sort((a, b) => (b.datum || '').localeCompare(a.datum || ''));
+  } catch(e) { console.warn('fsLoadTrainings:', e.message); return null; }
+}
+
+async function fsDeleteTraining(id) {
+  const db = window._firestoreDB;
+  if (!db) return;
+  try {
+    const { doc, deleteDoc } = window._firestoreAPI;
+    await deleteDoc(doc(db, 'trainings', id));
+  } catch(e) { console.warn('fsDeleteTraining:', e.message); }
+}
+
+// ══════════════════════════════════════════════════════════════
+// FIRESTORE: Übungsbibliothek
+// ══════════════════════════════════════════════════════════════
+async function fsSaveUebung(obj) {
+  const db = window._firestoreDB;
+  if (!db || !obj?.id) return;
+  try {
+    const { doc, setDoc, serverTimestamp } = window._firestoreAPI;
+    const tid = window._currentTenantId;
+    await setDoc(doc(db, 'uebungen', obj.id), {
+      ...obj,
+      tenant_id:  tid || '',
+      updated_at: serverTimestamp(),
+    }, { merge: true });
+  } catch(e) { console.warn('fsSaveUebung:', e.message); }
+}
+
+async function fsLoadUebungen() {
+  const db = window._firestoreDB;
+  if (!db) return null;
+  try {
+    const { collection, query, where, getDocs } = window._firestoreAPI;
+    const tid = window._currentTenantId;
+    const snap = await getDocs(query(collection(db, 'uebungen'), where('tenant_id', '==', tid)));
+    if (snap.empty) return null;
+    return snap.docs.map(d => ({ ...d.data(), id: d.id }));
+  } catch(e) { console.warn('fsLoadUebungen:', e.message); return null; }
+}
+
+async function fsDeleteUebung(id) {
+  const db = window._firestoreDB;
+  if (!db) return;
+  try {
+    const { doc, deleteDoc } = window._firestoreAPI;
+    await deleteDoc(doc(db, 'uebungen', id));
+  } catch(e) { console.warn('fsDeleteUebung:', e.message); }
+}
+
+// ══════════════════════════════════════════════════════════════
+// FIRESTORE: Camps
+// ══════════════════════════════════════════════════════════════
+async function fsSaveCamp(campObj) {
+  const db = window._firestoreDB;
+  if (!db || !campObj?.id) return;
+  try {
+    const { doc, setDoc, serverTimestamp } = window._firestoreAPI;
+    const tid = window._currentTenantId;
+    await setDoc(doc(db, 'camps', campObj.id), {
+      ...campObj,
+      tenant_id:  tid || '',
+      updated_at: serverTimestamp(),
+    }, { merge: true });
+  } catch(e) { console.warn('fsSaveCamp:', e.message); }
+}
+
+async function fsLoadCamps() {
+  const db = window._firestoreDB;
+  if (!db) return null;
+  try {
+    const { collection, query, where, getDocs } = window._firestoreAPI;
+    const tid = window._currentTenantId;
+    const snap = await getDocs(query(collection(db, 'camps'), where('tenant_id', '==', tid)));
+    if (snap.empty) return null;
+    return snap.docs
+      .map(d => ({ ...d.data(), id: d.id }))
+      .sort((a, b) => (b.datum || '').localeCompare(a.datum || ''));
+  } catch(e) { console.warn('fsLoadCamps:', e.message); return null; }
+}
+
+async function fsDeleteCamp(id) {
+  const db = window._firestoreDB;
+  if (!db) return;
+  try {
+    const { doc, deleteDoc } = window._firestoreAPI;
+    await deleteDoc(doc(db, 'camps', id));
+  } catch(e) { console.warn('fsDeleteCamp:', e.message); }
+}
+
+// ══════════════════════════════════════════════════════════════
+// FIRESTORE: Alles beim Login laden
+// ══════════════════════════════════════════════════════════════
+async function _loadAllFromFirestore() {
+  try {
+    const [fsPlayers, fsTrainings, fsUebungen, fsCamps] = await Promise.all([
+      fsLoadSpieler(),
+      fsLoadTrainings(),
+      fsLoadUebungen(),
+      fsLoadCamps(),
+      fsLoadVereinLogos(),
+    ]);
+
+    if (fsPlayers?.length) {
+      spielerData = fsPlayers;
+      renderSpielerSimple?.();
+    }
+    if (fsTrainings?.length) {
+      trainingsListe = fsTrainings;
+      trainingsCounter = Math.max(trainingsCounter, fsTrainings.length);
+      renderTrainingsListe?.();
+    }
+    if (fsUebungen?.length) {
+      uebungsDB = fsUebungen;
+      uebCounter = Math.max(uebCounter, fsUebungen.length);
+      renderUebungen?.();
+    }
+    if (fsCamps?.length) {
+      campListe = fsCamps;
+      campListeCounter = Math.max(campListeCounter, fsCamps.length);
+      currentCampId = fsCamps[0].id;
+      campSpielerData = _aktCamp()?.spieler || [];
+      campCounter = campSpielerData.length;
+      renderCampListe?.();
+    }
+    console.log('[MatchFlow] Firestore-Daten geladen:', {
+      spieler: fsPlayers?.length || 0,
+      trainings: fsTrainings?.length || 0,
+      uebungen: fsUebungen?.length || 0,
+      camps: fsCamps?.length || 0,
+    });
+  } catch(e) {
+    console.warn('_loadAllFromFirestore:', e.message);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// MEDIA SERVER – Config, Upload, Capture
+// ══════════════════════════════════════════════════════════════
+function getMediaConfig() {
+  try { return JSON.parse(localStorage.getItem('mf_media_cfg') || '{}'); } catch { return {}; }
+}
+function setMediaConfig(cfg) {
+  localStorage.setItem('mf_media_cfg', JSON.stringify(cfg));
+}
+
+window.mediaTabInit = function() {
+  const cfg = getMediaConfig();
+  const urlEl = document.getElementById('mediaServerUrl');
+  if (urlEl) urlEl.value = cfg.serverUrl || '';
+};
+
+window.mediaServerSave = function() {
+  const urlEl = document.getElementById('mediaServerUrl');
+  const url = urlEl?.value.trim().replace(/\/$/, '');
+  setMediaConfig({ serverUrl: url });
+  const st = document.getElementById('mediaServerStatus');
+  if (st) st.innerHTML = '<div class="alert alert-success py-2 mb-0"><i class="bi bi-check-circle me-1"></i>Gespeichert!</div>';
+};
+
+window.mediaServerTest = async function() {
+  const st = document.getElementById('mediaServerStatus');
+  const cfg = getMediaConfig();
+  if (!cfg.serverUrl) { st.innerHTML = '<div class="alert alert-warning py-2 mb-0">Bitte zuerst Server URL eingeben und speichern.</div>'; return; }
+  st.innerHTML = '<div class="alert alert-secondary py-2 mb-0"><span class="spinner-border spinner-border-sm me-2"></span>Verbindung wird getestet…</div>';
+  try {
+    const r = await fetch(`${cfg.serverUrl}/api/test-connection`, { method: 'POST' });
+    const j = await r.json();
+    st.innerHTML = `<div class="alert alert-success py-2 mb-0"><i class="bi bi-wifi me-1"></i>${j.message} <small class="text-muted">${j.time}</small></div>`;
+  } catch(e) {
+    st.innerHTML = `<div class="alert alert-danger py-2 mb-0"><i class="bi bi-wifi-off me-1"></i>Verbindung fehlgeschlagen: ${e.message}</div>`;
+  }
+};
+
+window.mediaServerCheckFolders = async function() {
+  const st = document.getElementById('mediaServerStatus');
+  const cfg = getMediaConfig();
+  if (!cfg.serverUrl) { st.innerHTML = '<div class="alert alert-warning py-2 mb-0">Bitte zuerst Server URL eingeben.</div>'; return; }
+  try {
+    const r = await fetch(`${cfg.serverUrl}/api/check-folders`, { method: 'POST' });
+    const j = await r.json();
+    const items = Object.entries(j.folders || {}).map(([n,f]) =>
+      `<li>${f.ok ? '✅' : '❌'} <code>${n}</code></li>`).join('');
+    st.innerHTML = `<div class="alert alert-success py-2 mb-0">Ordner geprüft:<ul class="mb-0 mt-1">${items}</ul></div>`;
+  } catch(e) {
+    st.innerHTML = `<div class="alert alert-danger py-2 mb-0">Fehler: ${e.message}</div>`;
+  }
+};
+
+window.mediaLoadStats = async function() {
+  const el = document.getElementById('mediaStorageStats');
+  const cfg = getMediaConfig();
+  if (!cfg.serverUrl) { el.innerHTML = '<span class="text-warning">Keine Server URL konfiguriert.</span>'; return; }
+  el.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Lade…';
+  try {
+    const r = await fetch(`${cfg.serverUrl}/api/storage-stats`);
+    const j = await r.json();
+    const fmt = bytes => bytes < 1024*1024 ? (bytes/1024).toFixed(1)+' KB' : (bytes/1024/1024).toFixed(1)+' MB';
+    el.innerHTML = `
+      <table class="table table-sm mb-0">
+        <tr><td>Videos</td><td>${j.videos?.count||0} Dateien</td><td>${fmt(j.videos?.bytes||0)}</td></tr>
+        <tr><td>Thumbnails</td><td>${j.thumbnails?.count||0} Dateien</td><td>${fmt(j.thumbnails?.bytes||0)}</td></tr>
+        <tr><td>Spielerbilder</td><td>${j.playerImages?.count||0} Dateien</td><td>${fmt(j.playerImages?.bytes||0)}</td></tr>
+        <tr class="fw-bold"><td>Getrackte Videos</td><td colspan="2">${j.tracked_videos||0} (Ablauf-Überwachung aktiv)</td></tr>
+      </table>`;
+  } catch(e) {
+    el.innerHTML = `<span class="text-danger">Fehler: ${e.message}</span>`;
+  }
+};
+
+// Upload a File to the media server → returns URL string
+async function uploadToMediaServer(file, type, id) {
+  const cfg = getMediaConfig();
+  if (!cfg.serverUrl) throw new Error('Kein Media Server konfiguriert');
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('type', type);
+  fd.append('id', id);
+  const r = await fetch(`${cfg.serverUrl}/api/upload`, { method: 'POST', body: fd });
+  if (!r.ok) throw new Error(`Upload fehlgeschlagen (${r.status})`);
+  const j = await r.json();
+  return j.url;
+}
+
+// Capture a single frame from a video element as a Blob (PNG)
+function captureVideoFrame(videoEl, timeSeconds) {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    canvas.width  = videoEl.videoWidth  || 640;
+    canvas.height = videoEl.videoHeight || 360;
+    const ctx = canvas.getContext('2d');
+    const doCapture = () => {
+      ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Canvas leer')), 'image/png');
+    };
+    if (timeSeconds !== undefined && Math.abs(videoEl.currentTime - timeSeconds) > 0.05) {
+      videoEl.onseeked = () => { videoEl.onseeked = null; doCapture(); };
+      videoEl.currentTime = timeSeconds;
+    } else {
+      doCapture();
+    }
+  });
+}
+
+// Save a shot measurement to Firestore
+async function saveShotMeasurement(data) {
+  const db = window._firestoreDB;
+  if (!db) return null;
+  const { addDoc, collection, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+  const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+  const doc = await addDoc(collection(db, 'shot_measurements'), {
+    player_id:        data.player_id   || null,
+    speed_kmh:        data.speed_kmh,
+    time_ms:          data.time_ms,
+    distance_m:       data.distance_m,
+    created_at:       serverTimestamp(),
+    thumbnail_url:    data.thumbnail_url || null,
+    video_url:        data.video_url     || null,
+    video_expires_at: data.video_url ? expiresAt : null,
+  });
+  return doc.id;
+}
+
+// Extended save-to-player: also uploads video + thumbnail if media server configured
+window.ssaConfirmSaveToPlayerWithUpload = async function() {
+  if (!ssaLastResult) { alert('Kein Ergebnis vorhanden.'); return; }
+  const pid = document.getElementById('ssaPlayerSel')?.value;
+  if (!pid) { alert('Bitte Spieler auswählen.'); return; }
+  const sp = spielerData.find(s => s.id === pid);
+  if (!sp) return;
+
+  const btn = document.querySelector('#ssaPlayerSaveCard button.btn-success');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Speichern…'; }
+
+  const cfg = getMediaConfig();
+  const hasServer = !!cfg.serverUrl;
+  const measureId = 'shot_' + Date.now() + '_' + pid;
+  let videoUrl = null, thumbnailUrl = null;
+
+  try {
+    // Capture thumbnail at marker midpoint
+    const vid = document.getElementById('ssaVideo');
+    if (vid) {
+      const midTime = ssaLastResult.kickTime !== undefined
+        ? ssaLastResult.kickTime + (ssaLastResult.netTime - ssaLastResult.kickTime) * 0.5
+        : vid.currentTime;
+      const thumbBlob = await captureVideoFrame(vid, midTime);
+      if (hasServer) {
+        try {
+          thumbnailUrl = await uploadToMediaServer(
+            new File([thumbBlob], `${measureId}.png`, { type: 'image/png' }),
+            'thumbnail', measureId
+          );
+        } catch(e) { console.warn('Thumbnail upload failed:', e); }
+      }
+      // Upload video if source is a File object
+      if (hasServer && ssaCurrentFile) {
+        try {
+          videoUrl = await uploadToMediaServer(ssaCurrentFile, 'video', measureId);
+        } catch(e) { console.warn('Video upload failed:', e); }
+      }
+    }
+    // Save to Firestore
+    await saveShotMeasurement({
+      player_id:    pid,
+      speed_kmh:    ssaLastResult.speed_kmh,
+      time_ms:      ssaLastResult.time_ms,
+      distance_m:   ssaLastResult.distance_m,
+      thumbnail_url: thumbnailUrl,
+      video_url:    videoUrl,
+    });
+  } catch(e) { console.warn('Firestore/Upload error:', e); }
+
+  // Update local spielerData
+  const score = Math.min(100, Math.round((ssaLastResult.speed_kmh / 130) * 100));
+  sp.shoot = sp.shoot || [];
+  sp.shoot.push(ssaLastResult.speed_kmh);
+  sp.shootKmh = sp.shootKmh || [];
+  sp.shootKmh.push(ssaLastResult.speed_kmh);
+  sp.skillBase = sp.skillBase || {};
+  if (score > (sp.skillBase.shoot || 50)) sp.skillBase.shoot = score;
+  renderSpielerSimple?.();
+
+  if (btn) {
+    const badge = videoUrl
+      ? '<span class="badge bg-primary ms-1">🎥 Video (48h)</span>'
+      : thumbnailUrl ? '<span class="badge bg-secondary ms-1">📸 Screenshot</span>' : '';
+    btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>✅ Gespeichert!' + badge;
+    btn.disabled = false;
+  }
+};
+
 </script>
 </body>
 </html>
