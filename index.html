@@ -317,6 +317,9 @@ body.sa-mode .sa-var{display:inline}
     <button id="navCamp" class="sb-item" onclick="showView('camp')">
       <i class="bi bi-trophy-fill" style="color:#ffc107"></i> Skills &amp; Camp
     </button>
+    <button id="navLeistung" class="sb-item" onclick="showView('leistung')">
+      <i class="bi bi-speedometer2" style="color:#20c997"></i> Leistungsmessungen
+    </button>
 
     <div class="sb-section-label mt-1">Tools</div>
     <button id="navSkillcalc" class="sb-item" onclick="showView('skillcalc')">
@@ -1921,6 +1924,20 @@ body.sa-mode .sa-var{display:inline}
   </div>
 </div>
 
+<!-- ===== LEISTUNGSMESSUNGEN ===== -->
+<div id="viewLeistung" class="container-fluid p-4" style="display:none">
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h4 class="mb-0"><i class="bi bi-speedometer2 me-2" style="color:#20c997"></i>Leistungsmessungen</h4>
+      <p class="text-muted mb-0 mt-1">Messungen erfassen, Spieler zuordnen, Auswertung</p>
+    </div>
+  </div>
+  <div class="alert alert-info">
+    <i class="bi bi-info-circle me-2"></i>
+    Dieses Modul wird schrittweise aufgebaut. <strong>Schritt 1</strong> ist abgeschlossen: Berechtigungen und Navigation eingerichtet.
+  </div>
+</div>
+
 <!-- ===== MEDIA STORAGE ===== -->
 <div id="viewMedia" class="container-fluid p-4" style="display:none">
   <div class="d-flex align-items-center mb-4 gap-3">
@@ -3164,7 +3181,7 @@ let quillTD    = null;
 // ══════════════════════════════════════════════════════════════
 // NAVIGATION
 // ══════════════════════════════════════════════════════════════
-const views  = ['main','spieler','karten','camp','training','uebungen','mannschaften','users','skillcalc','media'];
+const views  = ['main','spieler','karten','camp','training','uebungen','mannschaften','users','skillcalc','media','leistung'];
 const navMap = { main:'navMain', spieler:'navSpieler', karten:'navKarten', camp:'navCamp', training:'navTraining', uebungen:'navUebungen', mannschaften:'navMannschaften', users:'navUsers', skillcalc:'navSkillcalc', media:'navMedia' };
 const navTitles = { main:'Dashboard', spieler:'Spieler', karten:'Karten', camp:'Camp', training:'Training / Spiel', uebungen:'Übungsbibliothek', mannschaften:'Mannschaften', users:'Benutzer & Rollen', skillcalc:'Skill Calculator', media:'Media Storage' };
 let dtSpielerSimple = null;
@@ -3250,6 +3267,9 @@ const ALL_PERMISSIONS = [
   { key:'roles.view',        label:'Rollen anzeigen',               modul:'Rollen' },
   { key:'roles.edit',        label:'Rollen bearbeiten',             modul:'Rollen' },
   { key:'roles.delete',      label:'Rollen löschen',                modul:'Rollen' },
+  { key:'measurements.view',  label:'Messungen anzeigen',           modul:'Leistungsmessungen' },
+  { key:'measurements.edit',  label:'Messungen erfassen & bearbeiten', modul:'Leistungsmessungen' },
+  { key:'measurements.admin', label:'Messungstypen & Skill-Kategorien verwalten', modul:'Leistungsmessungen' },
 ];
 
 window.hasPermission = function(key) {
@@ -3268,6 +3288,7 @@ const VIEW_PERM_MAP = [
   { nav:'navUebungen',    view:'viewUebungen',     viewPerm:'uebungen.view',     editPerm:'uebungen.edit' },
   { nav:'navMannschaften', view:'viewMannschaften', viewPerm:'mannschaften.view', editPerm:'mannschaften.edit' },
   { nav:'navUsers',        view:'viewUsers',        viewPerm:'users.view',        editPerm:'users.edit' },
+  { nav:'navLeistung',    view:'viewLeistung',    viewPerm:'measurements.view', editPerm:'measurements.edit' },
 ];
 
 window.applyPermissions = function() {
@@ -8906,6 +8927,7 @@ const ALL_PERM_KEYS = [
   'mannschaften.view','mannschaften.edit',
   'users.view','users.edit','users.invite',
   'roles.view','roles.edit','roles.delete','audit.view',
+  'measurements.view','measurements.edit','measurements.admin',
 ];
 
 async function seedSeasonIfNeeded(tenantId) {
@@ -8931,9 +8953,9 @@ async function seedIfNeeded() {
     { id:'role_admin', name:'Admin', priority:90, tenantId:TENANT_ID, isSystem:false, isDeletable:true,
       permissions: Object.fromEntries(['spieler.view','spieler.edit','spieler.delete','camp.view','camp.edit','camp.delete','training.view','training.edit','training.delete','mannschaften.view','mannschaften.edit','users.view','users.edit','users.invite','roles.view'].map(k=>[k,'allow'])) },
     { id:'role_trainer', name:'Trainer', priority:80, tenantId:TENANT_ID, isSystem:false, isDeletable:true,
-      permissions: Object.fromEntries(['spieler.view','spieler.edit','camp.view','camp.edit','training.view','training.edit','training.delete','mannschaften.view'].map(k=>[k,'allow'])) },
+      permissions: Object.fromEntries(['spieler.view','spieler.edit','camp.view','camp.edit','training.view','training.edit','training.delete','mannschaften.view','measurements.view','measurements.edit'].map(k=>[k,'allow'])) },
     { id:'role_eltern', name:'Eltern', priority:50, tenantId:TENANT_ID, isSystem:false, isDeletable:true,
-      permissions: Object.fromEntries(['spieler.view','training.view'].map(k=>[k,'allow'])) },
+      permissions: Object.fromEntries(['spieler.view','training.view','measurements.view'].map(k=>[k,'allow'])) },
   ];
   await Promise.all(defaults.map(({ id, ...data }) => setDoc(doc(db,'roles',id), { ...data, createdAt:serverTimestamp() })));
 }
