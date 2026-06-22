@@ -235,12 +235,44 @@ body.sa-mode .sa-var{display:inline}
 
 <!-- LOGIN -->
 <div id="loginScreen" style="display:none;position:fixed;inset:0;background:#f5f6fa;z-index:9999;display:flex;align-items:center;justify-content:center">
-  <div class="card shadow p-4" style="width:100%;max-width:380px">
+  <div class="card shadow p-4" style="width:100%;max-width:400px">
     <h4 class="mb-4 text-center">⚽ MatchFlow</h4>
-    <div id="loginError" class="alert alert-danger d-none"></div>
-    <div class="mb-3"><label class="form-label">E-Mail</label><input type="email" id="loginEmail" class="form-control" onkeydown="if(event.key==='Enter')doLoginEnter()"></div>
-    <div class="mb-3"><label class="form-label">Passwort</label><input type="password" id="loginPassword" class="form-control" onkeydown="if(event.key==='Enter')doLoginEnter()"></div>
-    <button class="btn btn-dark w-100" onclick="doLogin()">Einloggen</button>
+
+    <!-- Login Form -->
+    <div id="loginFormPanel">
+      <div id="loginError" class="alert alert-danger d-none"></div>
+      <div class="mb-3"><label class="form-label">E-Mail</label><input type="email" id="loginEmail" class="form-control" onkeydown="if(event.key==='Enter')doLoginEnter()"></div>
+      <div class="mb-3"><label class="form-label">Passwort</label><input type="password" id="loginPassword" class="form-control" onkeydown="if(event.key==='Enter')doLoginEnter()"></div>
+      <button class="btn btn-dark w-100" onclick="doLogin()">Einloggen</button>
+      <div class="text-center mt-3"><a href="#" class="text-muted small" onclick="showRegPanel();return false">Noch kein Konto? Registrieren</a></div>
+    </div>
+
+    <!-- Registrierungs-Form -->
+    <div id="regFormPanel" style="display:none">
+      <div id="regError" class="alert alert-danger d-none"></div>
+      <div id="regSuccess" class="alert alert-success d-none"></div>
+      <div class="row g-2 mb-2">
+        <div class="col"><input type="text" id="regVorname" class="form-control" placeholder="Vorname"></div>
+        <div class="col"><input type="text" id="regNachname" class="form-control" placeholder="Nachname"></div>
+      </div>
+      <div class="mb-2"><input type="email" id="regEmail" class="form-control" placeholder="E-Mail"></div>
+      <div class="mb-2"><input type="password" id="regPasswort" class="form-control" placeholder="Passwort (min. 6 Zeichen)"></div>
+      <div class="mb-2">
+        <select id="regRolle" class="form-select"><option value="">-- Rolle wählen --</option></select>
+      </div>
+      <button class="btn btn-dark w-100" onclick="doRegister()">Konto beantragen</button>
+      <div class="text-center mt-3"><a href="#" class="text-muted small" onclick="showLoginPanel();return false">Zurück zum Login</a></div>
+    </div>
+
+    <!-- Warte auf Freigabe -->
+    <div id="pendingPanel" style="display:none">
+      <div class="text-center py-3">
+        <i class="bi bi-hourglass-split text-warning" style="font-size:2.5rem"></i>
+        <h5 class="mt-3">Konto wird geprüft</h5>
+        <p class="text-muted small">Deine Registrierung wurde eingereicht und wartet auf Freigabe durch einen Administrator.</p>
+        <button class="btn btn-outline-secondary btn-sm" onclick="doLogout()">Abmelden</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1808,14 +1840,28 @@ body.sa-mode .sa-var{display:inline}
   </div>
   <ul class="nav nav-tabs mt-3 mb-3">
     <li class="nav-item"><a class="nav-link active" href="#" onclick="showUsersTab('benutzer',this);return false"><i class="bi bi-people me-1"></i>Benutzer</a></li>
+    <li class="nav-item"><a class="nav-link" href="#" onclick="showUsersTab('ausstehend',this);return false"><i class="bi bi-hourglass-split me-1"></i>Ausstehend <span id="pendingBadge" class="badge bg-warning text-dark ms-1 d-none">0</span></a></li>
     <li class="nav-item"><a class="nav-link" href="#" onclick="showUsersTab('rollen',this);return false"><i class="bi bi-shield-check me-1"></i>Rollen</a></li>
+    <li class="nav-item"><a class="nav-link" href="#" onclick="showUsersTab('registrierung',this);return false"><i class="bi bi-person-plus me-1"></i>Registrierung</a></li>
   </ul>
   <div id="usersPanelBenutzer">
     <div id="usersBenutzerContent"><div class="text-center py-5 text-muted"><div class="spinner-border mb-2"></div><br>Benutzer werden geladen…</div></div>
   </div>
+  <div id="usersPanelAusstehend" style="display:none">
+    <div id="usersAusstehendContent"><div class="text-center py-5 text-muted"><div class="spinner-border mb-2"></div><br>Wird geladen…</div></div>
+  </div>
   <div id="usersPanelRollen" style="display:none">
     <div class="d-flex justify-content-end mb-3"><div class="edit"><button class="btn btn-dark btn-sm" onclick="openRolleModal(null)"><i class="bi bi-plus-circle me-1"></i>Neue Rolle</button></div></div>
     <div id="usersRollenContent"><div class="text-center py-5 text-muted"><div class="spinner-border mb-2"></div><br>Rollen werden geladen…</div></div>
+  </div>
+  <div id="usersPanelRegistrierung" style="display:none">
+    <div class="card p-4">
+      <h6 class="fw-bold mb-3"><i class="bi bi-person-plus me-2 text-primary"></i>Selbst-Registrierung Einstellungen</h6>
+      <p class="text-muted small">Welche Rollen können neue Benutzer beim Registrieren selbst wählen? <strong>SuperAdmin</strong> und System-Rollen sind grundsätzlich ausgeschlossen.</p>
+      <div id="regRollenConfig" class="mb-3"></div>
+      <button class="btn btn-dark btn-sm" onclick="regKonfigSpeichern()"><i class="bi bi-save me-1"></i>Einstellungen speichern</button>
+      <div id="regKonfigInfo" class="alert alert-success d-none mt-2">Gespeichert ✓</div>
+    </div>
   </div>
 </div>
 
@@ -3209,12 +3255,14 @@ window.applyPermissions = function() {
 window._cachedRoles = {};
 
 window.showUsersTab = function(tab, el) {
-  ['Benutzer','Rollen'].forEach(t => {
+  ['Benutzer','Ausstehend','Rollen','Registrierung'].forEach(t => {
     document.getElementById('usersPanel'+t).style.display = (t.toLowerCase() === tab) ? '' : 'none';
   });
   document.querySelectorAll('#viewUsers .nav-link').forEach(a => a.classList.remove('active'));
   if (el) el.classList.add('active');
   if (tab === 'rollen') renderRollenView();
+  if (tab === 'ausstehend') renderAusstehendView();
+  if (tab === 'registrierung') renderRegKonfigView();
 };
 
 window.renderUsersView = async function() {
@@ -3225,6 +3273,12 @@ window.renderUsersView = async function() {
   const el = document.getElementById('usersBenutzerContent');
   if (!el) return;
   el.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border mb-2"></div><br>Laden…</div>';
+  // Ausstehend-Badge aktualisieren
+  try {
+    const pendingSnap = await getDocs(query(collection(db, 'users'), where('tenantId', '==', tenantId), where('status', '==', 'pending')));
+    const badge = document.getElementById('pendingBadge');
+    if (badge) { badge.textContent = pendingSnap.size; badge.classList.toggle('d-none', pendingSnap.empty); }
+  } catch(e) {}
   try {
     // Rollen vorher laden falls Cache leer
     if (!Object.keys(window._cachedRoles).length) await renderRollenView();
@@ -7956,14 +8010,17 @@ window.openBenutzerBearbeiten = async function(uid) {
     `<option value="${r.id}" ${(u.roleIds||[]).includes(r.id)?'selected':''}>${r.name}</option>`
   ).join('');
 
-  // Teams-Checkboxen
+  // Teams-Checkboxen (dynamisch aus mannschaftenListe)
   const teamIds = u.teamIds || [];
-  document.getElementById('buEditTeamsGrid').innerHTML = TEAMS_VERFUEGBAR.map(t =>
-    `<div class="form-check form-check-inline">
-      <input class="form-check-input" type="checkbox" id="buTeam_${t}" value="${t}" ${teamIds.includes(t)?'checked':''}>
-      <label class="form-check-label" for="buTeam_${t}">${t}</label>
-    </div>`
-  ).join('');
+  const aktiveMannschaften = mannschaftenListe.filter(m => m.aktiv !== false);
+  document.getElementById('buEditTeamsGrid').innerHTML = aktiveMannschaften.length
+    ? aktiveMannschaften.map(m =>
+        `<div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="buTeam_${m.id}" value="${m.name}" ${teamIds.includes(m.name)?'checked':''}>
+          <label class="form-check-label" for="buTeam_${m.id}">${m.name}</label>
+        </div>`
+      ).join('')
+    : '<span class="text-muted small">Keine Mannschaften vorhanden – bitte zuerst anlegen.</span>';
 
   // Spieler für Eltern-Verknüpfung
   const childIds = u.childPlayerIds || [];
@@ -7987,7 +8044,7 @@ window.benutzerBearbeitenSpeichern = async function() {
   const roleIds = Array.from(sel.selectedOptions).map(o => o.value);
   if (!roleIds.length) { err.classList.remove('d-none'); err.textContent = 'Mindestens eine Rolle wählen.'; return; }
 
-  const teamIds = TEAMS_VERFUEGBAR.filter(t => document.getElementById(`buTeam_${t}`)?.checked);
+  const teamIds = mannschaftenListe.filter(m => document.getElementById(`buTeam_${m.id}`)?.checked).map(m => m.name);
   const childPlayerIds = spielerData.filter(p => document.getElementById(`buSpieler_${p.id}`)?.checked).map(p => p.id);
 
   const displayName = document.getElementById('buEditDisplayName').value.trim();
@@ -8003,6 +8060,154 @@ window.benutzerBearbeitenSpeichern = async function() {
     err.classList.remove('d-none');
     err.textContent = 'Fehler beim Speichern: ' + e.message;
   }
+};
+
+// ── Ausstehende Registrierungen ──────────────────────────────
+window.renderAusstehendView = async function() {
+  const el = document.getElementById('usersAusstehendContent');
+  el.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border mb-2"></div><br>Wird geladen…</div>';
+  try {
+    const { collection, query, where, getDocs } = window._firestoreAPI;
+    const snap = await getDocs(query(
+      collection(window._firestoreDB, 'users'),
+      where('tenantId', '==', window.currentUserDoc.tenantId),
+      where('status', '==', 'pending')
+    ));
+    const badge = document.getElementById('pendingBadge');
+    if (snap.empty) {
+      el.innerHTML = '<p class="text-center text-muted py-5"><i class="bi bi-check-circle text-success me-2"></i>Keine ausstehenden Registrierungen.</p>';
+      badge.classList.add('d-none');
+      return;
+    }
+    badge.textContent = snap.size; badge.classList.remove('d-none');
+    const rows = [];
+    snap.forEach(d => rows.push({ id: d.id, ...d.data() }));
+    el.innerHTML = `<table class="table table-sm align-middle">
+      <thead class="table-dark"><tr><th>Name</th><th>E-Mail</th><th>Datum</th><th></th></tr></thead>
+      <tbody>${rows.map(u => `<tr>
+        <td><strong>${u.displayName || '—'}</strong></td>
+        <td>${u.email || '—'}</td>
+        <td>${u.createdAt?.toDate?.().toLocaleDateString('de-AT') || '—'}</td>
+        <td><div class="d-flex gap-1">
+          <button class="btn btn-success btn-sm" onclick="pendingFreigeben('${u.id}')"><i class="bi bi-check-lg me-1"></i>Freigeben</button>
+          <button class="btn btn-danger btn-sm" onclick="pendingAblehnen('${u.id}')"><i class="bi bi-x-lg"></i></button>
+        </div></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  } catch(e) {
+    el.innerHTML = `<div class="alert alert-danger">Fehler: ${e.message}</div>`;
+  }
+};
+
+window.pendingFreigeben = async function(uid) {
+  try {
+    const { doc, updateDoc } = window._firestoreAPI;
+    await updateDoc(doc(window._firestoreDB, 'users', uid), { status: 'active' });
+    renderAusstehendView();
+    openBenutzerBearbeiten(uid); // Rolle + Team zuweisen
+  } catch(e) { alert('Fehler: ' + e.message); }
+};
+
+window.pendingAblehnen = async function(uid) {
+  if (!confirm('Registrierung ablehnen und Benutzer löschen?')) return;
+  try {
+    const { doc, deleteDoc } = window._firestoreAPI;
+    await deleteDoc(doc(window._firestoreDB, 'users', uid));
+    renderAusstehendView();
+  } catch(e) { alert('Fehler: ' + e.message); }
+};
+
+// ── Registrierungs-Konfiguration ─────────────────────────────
+window.renderRegKonfigView = async function() {
+  const roles = Object.values(window._cachedRoles || {}).filter(r => !r.isSystem && r.id !== 'role_superadmin' && r.name?.toLowerCase() !== 'superadmin');
+  if (!roles.length && !Object.keys(window._cachedRoles).length) await renderRollenView();
+  let allowedIds = [];
+  try {
+    const { doc, getDoc } = window._firestoreAPI;
+    const snap = await getDoc(doc(window._firestoreDB, 'settings', 'registration_config'));
+    if (snap.exists()) allowedIds = snap.data().allowedRoleIds || [];
+  } catch(e) {}
+  const freshRoles = Object.values(window._cachedRoles || {}).filter(r => !r.isSystem && r.id !== 'role_superadmin');
+  document.getElementById('regRollenConfig').innerHTML = freshRoles.length
+    ? freshRoles.map(r => `<div class="form-check mb-2">
+        <input class="form-check-input" type="checkbox" id="regRole_${r.id}" value="${r.id}" ${allowedIds.includes(r.id)?'checked':''}>
+        <label class="form-check-label" for="regRole_${r.id}"><strong>${r.name}</strong></label>
+      </div>`).join('')
+    : '<span class="text-muted">Keine Rollen vorhanden.</span>';
+};
+
+window.regKonfigSpeichern = async function() {
+  const roles = Object.values(window._cachedRoles || {}).filter(r => !r.isSystem && r.id !== 'role_superadmin');
+  const allowedRoleIds = roles.filter(r => document.getElementById(`regRole_${r.id}`)?.checked).map(r => r.id);
+  try {
+    const { doc, setDoc } = window._firestoreAPI;
+    await setDoc(doc(window._firestoreDB, 'settings', 'registration_config'), { allowedRoleIds }, { merge: true });
+    const info = document.getElementById('regKonfigInfo');
+    info.classList.remove('d-none');
+    setTimeout(() => info.classList.add('d-none'), 2500);
+  } catch(e) { alert('Fehler: ' + e.message); }
+};
+
+// ── Selbst-Registrierung (Login-Screen) ──────────────────────
+window.showRegPanel = async function() {
+  document.getElementById('loginFormPanel').style.display = 'none';
+  document.getElementById('pendingPanel').style.display = 'none';
+  document.getElementById('regFormPanel').style.display = '';
+  document.getElementById('regError').classList.add('d-none');
+  document.getElementById('regSuccess').classList.add('d-none');
+  // Erlaubte Rollen laden
+  const sel = document.getElementById('regRolle');
+  sel.innerHTML = '<option value="">-- Rolle wählen --</option>';
+  try {
+    const { doc, getDoc } = window._firestoreAPI;
+    const snap = await getDoc(doc(window._firestoreDB, 'settings', 'registration_config'));
+    const allowedIds = snap.exists() ? (snap.data().allowedRoleIds || []) : [];
+    if (!Object.keys(window._cachedRoles || {}).length) await renderRollenView();
+    allowedIds.forEach(rid => {
+      const r = window._cachedRoles?.[rid];
+      if (r) sel.insertAdjacentHTML('beforeend', `<option value="${rid}">${r.name}</option>`);
+    });
+    if (sel.options.length <= 1) sel.insertAdjacentHTML('beforeend', '<option disabled>Keine Rollen konfiguriert</option>');
+  } catch(e) {}
+};
+
+window.showLoginPanel = function() {
+  document.getElementById('regFormPanel').style.display = 'none';
+  document.getElementById('pendingPanel').style.display = 'none';
+  document.getElementById('loginFormPanel').style.display = '';
+};
+
+window.doRegister = async function() {
+  const vorname  = document.getElementById('regVorname').value.trim();
+  const nachname = document.getElementById('regNachname').value.trim();
+  const email    = document.getElementById('regEmail').value.trim();
+  const pw       = document.getElementById('regPasswort').value;
+  const rolleId  = document.getElementById('regRolle').value;
+  const err      = document.getElementById('regError');
+  const suc      = document.getElementById('regSuccess');
+  err.classList.add('d-none'); suc.classList.add('d-none');
+  if (!vorname || !nachname) { err.classList.remove('d-none'); err.textContent = 'Vor- und Nachname erforderlich.'; return; }
+  if (!email)  { err.classList.remove('d-none'); err.textContent = 'E-Mail erforderlich.'; return; }
+  if (pw.length < 6) { err.classList.remove('d-none'); err.textContent = 'Passwort min. 6 Zeichen.'; return; }
+  if (!rolleId) { err.classList.remove('d-none'); err.textContent = 'Bitte eine Rolle wählen.'; return; }
+  try {
+    const { createUserWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+    const { doc, setDoc, serverTimestamp } = window._firestoreAPI;
+    const cred = await createUserWithEmailAndPassword(window._firebaseAuth, email, pw);
+    await setDoc(doc(window._firestoreDB, 'users', cred.user.uid), {
+      uid: cred.user.uid,
+      email,
+      displayName: `${vorname} ${nachname}`,
+      tenantId: 'tenant_atus_baernbach',
+      roleIds: [rolleId],
+      teamIds: [],
+      childPlayerIds: [],
+      status: 'pending',
+      createdAt: serverTimestamp(),
+    });
+    suc.classList.remove('d-none');
+    suc.textContent = 'Registrierung eingereicht! Ein Administrator muss dein Konto freigeben.';
+  } catch(e) { err.classList.remove('d-none'); err.textContent = e.message; }
 };
 
 window.benutzerResetPasswort = async function() {
@@ -8720,6 +8925,15 @@ onAuthStateChanged(auth, async user => {
       window.currentUserDoc    = userDoc;
       window.currentPermissions = userDoc.effectivePermissions || {};
       window._currentTenantId  = userDoc.tenantId || TENANT_ID;
+      // Ausstehend-Badge aktualisieren falls im Users-View
+      if (userDoc.status === 'pending') {
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('loginFormPanel').style.display = 'none';
+        document.getElementById('regFormPanel').style.display = 'none';
+        document.getElementById('pendingPanel').style.display = '';
+        document.getElementById('dashboard').style.display = 'none';
+        return;
+      }
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('dashboard').style.display   = 'block';
       applyPermissions();
