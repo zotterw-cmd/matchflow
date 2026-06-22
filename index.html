@@ -2085,6 +2085,30 @@ body.sa-mode .sa-var{display:inline}
   </div>
 </div>
 
+<!-- MODAL: Spielerzuordnung -->
+<div class="modal fade" id="modalSpielerZuordnung" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-people me-2"></i>Spieler zuordnen</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="spielerZuordnungSitzungId">
+        <div class="d-flex gap-2 mb-2">
+          <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.querySelectorAll('#spielerZuordnungContent input').forEach(cb=>cb.checked=true)">Alle</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.querySelectorAll('#spielerZuordnungContent input').forEach(cb=>cb.checked=false)">Keine</button>
+        </div>
+        <div id="spielerZuordnungContent" class="border rounded p-2" style="max-height:300px;overflow-y:auto"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Abbrechen</button>
+        <button type="button" class="btn btn-dark btn-sm" onclick="spielerZuordnungSpeichern()"><i class="bi bi-save me-1"></i>Speichern</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: Spieler-Messung Werte eingeben -->
 <div class="modal fade" id="modalSpielerMessung" tabindex="-1">
   <div class="modal-dialog modal-lg">
@@ -2131,6 +2155,19 @@ body.sa-mode .sa-var{display:inline}
             <div class="text-muted small">Wird geladen…</div>
           </div>
           <div class="form-text">Welche Messungstypen sollen in dieser Sitzung erfasst werden?</div>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex align-items-center justify-content-between mb-1">
+            <label class="form-label fw-bold mb-0">Spieler zuordnen</label>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-outline-secondary btn-xs" style="font-size:.75rem;padding:2px 8px" onclick="sitzungAlleWaehlen(true)">Alle</button>
+              <button type="button" class="btn btn-outline-secondary btn-xs" style="font-size:.75rem;padding:2px 8px" onclick="sitzungAlleWaehlen(false)">Keine</button>
+            </div>
+          </div>
+          <div id="messungSitzungSpieler" class="border rounded p-2" style="max-height:220px;overflow-y:auto">
+            <div class="text-muted small">Wird geladen…</div>
+          </div>
+          <div class="form-text">Leer lassen = alle Spieler werden angezeigt.</div>
         </div>
       </div>
       <div class="modal-footer">
@@ -8629,33 +8666,41 @@ window.openNeueMessungSitzung = async function() {
   document.getElementById('messungSitzungError').classList.add('d-none');
   document.getElementById('messungSitzungName').value  = '';
   document.getElementById('messungSitzungDatum').value = new Date().toISOString().slice(0, 10);
-  // Messungstypen laden für Checkboxen
-  const typenEl = document.getElementById('messungSitzungTypen');
-  typenEl.innerHTML = '<div class="text-muted small">Wird geladen…</div>';
+  const typenEl   = document.getElementById('messungSitzungTypen');
+  const spielerEl = document.getElementById('messungSitzungSpieler');
+  typenEl.innerHTML   = '<div class="text-muted small">Wird geladen…</div>';
+  spielerEl.innerHTML = '<div class="text-muted small">Wird geladen…</div>';
   try {
     const { collection, query, where, getDocs } = window._firestoreAPI;
     const tid = window._currentTenantId;
     const [typSnap, katSnap] = await Promise.all([
-      getDocs(query(collection(window._firestoreDB, 'measurement_types'),  where('tenant_id', '==', tid), where('active', '==', true))),
-      getDocs(query(collection(window._firestoreDB, 'skill_categories'),   where('tenant_id', '==', tid))),
+      getDocs(query(collection(window._firestoreDB, 'measurement_types'), where('tenant_id', '==', tid), where('active', '==', true))),
+      getDocs(query(collection(window._firestoreDB, 'skill_categories'),  where('tenant_id', '==', tid))),
     ]);
     const katMap = {};
     katSnap.forEach(d => { katMap[d.id] = d.data().name; });
     const typen = [];
     typSnap.forEach(d => typen.push({ id: d.id, ...d.data() }));
     typen.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-    if (!typen.length) {
-      typenEl.innerHTML = '<p class="text-muted small mb-0">Keine aktiven Messungstypen vorhanden. Bitte zuerst im Tab "Messungstypen" anlegen.</p>';
-    } else {
-      typenEl.innerHTML = typen.map(t =>
-        `<div class="form-check"><input class="form-check-input" type="checkbox" id="sitzTyp_${t.id}" value="${t.id}" checked>
-         <label class="form-check-label" for="sitzTyp_${t.id}">${t.name} <span class="text-muted small">(${katMap[t.skill_category_id] || '–'}, ${t.unit})</span></label></div>`
-      ).join('');
-    }
+    typenEl.innerHTML = typen.length
+      ? typen.map(t => `<div class="form-check"><input class="form-check-input" type="checkbox" id="sitzTyp_${t.id}" value="${t.id}" checked>
+          <label class="form-check-label" for="sitzTyp_${t.id}">${t.name} <span class="text-muted small">(${katMap[t.skill_category_id] || '–'}, ${t.unit})</span></label></div>`).join('')
+      : '<p class="text-muted small mb-0">Keine aktiven Messungstypen vorhanden.</p>';
+    // Spieler aus globalem spielerData laden
+    const spieler = (window.spielerData || []).slice().sort((a, b) =>
+      (a.nachname || '').localeCompare(b.nachname || '', 'de'));
+    spielerEl.innerHTML = spieler.length
+      ? spieler.map(sp => `<div class="form-check"><input class="form-check-input" type="checkbox" id="sitzSp_${sp.id}" value="${sp.id}" checked>
+          <label class="form-check-label" for="sitzSp_${sp.id}">${sp.nachname || ''} ${sp.vorname || ''}</label></div>`).join('')
+      : '<p class="text-muted small mb-0">Keine Spieler vorhanden.</p>';
   } catch(e) {
-    typenEl.innerHTML = `<div class="text-danger small">Fehler beim Laden: ${e.message}</div>`;
+    typenEl.innerHTML = `<div class="text-danger small">Fehler: ${e.message}</div>`;
   }
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalMessungSitzung')).show();
+};
+
+window.sitzungAlleWaehlen = function(checked) {
+  document.querySelectorAll('#messungSitzungSpieler input[type="checkbox"]').forEach(cb => cb.checked = checked);
 };
 
 window.messungSitzungSpeichern = async function() {
@@ -8665,7 +8710,8 @@ window.messungSitzungSpeichern = async function() {
   err.classList.add('d-none');
   if (!name)  { err.classList.remove('d-none'); err.textContent = 'Bezeichnung ist erforderlich.'; return; }
   if (!datum) { err.classList.remove('d-none'); err.textContent = 'Datum ist erforderlich.'; return; }
-  const checkedTypen = [...document.querySelectorAll('#messungSitzungTypen input:checked')].map(cb => cb.value);
+  const checkedTypen   = [...document.querySelectorAll('#messungSitzungTypen input:checked')].map(cb => cb.value);
+  const checkedSpieler = [...document.querySelectorAll('#messungSitzungSpieler input:checked')].map(cb => cb.value);
   if (!checkedTypen.length) { err.classList.remove('d-none'); err.textContent = 'Mindestens ein Messungstyp muss gewählt sein.'; return; }
   const tid = window._currentTenantId;
   const { collection, addDoc, serverTimestamp } = window._firestoreAPI;
@@ -8673,6 +8719,7 @@ window.messungSitzungSpeichern = async function() {
     await addDoc(collection(window._firestoreDB, 'measurement_sessions'), {
       name, date: datum, status: 'open',
       measurement_type_ids: checkedTypen,
+      player_ids: checkedSpieler,
       tenant_id: tid,
       created_at: serverTimestamp(),
       created_by: window.currentUserDoc?.uid || '',
@@ -8721,15 +8768,21 @@ window.openMessungSitzung = async function(id) {
 
 window.renderSitzungDetail = function(sitzung, typMap, messMap) {
   const el = document.getElementById('sitzungDetailContent');
-  const sitzTypIds = sitzung.measurement_type_ids || [];
-  const sitzTypen  = sitzTypIds.map(id => typMap[id]).filter(Boolean);
-  const spieler    = (window.spielerData || []).slice().sort((a, b) =>
+  const sitzTypIds  = sitzung.measurement_type_ids || [];
+  const sitzTypen   = sitzTypIds.map(id => typMap[id]).filter(Boolean);
+  // Spieler: nur zugeordnete, Fallback auf alle wenn player_ids fehlt/leer
+  const alleSpiefer = (window.spielerData || []).slice().sort((a, b) =>
     (a.nachname || '').localeCompare(b.nachname || '', 'de'));
+  const sitzPlayerIds = sitzung.player_ids && sitzung.player_ids.length
+    ? sitzung.player_ids : null;
+  const spieler = sitzPlayerIds
+    ? alleSpiefer.filter(sp => sitzPlayerIds.includes(sp.id))
+    : alleSpiefer;
   if (!spieler.length) {
-    el.innerHTML = '<div class="alert alert-warning">Keine Spieler gefunden. Bitte zuerst Spieler anlegen.</div>';
+    el.innerHTML = '<div class="alert alert-warning">Keine Spieler zugeordnet.</div>';
     return;
   }
-  const isClosed = sitzung.status === 'closed';
+  const isClosed  = sitzung.status === 'closed';
   const typHeader = sitzTypen.map(t => `<th class="text-center small">${t.name}<br><span class="text-muted" style="font-size:.75em">${t.unit}</span></th>`).join('');
   const rows = spieler.map(sp => {
     const pid = sp.id;
@@ -8740,9 +8793,18 @@ window.renderSitzungDetail = function(sitzung, typMap, messMap) {
         ? `<span class="badge bg-warning text-dark">${gemessen}/${sitzTypIds.length}</span>`
         : `<span class="badge bg-success">${gemessen}/${sitzTypIds.length}</span>`;
     const typCells = sitzTypen.map(t => {
-      const vals = messMap[pid]?.[t.id]?.values || [];
-      const best = vals.length ? Math.max(...vals.map(v => parseFloat(v.value) || 0)) : null;
-      return `<td class="text-center small">${best !== null ? `<strong>${best}</strong> <span class="text-muted">${t.unit}</span>` : '–'}</td>`;
+      const vals  = messMap[pid]?.[t.id]?.values || [];
+      const aggFn = window._aktCalcMethodAgg?.[t.id] || 'best';
+      let display = '–';
+      if (vals.length) {
+        const nums = vals.map(v => parseFloat(v.value) || 0);
+        const val  = aggFn === 'min' ? Math.min(...nums)
+                   : aggFn === 'avg' ? (nums.reduce((a,b)=>a+b,0)/nums.length)
+                   : aggFn === 'last' ? nums[nums.length-1]
+                   : Math.max(...nums);
+        display = `<strong>${parseFloat(val.toFixed(2))}</strong> <span class="text-muted">${t.unit}</span>`;
+      }
+      return `<td class="text-center small">${display}</td>`;
     }).join('');
     return `<tr>
       <td><strong>${sp.nachname || ''}</strong> ${sp.vorname || ''}</td>
@@ -8754,7 +8816,10 @@ window.renderSitzungDetail = function(sitzung, typMap, messMap) {
   el.innerHTML = `
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
       <span class="text-muted small"><i class="bi bi-calendar3 me-1"></i>${sitzung.date ? new Date(sitzung.date).toLocaleDateString('de-AT') : '–'} &nbsp;·&nbsp; ${spieler.length} Spieler &nbsp;·&nbsp; ${sitzTypen.length} Messungstypen</span>
-      ${!isClosed ? `<button class="btn btn-success btn-sm" onclick="sitzungAbschliessen('${sitzung.id}')"><i class="bi bi-check-circle me-1"></i>Sitzung abschließen</button>` : ''}
+      <div class="d-flex gap-2">
+        ${!isClosed ? `<button class="btn btn-outline-secondary btn-sm" onclick="openSpielerZuordnung('${sitzung.id}')"><i class="bi bi-people me-1"></i>Spieler bearbeiten</button>` : ''}
+        ${!isClosed ? `<button class="btn btn-success btn-sm" onclick="sitzungAbschliessen('${sitzung.id}')"><i class="bi bi-check-circle me-1"></i>Abschließen</button>` : ''}
+      </div>
     </div>
     <div class="table-responsive">
       <table class="table table-sm table-hover align-middle">
@@ -8766,6 +8831,32 @@ window.renderSitzungDetail = function(sitzung, typMap, messMap) {
   window._aktSitzung  = sitzung;
   window._aktTypMap   = typMap;
   window._aktMessMap  = messMap;
+};
+
+window.openSpielerZuordnung = function(sitzungId) {
+  const sitzung = window._aktSitzung;
+  const alleSpiefer = (window.spielerData || []).slice().sort((a, b) =>
+    (a.nachname || '').localeCompare(b.nachname || '', 'de'));
+  const assigned = new Set(sitzung.player_ids || []);
+  const html = alleSpiefer.map(sp =>
+    `<div class="form-check"><input class="form-check-input" type="checkbox" id="zuordSp_${sp.id}" value="${sp.id}" ${assigned.size === 0 || assigned.has(sp.id) ? 'checked' : ''}>
+     <label class="form-check-label" for="zuordSp_${sp.id}">${sp.nachname || ''} ${sp.vorname || ''}</label></div>`
+  ).join('');
+  document.getElementById('spielerZuordnungContent').innerHTML = html || '<p class="text-muted small">Keine Spieler vorhanden.</p>';
+  document.getElementById('spielerZuordnungSitzungId').value = sitzungId;
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSpielerZuordnung')).show();
+};
+
+window.spielerZuordnungSpeichern = async function() {
+  const sitzungId  = document.getElementById('spielerZuordnungSitzungId').value;
+  const playerIds  = [...document.querySelectorAll('#spielerZuordnungContent input:checked')].map(cb => cb.value);
+  try {
+    const { doc, updateDoc } = window._firestoreAPI;
+    await updateDoc(doc(window._firestoreDB, 'measurement_sessions', sitzungId), { player_ids: playerIds });
+    window._aktSitzung.player_ids = playerIds;
+    bootstrap.Modal.getInstance(document.getElementById('modalSpielerZuordnung')).hide();
+    renderSitzungDetail(window._aktSitzung, window._aktTypMap, window._aktMessMap);
+  } catch(e) { alert('Fehler: ' + e.message); }
 };
 
 window.sitzungZurueck = function() {
