@@ -4922,7 +4922,7 @@ function renderSpielerSimple() {
          </div>`;
     const slv = playerSLV(s);
     const skillCell = t => { const v = playerScore(s, t); const c = v>=70?'success':v>=45?'warning':'danger'; return `<td><span class="badge bg-${c}" style="min-width:2rem">${v}</span></td>`; };
-    return `<tr${rowStyle}>
+    return `<tr${rowStyle} data-spid="${s.id}">
       <td>${fotoCell}</td><td>${s.rnr}</td>
       <td><span class="badge bg-secondary">${s.pos}</span></td>
       <td><strong>${s.nachname}</strong></td><td>${s.vorname}</td>
@@ -5041,6 +5041,16 @@ window.spielerSimpleSpeichern = async function() {
   // Persist to Firestore (players + player_seasons)
   await fsSaveSpieler(obj);
   renderSpielerSimple();
+  // Foto-Patch: nach DataTables-Init den img direkt setzen (blob-URL zeigt sofort)
+  if (pendingFotoBase64) {
+    const displayUrl = pendingFotoBase64;
+    setTimeout(() => {
+      document.querySelectorAll(`#spielerTableSimple tbody tr[data-spid="${spId}"], #spielerTableSimple_wrapper tr[data-spid="${spId}"]`).forEach(row => {
+        const td = row.querySelector('td:first-child');
+        if (td) td.innerHTML = `<img src="${displayUrl}" style="width:34px;height:34px;object-fit:cover;border-radius:50%;border:2px solid #c0392b">`;
+      });
+    }, 100);
+  }
   _afterSave('spieler');
   bootstrap.Modal.getInstance(document.getElementById('modalSpieler')).hide();
 };
