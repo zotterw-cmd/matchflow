@@ -2984,6 +2984,32 @@ body.sa-mode .sa-var{display:inline}
 
 <script>
 // ══════════════════════════════════════════════════════════════
+// GLOBALER SAVE-HELPER
+// ══════════════════════════════════════════════════════════════
+window._showSaveToast = function(msg = 'Gespeichert ✓') {
+  let toast = document.getElementById('_globalSaveToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = '_globalSaveToast';
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;background:#198754;color:#fff;padding:10px 20px;border-radius:8px;font-weight:600;font-size:.95rem;box-shadow:0 4px 16px rgba(0,0,0,.2);transition:opacity .4s;pointer-events:none';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+};
+
+window._afterSave = function(context) {
+  window._showSaveToast();
+  // Aktive Ansicht neu rendern
+  try { if (context === 'camp' || document.getElementById('campPanelDetail')?.style.display !== 'none') { window.renderCampSpieler?.(); window.renderCampListe?.(); } } catch(e) {}
+  try { if (context === 'spieler') { renderSpielerSimple?.(); } } catch(e) {}
+  try { if (context === 'training') { renderTrainingsListe?.(); } } catch(e) {}
+  try { if (context === 'uebung') { window.renderUebungen?.(); } } catch(e) {}
+};
+
+// ══════════════════════════════════════════════════════════════
 // DATEN
 // ══════════════════════════════════════════════════════════════
 const SKILL_COLORS = ['#c0392b','#922b21','#7f8c8d','#616a6b','#a93226','#6e2f1a','#884ea0','#1a5276'];
@@ -5010,6 +5036,7 @@ window.spielerSimpleSpeichern = async function() {
   // Persist to Firestore (players + player_seasons)
   await fsSaveSpieler(obj);
   renderSpielerSimple();
+  _afterSave('spieler');
   bootstrap.Modal.getInstance(document.getElementById('modalSpieler')).hide();
 };
 
@@ -5447,6 +5474,7 @@ window.campManuellSpeichern = async function() {
   _syncCampSpieler();
   try {
     await fsSaveCamp(_aktCamp());
+    _afterSave('camp');
     if (btn) { btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Gespeichert!'; }
     setTimeout(() => { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-cloud-upload me-1"></i>Speichern'; } }, 2000);
   } catch(e) {
@@ -5532,6 +5560,7 @@ window.campMesswerteSpeichern = async function() {
   _syncCampSpieler();
   try {
     await fsSaveCamp(_aktCamp());
+    _afterSave('camp');
     renderCampSpieler();
     bootstrap.Modal.getInstance(document.getElementById('modalCampMesswerte')).hide();
   } catch(e) {
@@ -5928,7 +5957,7 @@ window.campSpielerSpeichern = function() {
   }
   bootstrap.Modal.getInstance(document.getElementById('modalCampSpieler')).hide();
   _syncCampSpieler();
-  fsSaveCamp(_aktCamp()).catch(e => {
+  fsSaveCamp(_aktCamp()).then(() => _afterSave('camp')).catch(e => {
     console.error('fsSaveCamp Fehler:', e);
     alert('Firestore-Fehler beim Speichern:\n' + e.message);
   });
@@ -6317,7 +6346,7 @@ window.trainingSpeichern = function() {
   } else {
     trainingsListe.push(obj);
   }
-  fsSaveTraining(obj).catch(console.warn);
+  fsSaveTraining(obj).then(() => _afterSave('training')).catch(console.warn);
   zurueckZurListe();
 };
 
