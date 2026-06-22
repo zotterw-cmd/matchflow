@@ -1136,7 +1136,7 @@ body.sa-mode .sa-var{display:inline}
         <h4 class="mb-0"><i class="bi bi-trophy-fill text-warning me-2"></i>Camps &amp; Skill-Tests</h4>
         <p class="text-muted mb-0 mt-1">Mehrere Camps verwalten – mit Spielern, Skills-Karten und Gruppen</p>
       </div>
-      <button class="btn btn-warning fw-bold" onclick="neuesCampErstellen()"><i class="bi bi-plus-circle-fill me-1"></i>Neues Camp</button>
+      <button class="btn btn-warning fw-bold" id="btnNeuesCamp" onclick="neuesCampErstellen()"><i class="bi bi-plus-circle-fill me-1"></i>Neues Camp</button>
     </div>
     <div id="campListeGrid" class="row g-3"></div>
   </div>
@@ -5326,7 +5326,9 @@ window.renderCampListe = function() {
   }).join('');
 };
 
-window.neuesCampErstellen = function() {
+window.neuesCampErstellen = async function() {
+  const btn = document.getElementById('btnNeuesCamp');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Wird erstellt…'; }
   _syncCampSpieler(); // aktuelles Camp zuerst sichern
   const id = 'camp' + String(++campListeCounter).padStart(2,'0');
   const name = `Neues Camp ${campListeCounter}`;
@@ -5335,7 +5337,7 @@ window.neuesCampErstellen = function() {
   currentCampId = id;
   campSpielerData = []; // explizit leer – kein Carry-over
   campCounter = 0;
-  fsSaveCamp(newCamp).catch(console.warn);
+  await fsSaveCamp(newCamp);
   document.getElementById('campPanelListe').style.display = 'none';
   document.getElementById('campPanelDetail').style.display = '';
   document.getElementById('campDetailTitel').innerHTML = `<i class="bi bi-trophy-fill text-warning me-2"></i>${name}`;
