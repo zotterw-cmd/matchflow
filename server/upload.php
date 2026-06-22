@@ -96,9 +96,10 @@ function handleUpload() {
 
   if (!move_uploaded_file($file['tmp_name'], $target)) { json(['error' => 'Could not save file'], 500); return; }
 
-  $baseUrl = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'];
-  $relPath = str_replace(UPLOAD_BASE, '', $folder) . '/' . $filename;
-  $url     = rtrim($baseUrl, '/') . '/matchflow-api/uploads' . $relPath;
+  $baseUrl    = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'];
+  $scriptDir  = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/'); // z.B. /server
+  $uploadsUrl = $baseUrl . $scriptDir . '/uploads';
+  $url        = $uploadsUrl . '/' . $dir . '/' . $filename;
 
   json(['ok' => true, 'url' => $url, 'filename' => $filename, 'size' => $file['size']]);
 }
