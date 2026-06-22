@@ -2980,7 +2980,7 @@ body.sa-mode .sa-var{display:inline}
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/de.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="qrcode.min.js"></script>
 
 <script>
 // ══════════════════════════════════════════════════════════════
@@ -9839,7 +9839,7 @@ function seasonKey(season) {
   return season.replace(/\//g, '-');
 }
 
-async function fsSaveSpieler(obj) {
+window.fsSaveSpieler = async function fsSaveSpieler(obj) {
   const db = window._firestoreDB;
   if (!db) return;
   try {
