@@ -5880,11 +5880,13 @@ function renderTrainingsListe() {
   }).join('') || '<tr><td colspan="7" class="text-center text-muted py-3">Noch keine Trainings erfasst.</td></tr>';
 
   if (dtTrainingListe) { dtTrainingListe.destroy(); dtTrainingListe = null; }
-  dtTrainingListe = $('#trainingsListeTable').DataTable({
-    responsive: true, autoWidth: false,
-    language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/de-DE.json' },
-    columnDefs: [{ orderable: false, targets: -1 }]
-  });
+  if (trainingsListe.length > 0) {
+    dtTrainingListe = $('#trainingsListeTable').DataTable({
+      responsive: true, autoWidth: false,
+      language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/de-DE.json' },
+      columnDefs: [{ orderable: false, targets: -1 }]
+    });
+  }
 }
 
 window.neuesSpielErstellen = function() {
