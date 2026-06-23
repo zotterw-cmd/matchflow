@@ -8924,15 +8924,18 @@ window.renderSitzungDetail = async function(sitzung, typMap, messMap) {
       <td><strong>${sp.nachname || ''}</strong> ${sp.vorname || ''}</td>
       <td class="text-center">${statusBadge}</td>
       ${typCells}
-      <td>${isClosed ? '' : `<button class="btn btn-outline-primary btn-sm" onclick="openSpielerMessung('${pid}','${sitzung.id}')"><i class="bi bi-pencil"></i></button>`}</td>
+      <td><button class="btn btn-outline-primary btn-sm" onclick="openSpielerMessung('${pid}','${sitzung.id}')"><i class="bi bi-pencil"></i></button></td>
     </tr>`;
   }).join('');
   el.innerHTML = `
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
       <span class="text-muted small"><i class="bi bi-calendar3 me-1"></i>${sitzung.date ? new Date(sitzung.date).toLocaleDateString('de-AT') : '–'} &nbsp;·&nbsp; ${spieler.length} Spieler &nbsp;·&nbsp; ${sitzTypen.length} Messungstypen</span>
       <div class="d-flex gap-2">
-        ${!isClosed ? `<button class="btn btn-outline-secondary btn-sm" onclick="openSpielerZuordnung('${sitzung.id}')"><i class="bi bi-people me-1"></i>Spieler bearbeiten</button>` : ''}
-        ${!isClosed ? `<button class="btn btn-success btn-sm" onclick="sitzungAbschliessen('${sitzung.id}')"><i class="bi bi-check-circle me-1"></i>Abschließen</button>` : ''}
+        <button class="btn btn-outline-secondary btn-sm" onclick="openSpielerZuordnung('${sitzung.id}')"><i class="bi bi-people me-1"></i>Spieler bearbeiten</button>
+        ${isClosed
+          ? `<button class="btn btn-warning btn-sm" onclick="sitzungReaktivieren('${sitzung.id}')"><i class="bi bi-arrow-counterclockwise me-1"></i>Reaktivieren</button>`
+          : `<button class="btn btn-success btn-sm" onclick="sitzungAbschliessen('${sitzung.id}')"><i class="bi bi-check-circle me-1"></i>Abschließen</button>`
+        }
       </div>
     </div>
     <div class="table-responsive">
@@ -9652,6 +9655,19 @@ window.sitzungAbschliessen = async function(id) {
     const badge = document.getElementById('sitzungDetailBadge');
     badge.textContent = 'Abgeschlossen';
     badge.className   = 'badge ms-1 bg-success';
+  } catch(e) { alert('Fehler: ' + e.message); }
+};
+
+window.sitzungReaktivieren = async function(id) {
+  if (!confirm('Sitzung reaktivieren? Danach können wieder Werte eingetragen werden.')) return;
+  try {
+    const { doc, updateDoc } = window._firestoreAPI;
+    await updateDoc(doc(window._firestoreDB, 'measurement_sessions', id), { status: 'open' });
+    window._aktSitzung.status = 'open';
+    renderSitzungDetail(window._aktSitzung, window._aktTypMap, window._aktMessMap);
+    const badge = document.getElementById('sitzungDetailBadge');
+    badge.textContent = 'Offen';
+    badge.className   = 'badge ms-1 bg-warning text-dark';
   } catch(e) { alert('Fehler: ' + e.message); }
 };
 
