@@ -8949,7 +8949,7 @@ window._messungSSAClose = function() {
   if (overlay) overlay.style.display = 'none';
   document.body.style.overflow = '';
   window._ssaMeasurementMode = null;
-  if (ssaStream) { ssaStream.getTracks().forEach(t => t.stop()); ssaStream = null; }
+  if (typeof ssaStream !== 'undefined' && ssaStream) { ssaStream.getTracks().forEach(t => t.stop()); ssaStream = null; }
 };
 
 window.ssaUebernehmenMessung = async function(speed_kmh) {
