@@ -2203,6 +2203,11 @@ body.sa-mode .sa-var{display:inline}
           </div>
           <div class="form-text">Leer lassen = alle Spieler werden angezeigt.</div>
         </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Teilnahme-XP <span class="text-muted fw-normal small">(einmalig pro Spieler)</span></label>
+          <input type="number" id="messungSitzungTeilnahmeXp" class="form-control" value="10" min="0" placeholder="z.B. 10">
+          <div class="form-text">XP die ein Spieler einmalig erhält, wenn er mindestens einen Wert in dieser Sitzung einträgt.</div>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Abbrechen</button>
@@ -8834,6 +8839,7 @@ window.messungSitzungSpeichern = async function() {
   if (!datum) { err.classList.remove('d-none'); err.textContent = 'Datum ist erforderlich.'; return; }
   const checkedTypen   = [...document.querySelectorAll('#messungSitzungTypen input:checked')].map(cb => cb.value);
   const checkedSpieler = [...document.querySelectorAll('#messungSitzungSpieler input:checked')].map(cb => cb.value);
+  const teilnahmeXp    = parseInt(document.getElementById('messungSitzungTeilnahmeXp').value) || 0;
   if (!checkedTypen.length) { err.classList.remove('d-none'); err.textContent = 'Mindestens ein Messungstyp muss gewählt sein.'; return; }
   const tid = window._currentTenantId;
   const { collection, addDoc, serverTimestamp } = window._firestoreAPI;
@@ -8842,6 +8848,8 @@ window.messungSitzungSpeichern = async function() {
       name, date: datum, status: 'open',
       measurement_type_ids: checkedTypen,
       player_ids: checkedSpieler,
+      participation_xp: teilnahmeXp,
+      xp_awarded_players: [],
       tenant_id: tid,
       created_at: serverTimestamp(),
       created_by: window.currentUserDoc?.uid || '',
@@ -9518,9 +9526,10 @@ window.openSpielerMessung = function(playerId, sitzungId) {
         <input type="number" step="0.01" class="form-control form-control-sm" style="max-width:110px"
           id="messWertNeu_${tid}" placeholder="${t.unit}">
         <select class="form-select form-select-sm" style="max-width:150px" id="messWertSource_${tid}">
-          <option value="training">🏟️ Training</option>
-          <option value="home">🏠 Zuhause</option>
-          <option value="manual">✏️ Manuell</option>
+          <option value="training">Training</option>
+          <option value="home">Zu Hause</option>
+          <option value="camp">Camp</option>
+          <option value="other">Sonstiges</option>
         </select>
         <input type="hidden" id="messVideo_${tid}" value="">
         ${hasVideo
@@ -9558,9 +9567,10 @@ window._getOrCreateMeasDoc = async function _getOrCreateMeasDoc(playerId, typId,
 }
 
 function _sourceIcon(source) {
-  if (source === 'home')   return '<span title="Zuhause nachgemacht" style="font-size:.85rem">🏠</span>';
-  if (source === 'manual') return '<span title="Manuell nachgetragen" style="font-size:.85rem">✏️</span>';
-  return '<span title="Beim Training" style="font-size:.85rem">🏟️</span>';
+  if (source === 'home')  return '<i class="bi bi-house-heart-fill text-primary" title="Zu Hause" style="font-size:.9rem"></i>';
+  if (source === 'camp')  return '<i class="bi bi-backpack-fill text-warning" title="Camp" style="font-size:.9rem"></i>';
+  if (source === 'other') return '<i class="bi bi-slash-circle text-secondary" title="Sonstiges" style="font-size:.9rem"></i>';
+  return '<i class="bi bi-person-arms-up text-success" title="Training" style="font-size:.9rem"></i>';
 }
 
 function _formatRecordedAt(iso) {
@@ -9594,6 +9604,31 @@ async function _calculateAndAddXP(playerId, typId, newValue, allValues) {
     if (sp) sp.xp = (sp.xp || 0) + xp;
     console.log(`[XP] +${xp} XP für ${playerId} (Typ: ${typ.name})`);
   } catch(e) { console.warn('[XP] Fehler:', e.message); }
+}
+
+async function _awardTeilnahmeXP(playerId, sitzungId) {
+  try {
+    const { doc, getDoc, updateDoc, arrayUnion } = window._firestoreAPI;
+    const sitzRef  = doc(window._firestoreDB, 'measurement_sessions', sitzungId);
+    const sitzSnap = await getDoc(sitzRef);
+    if (!sitzSnap.exists()) return;
+    const sitz = sitzSnap.data();
+    const xp   = sitz.participation_xp || 0;
+    if (!xp) return;
+    const awarded = sitz.xp_awarded_players || [];
+    if (awarded.includes(playerId)) return; // bereits vergeben
+    // Sitzung: Spieler als "erhalten" markieren
+    await updateDoc(sitzRef, { xp_awarded_players: arrayUnion(playerId) });
+    // player_seasons: XP addieren
+    const sk  = (window.currentSeason || '2025/26').replace(/\//g, '-');
+    const ref = doc(window._firestoreDB, 'player_seasons', `${playerId}_${sk}`);
+    const snap = await getDoc(ref);
+    const curXp = snap.exists() ? (snap.data().xp || 0) : 0;
+    await updateDoc(ref, { xp: curXp + xp });
+    const sp = (window.spielerData || []).find(s => s.id === playerId);
+    if (sp) sp.xp = (sp.xp || 0) + xp;
+    console.log(`[Teilnahme-XP] +${xp} XP für ${playerId} (Sitzung: ${sitzungId})`);
+  } catch(e) { console.warn('[Teilnahme-XP] Fehler:', e.message); }
 }
 
 window._refreshMessTypBlock = function _refreshMessTypBlock(typId, vals, unit) {
@@ -9642,6 +9677,7 @@ window.messWertHinzufuegen = async function(typId) {
     if (statusEl) statusEl.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i>Gespeichert';
     _recalcSkillBase(playerId);
     _calculateAndAddXP(playerId, typId, parseFloat(val), newValues);
+    _awardTeilnahmeXP(playerId, sitzungId);
   } catch(e) {
     if (statusEl) statusEl.innerHTML = `<span class="text-danger">Fehler: ${e.message}</span>`;
   }
