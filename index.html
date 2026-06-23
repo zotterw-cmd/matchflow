@@ -8771,20 +8771,27 @@ window.openMessungSitzung = async function(id) {
   }
 };
 
-window.renderSitzungDetail = function(sitzung, typMap, messMap) {
+window.renderSitzungDetail = async function(sitzung, typMap, messMap) {
   const el = document.getElementById('sitzungDetailContent');
+  el.innerHTML = '<div class="text-muted small p-2"><span class="spinner-border spinner-border-sm me-2"></span>Lade Spieler…</div>';
+  // Spieler immer aus Firestore laden (spielerData evtl. leer)
+  const { collection, query, where, getDocs } = window._firestoreAPI;
+  const tid = window._currentTenantId;
+  const plSnap = await getDocs(query(collection(window._firestoreDB, 'players'), where('tenant_id', '==', tid)));
+  const alleSpieler = [];
+  plSnap.forEach(d => alleSpieler.push({ id: d.id, ...d.data() }));
+  alleSpieler.sort((a, b) => (a.nachname || '').localeCompare(b.nachname || '', 'de'));
+  window._aktAlleSpieler = alleSpieler; // für openSpielerZuordnung
   const sitzTypIds  = sitzung.measurement_type_ids || [];
   const sitzTypen   = sitzTypIds.map(id => typMap[id]).filter(Boolean);
-  // Spieler: nur zugeordnete, Fallback auf alle wenn player_ids fehlt/leer
-  const alleSpiefer = (window.spielerData || []).slice().sort((a, b) =>
-    (a.nachname || '').localeCompare(b.nachname || '', 'de'));
   const sitzPlayerIds = sitzung.player_ids && sitzung.player_ids.length
     ? sitzung.player_ids : null;
   const spieler = sitzPlayerIds
-    ? alleSpiefer.filter(sp => sitzPlayerIds.includes(sp.id))
-    : alleSpiefer;
+    ? alleSpieler.filter(sp => sitzPlayerIds.includes(sp.id))
+    : alleSpieler;
   if (!spieler.length) {
-    el.innerHTML = '<div class="alert alert-warning">Keine Spieler zugeordnet.</div>';
+    el.innerHTML = `<div class="alert alert-warning">Keine Spieler zugeordnet. <button class="btn btn-sm btn-outline-secondary ms-2" onclick="openSpielerZuordnung('${sitzung.id}')"><i class="bi bi-people me-1"></i>Spieler zuordnen</button></div>`;
+    window._aktSitzung = sitzung; window._aktTypMap = typMap; window._aktMessMap = messMap;
     return;
   }
   const isClosed  = sitzung.status === 'closed';
@@ -8842,7 +8849,7 @@ window.renderSitzungDetail = function(sitzung, typMap, messMap) {
 
 window.openSpielerZuordnung = function(sitzungId) {
   const sitzung = window._aktSitzung;
-  const alleSpiefer = (window.spielerData || []).slice().sort((a, b) =>
+  const alleSpiefer = (window._aktAlleSpieler || window.spielerData || []).slice().sort((a, b) =>
     (a.nachname || '').localeCompare(b.nachname || '', 'de'));
   const assigned = new Set(sitzung.player_ids || []);
   const html = alleSpiefer.map(sp =>
