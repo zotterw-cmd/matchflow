@@ -2252,7 +2252,55 @@ body.sa-mode .sa-var{display:inline}
               <i class="bi bi-camera-video me-1 text-danger"></i>Video-Analyse aktivieren
             </label>
           </div>
-          <div class="form-text">Wenn aktiviert, erscheint ein "Video-Analyse"-Button beim Erfassen von Werten für diesen Typ.</div>
+          <div class="form-text">Wenn aktiviert, erscheint ein "Video-Analyse"-Button beim Erfassen von Werten.</div>
+        </div>
+        <hr>
+        <div class="mb-3">
+          <label class="form-label fw-bold">System-Modus <span class="text-danger">*</span></label>
+          <div class="d-flex flex-column gap-1 mt-1">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="messungstypSystemMode" id="modePerformance" value="performance" checked>
+              <label class="form-check-label" for="modePerformance">
+                <strong>📈 Performance</strong> — fließt in echten Skill Score ein (nur valide Messungen)
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="messungstypSystemMode" id="modeFun" value="fun">
+              <label class="form-check-label" for="modeFun">
+                <strong>🎮 Spaß</strong> — nur für Karten & Motivation, KEIN Einfluss auf Skill Score
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="messungstypSystemMode" id="modeBoth" value="both">
+              <label class="form-check-label" for="modeBoth">
+                <strong>🎮📈 Beides</strong> — erzeugt Karte UND fließt in Skill Score ein
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="mb-3 d-flex gap-4">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="messungstypUseForScore" checked>
+            <label class="form-check-label fw-bold" for="messungstypUseForScore">Skill Score berechnen</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="messungstypUseForXp" checked>
+            <label class="form-check-label fw-bold" for="messungstypUseForXp">XP vergeben</label>
+          </div>
+        </div>
+        <div class="mb-3 row g-2">
+          <div class="col-6">
+            <label class="form-label fw-bold">Top-N Werte <small class="text-muted fw-normal">(für Performance)</small></label>
+            <input type="number" id="messungstypTopN" class="form-control" value="3" min="1" max="20">
+            <div class="form-text">Beste N Werte werden gemittelt (Performance-Anteil 60%).</div>
+          </div>
+          <div class="col-6 d-flex align-items-center">
+            <div class="form-check mt-3">
+              <input class="form-check-input" type="checkbox" id="messungstypInvert">
+              <label class="form-check-label fw-bold" for="messungstypInvert">Invertieren</label>
+              <div class="form-text">Niedrigerer Wert = besser (z.B. Sprint-Zeit in Sekunden)</div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="modal-footer">
@@ -9737,6 +9785,12 @@ window.openMessungstypModal = async function(id) {
     document.getElementById('messungstypUnit').value  = t.unit || '';
     document.getElementById('messungstypSort').value  = t.sort_order || 1;
     document.getElementById('messungstypVideoAnalyse').checked = t.video_analyse === true;
+    const mode = t.system_mode || 'performance';
+    document.querySelector(`input[name="messungstypSystemMode"][value="${mode}"]`).checked = true;
+    document.getElementById('messungstypUseForScore').checked = t.use_for_score !== false;
+    document.getElementById('messungstypUseForXp').checked    = t.use_for_xp !== false;
+    document.getElementById('messungstypTopN').value          = t.calc_config?.top_n ?? 3;
+    document.getElementById('messungstypInvert').checked      = t.calc_config?.invert === true;
   } else {
     titleEl.innerHTML = '<i class="bi bi-sliders me-2"></i>Neuer Messungstyp';
     document.getElementById('messungstypId').value    = '';
@@ -9746,6 +9800,11 @@ window.openMessungstypModal = async function(id) {
     document.getElementById('messungstypUnit').value  = '';
     document.getElementById('messungstypSort').value  = '1';
     document.getElementById('messungstypVideoAnalyse').checked = false;
+    document.querySelector('input[name="messungstypSystemMode"][value="performance"]').checked = true;
+    document.getElementById('messungstypUseForScore').checked = true;
+    document.getElementById('messungstypUseForXp').checked    = true;
+    document.getElementById('messungstypTopN').value          = '3';
+    document.getElementById('messungstypInvert').checked      = false;
   }
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalMessungstyp')).show();
 };
@@ -9757,6 +9816,11 @@ window.messungstypSpeichern = async function() {
   const calcId    = document.getElementById('messungstypCalcId').value;
   const sort         = parseInt(document.getElementById('messungstypSort').value) || 1;
   const videoAnalyse = document.getElementById('messungstypVideoAnalyse').checked;
+  const systemMode   = document.querySelector('input[name="messungstypSystemMode"]:checked')?.value || 'performance';
+  const useForScore  = document.getElementById('messungstypUseForScore').checked;
+  const useForXp     = document.getElementById('messungstypUseForXp').checked;
+  const topN         = parseInt(document.getElementById('messungstypTopN').value) || 3;
+  const invert       = document.getElementById('messungstypInvert').checked;
   const err          = document.getElementById('messungstypError');
   err.classList.add('d-none');
   if (!name)   { err.classList.remove('d-none'); err.textContent = 'Name ist erforderlich.'; return; }
@@ -9769,12 +9833,17 @@ window.messungstypSpeichern = async function() {
   try {
     if (existingId) {
       await setDoc(doc(window._firestoreDB, 'measurement_types', existingId),
-        { name, skill_category_id: katId, unit, calc_method_id: calcId, sort_order: sort, video_analyse: videoAnalyse, tenant_id: tid },
+        { name, skill_category_id: katId, unit, calc_method_id: calcId, sort_order: sort,
+          video_analyse: videoAnalyse, system_mode: systemMode, use_for_score: useForScore,
+          use_for_xp: useForXp, calc_config: { top_n: topN, invert },
+          tenant_id: tid },
         { merge: true });
     } else {
       await addDoc(collection(window._firestoreDB, 'measurement_types'), {
         name, skill_category_id: katId, unit, calc_method_id: calcId,
-        sort_order: sort, video_analyse: videoAnalyse, active: true,
+        sort_order: sort, video_analyse: videoAnalyse, system_mode: systemMode,
+        use_for_score: useForScore, use_for_xp: useForXp,
+        calc_config: { top_n: topN, invert }, active: true,
         tenant_id: tid, created_at: serverTimestamp(),
         created_by: window.currentUserDoc?.uid || '',
       });
