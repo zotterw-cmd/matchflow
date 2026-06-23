@@ -1236,7 +1236,7 @@ body.sa-mode .sa-var{display:inline}
   <div class="card shadow-sm p-3">
     <div class="table-responsive">
       <table id="spielerTableSimple" class="table table-striped align-middle w-100">
-        <thead class="table-dark"><tr><th>Foto</th><th>RNr</th><th>Pos</th><th>Nachname</th><th>Vorname</th><th>Geb.</th><th>Team</th><th>SLV</th><th>SPD</th><th>ATK</th><th>BON</th><th>SHT</th><th>SKL</th><th>PAS</th><th>DEF</th><th>XP</th><th title="Regains vom Trainer">Regain</th><th>Notizen</th><th></th></tr></thead>
+        <thead class="table-dark"><tr><th>Foto</th><th>RNr</th><th>Pos</th><th>Nachname</th><th>Vorname</th><th>Geb.</th><th>Team</th><th>SLV</th><th>SPD</th><th>ATK</th><th>BON</th><th>SHT</th><th>SKL</th><th>PAS</th><th>DEF</th><th>XP</th><th>Notizen</th><th></th></tr></thead>
         <tbody id="spielerBodySimple"></tbody>
       </table>
     </div>
@@ -2996,7 +2996,13 @@ body.sa-mode .sa-var{display:inline}
         </div>
         <!-- XP -->
         <div class="card p-3 mt-3" id="spXpCard" style="display:none">
-          <h6 class="fw-bold mb-2"><i class="bi bi-star-fill text-warning me-1"></i>XP – Erfahrungspunkte</h6>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-bold mb-0"><i class="bi bi-star-fill text-warning me-1"></i>XP – Erfahrungspunkte</h6>
+            <button class="btn btn-success btn-sm" id="spRegainBtn" onclick="openXpRegainModal(document.getElementById('spRegainPlayerId').value)">
+              <i class="bi bi-arrow-up-circle-fill me-1"></i>Regain vergeben
+            </button>
+          </div>
+          <input type="hidden" id="spRegainPlayerId">
           <div id="spXpContent"></div>
         </div>
         <div id="spError" class="alert alert-danger d-none mt-3"></div>
@@ -5547,7 +5553,6 @@ function _buildSpielerRow(s) {
        </div>`
     : `<div class="edit d-inline-flex gap-1">
          <button class="btn btn-outline-secondary btn-sm" onclick="openSpielerModalSimple('${s.id}')" title="Bearbeiten"><i class="bi bi-pencil"></i></button>
-         <button class="btn btn-outline-success btn-sm" onclick="openXpRegainModal('${s.id}')" title="XP Regain vergeben"><i class="bi bi-arrow-up-circle-fill"></i></button>
          <button class="btn btn-warning btn-sm" onclick="spielerSoftDelete('${s.id}')" title="Ausblenden"><i class="bi bi-trash" style="color:#fff"></i></button>
          <button class="btn btn-danger btn-sm" onclick="spielerHardDelete('${s.id}')" title="Endgültig löschen"><i class="bi bi-trash-fill"></i></button>
        </div>`;
@@ -5565,7 +5570,6 @@ function _buildSpielerRow(s) {
     <td><strong>${slv}</strong></td>
     ${skillCell('speed')}${skillCell('attack')}${skillCell('bonus')}${skillCell('shoot')}${skillCell('skill')}${skillCell('pass')}${skillCell('def')}
     <td>${(() => { const xp = s.xp || 0; const max = 1000; const pct = Math.min(100, Math.round(xp/max*100)); return `<div style="min-width:80px"><div class="d-flex justify-content-between" style="font-size:.7rem"><span class="fw-bold">${xp}</span><span class="text-muted">${max}</span></div><div class="progress" style="height:6px"><div class="progress-bar bg-warning" style="width:${pct}%"></div></div><div class="text-muted text-center" style="font-size:.65rem">${pct}%</div>`; })()}</td>
-    <td>${(() => { const r = s.regainCount || 0; return r > 0 ? `<span class="badge bg-success" title="${r} Regain${r!==1?'s':''} erhalten"><i class="bi bi-arrow-up-circle-fill me-1"></i>${r}</span>` : '<span class="text-muted small">–</span>'; })()}</td>
     <td><span class="badge ${nAnzahl>0?'bg-success':'bg-light text-dark border'}">${nAnzahl} Notiz${nAnzahl!==1?'en':''}</span></td>
     <td>${aktionen}</td>`;
   return tr;
@@ -5675,10 +5679,12 @@ window.openSpielerModalSimple = function(id) {
   const xpCard    = document.getElementById('spXpCard');
   const xpContent = document.getElementById('spXpContent');
   if (s) {
-    const xp  = s.xp || 0;
-    const max = 1000;
-    const pct = Math.min(100, Math.round(xp / max * 100));
-    const bar = pct >= 70 ? 'bg-success' : pct >= 40 ? 'bg-warning' : 'bg-danger';
+    document.getElementById('spRegainPlayerId').value = s.id;
+    const xp       = s.xp || 0;
+    const max      = 1000;
+    const pct      = Math.min(100, Math.round(xp / max * 100));
+    const bar      = pct >= 70 ? 'bg-success' : pct >= 40 ? 'bg-warning' : 'bg-danger';
+    const regained = s.regainCount || 0;
     xpContent.innerHTML = `
       <div class="d-flex justify-content-between mb-1" style="font-size:.85rem">
         <span class="fw-bold fs-5">${xp} <span class="text-muted fw-normal" style="font-size:.8rem">/ ${max} XP</span></span>
@@ -5687,11 +5693,14 @@ window.openSpielerModalSimple = function(id) {
       <div class="progress mb-2" style="height:10px">
         <div class="progress-bar ${bar}" style="width:${pct}%" role="progressbar"></div>
       </div>
-      <div class="text-muted" style="font-size:.75rem">XP werden durch Trainingsteilnahme, Messungen und Leistungssteigerungen gesammelt.</div>`;
-    // Regain-History laden
+      <div class="d-flex gap-3 mb-2" style="font-size:.78rem">
+        <span class="text-muted"><i class="bi bi-arrow-up-circle-fill text-success me-1"></i>Regains erhalten: <strong>${regained}</strong></span>
+      </div>
+      <div id="spRegainSummary" class="text-muted small mb-1"></div>`;
     _loadRegainHistory(s.id, xpContent);
     xpCard.style.display = '';
   } else {
+    document.getElementById('spRegainPlayerId').value = '';
     xpCard.style.display = 'none';
   }
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSpieler')).show();
@@ -10070,7 +10079,10 @@ window.xpRegainSpeichern = async function() {
     if (sp) { sp.xp = curXp + amount; sp.regainCount = (sp.regainCount || 0) + 1; }
     bootstrap.Modal.getInstance(document.getElementById('modalXpRegain')).hide();
     renderSpielerSimple();
-    alert(`✅ ${amount} XP Regain für ${sp?.vorname} ${sp?.nachname} vergeben.`);
+    // Spieler-Modal XP-Anzeige aktualisieren falls offen
+    if (sp && document.getElementById('spRegainPlayerId').value === playerId) {
+      openSpielerModalSimple(playerId);
+    }
   } catch(e) { err.classList.remove('d-none'); err.textContent = 'Fehler: ' + e.message; }
 };
 
