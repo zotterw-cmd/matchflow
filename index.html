@@ -2152,6 +2152,9 @@ body.sa-mode .sa-var{display:inline}
             <button class="btn btn-outline-secondary btn-sm" onclick="messSSAStartCamera()">
               <i class="bi bi-camera-video me-1"></i>Kamera öffnen
             </button>
+            <button id="messSSARecBtn" class="btn btn-danger btn-sm" style="display:none" onclick="messSSAToggleRecord()">
+              <i class="bi bi-record-circle me-1"></i>Aufnahme starten
+            </button>
             <span id="messSSAFileLabel" class="text-muted small"></span>
           </div>
         </div>
@@ -8971,11 +8974,47 @@ window.messSSAStartCamera = async function() {
     const video = document.getElementById('messSSAVideo');
     video.srcObject = _messSSAStream;
     video._sourceFile = null;
+    video.play();
     document.getElementById('messSSAPlayerWrap').style.display = 'block';
-    document.getElementById('messSSAFileLabel').textContent = 'Kamera aktiv';
+    document.getElementById('messSSAResultWrap').style.display = 'none';
+    document.getElementById('messSSARecBtn').style.display = 'inline-flex';
+    document.getElementById('messSSAFileLabel').textContent = 'Kamera aktiv — bitte Aufnahme starten';
     if (screen.orientation?.lock) screen.orientation.lock('landscape').catch(() => {});
   } catch(e) {
     alert('Kamera nicht verfügbar: ' + e.message);
+  }
+};
+
+let _messSSAMediaRec = null, _messSSARecChunks = [];
+window.messSSAToggleRecord = function() {
+  const btn = document.getElementById('messSSARecBtn');
+  if (_messSSAMediaRec && _messSSAMediaRec.state === 'recording') {
+    _messSSAMediaRec.stop();
+    btn.innerHTML = '<i class="bi bi-record-circle me-1"></i>Aufnahme starten';
+    btn.className = btn.className.replace('btn-warning', 'btn-danger');
+  } else {
+    _messSSARecChunks = [];
+    const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
+    _messSSAMediaRec = new MediaRecorder(_messSSAStream, { mimeType: mime });
+    _messSSAMediaRec.ondataavailable = e => { if (e.data.size > 0) _messSSARecChunks.push(e.data); };
+    _messSSAMediaRec.onstop = () => {
+      const blob = new Blob(_messSSARecChunks, { type: 'video/webm' });
+      const file = new File([blob], `messung_${Date.now()}.webm`, { type: 'video/webm' });
+      const video = document.getElementById('messSSAVideo');
+      video.srcObject = null;
+      video.src = URL.createObjectURL(blob);
+      video._sourceFile = file;
+      video.load();
+      if (_messSSAStream) { _messSSAStream.getTracks().forEach(t => t.stop()); _messSSAStream = null; }
+      btn.style.display = 'none';
+      document.getElementById('messSSAFileLabel').textContent = 'Aufnahme bereit — Marker setzen';
+      _messSSAMarkerStart = null; _messSSAMarkerEnd = null;
+      document.getElementById('messSSAMarkerInfo').textContent = '';
+    };
+    _messSSAMediaRec.start();
+    btn.innerHTML = '<i class="bi bi-stop-circle me-1"></i>Aufnahme stoppen';
+    btn.className = btn.className.replace('btn-danger', 'btn-warning');
+    document.getElementById('messSSAFileLabel').textContent = '● Aufnahme läuft…';
   }
 };
 
