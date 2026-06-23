@@ -1236,7 +1236,7 @@ body.sa-mode .sa-var{display:inline}
   <div class="card shadow-sm p-3">
     <div class="table-responsive">
       <table id="spielerTableSimple" class="table table-striped align-middle w-100">
-        <thead class="table-dark"><tr><th>Foto</th><th>RNr</th><th>Pos</th><th>Nachname</th><th>Vorname</th><th>Geb.</th><th>Team</th><th>SLV</th><th>SPD</th><th>ATK</th><th>BON</th><th>SHT</th><th>SKL</th><th>PAS</th><th>DEF</th><th>XP</th><th>Notizen</th><th></th></tr></thead>
+        <thead class="table-dark"><tr><th>Foto</th><th>RNr</th><th>Pos</th><th>Nachname</th><th>Vorname</th><th>Geb.</th><th>Team</th><th>SLV</th><th>SPD</th><th>ATK</th><th>BON</th><th>SHT</th><th>SKL</th><th>PAS</th><th>DEF</th><th>XP</th><th title="Regains vom Trainer">Regain</th><th>Notizen</th><th></th></tr></thead>
         <tbody id="spielerBodySimple"></tbody>
       </table>
     </div>
@@ -3004,6 +3004,39 @@ body.sa-mode .sa-var{display:inline}
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
         <button type="button" class="btn btn-dark" onclick="spielerSimpleSpeichern()"><i class="bi bi-save"></i> Speichern</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: XP Regain vergeben -->
+<div class="modal fade" id="modalXpRegain" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-arrow-up-circle-fill text-success me-2"></i>XP Regain vergeben</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="regainPlayerId">
+        <div id="regainError" class="alert alert-danger d-none"></div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Spieler</label>
+          <div id="regainSpielerName" class="form-control-plaintext fw-bold text-primary"></div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">XP Betrag <span class="text-danger">*</span></label>
+          <input type="number" id="regainAmount" class="form-control" min="1" placeholder="z.B. 10">
+          <div class="form-text">Wird dem Spieler gutgeschrieben (kann auch abgezogene XP ausgleichen).</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Nachricht an den Spieler <span class="text-danger">*</span></label>
+          <textarea id="regainMessage" class="form-control" rows="3" placeholder="z.B. Du warst diese Woche fleißig beim Training – hier sind deine XP zurück!"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Abbrechen</button>
+        <button type="button" class="btn btn-success btn-sm" onclick="xpRegainSpeichern()"><i class="bi bi-arrow-up-circle-fill me-1"></i>Regain vergeben</button>
       </div>
     </div>
   </div>
@@ -5514,6 +5547,7 @@ function _buildSpielerRow(s) {
        </div>`
     : `<div class="edit d-inline-flex gap-1">
          <button class="btn btn-outline-secondary btn-sm" onclick="openSpielerModalSimple('${s.id}')" title="Bearbeiten"><i class="bi bi-pencil"></i></button>
+         <button class="btn btn-outline-success btn-sm" onclick="openXpRegainModal('${s.id}')" title="XP Regain vergeben"><i class="bi bi-arrow-up-circle-fill"></i></button>
          <button class="btn btn-warning btn-sm" onclick="spielerSoftDelete('${s.id}')" title="Ausblenden"><i class="bi bi-trash" style="color:#fff"></i></button>
          <button class="btn btn-danger btn-sm" onclick="spielerHardDelete('${s.id}')" title="Endgültig löschen"><i class="bi bi-trash-fill"></i></button>
        </div>`;
@@ -5531,6 +5565,7 @@ function _buildSpielerRow(s) {
     <td><strong>${slv}</strong></td>
     ${skillCell('speed')}${skillCell('attack')}${skillCell('bonus')}${skillCell('shoot')}${skillCell('skill')}${skillCell('pass')}${skillCell('def')}
     <td>${(() => { const xp = s.xp || 0; const max = 1000; const pct = Math.min(100, Math.round(xp/max*100)); return `<div style="min-width:80px"><div class="d-flex justify-content-between" style="font-size:.7rem"><span class="fw-bold">${xp}</span><span class="text-muted">${max}</span></div><div class="progress" style="height:6px"><div class="progress-bar bg-warning" style="width:${pct}%"></div></div><div class="text-muted text-center" style="font-size:.65rem">${pct}%</div>`; })()}</td>
+    <td>${(() => { const r = s.regainCount || 0; return r > 0 ? `<span class="badge bg-success" title="${r} Regain${r!==1?'s':''} erhalten"><i class="bi bi-arrow-up-circle-fill me-1"></i>${r}</span>` : '<span class="text-muted small">–</span>'; })()}</td>
     <td><span class="badge ${nAnzahl>0?'bg-success':'bg-light text-dark border'}">${nAnzahl} Notiz${nAnzahl!==1?'en':''}</span></td>
     <td>${aktionen}</td>`;
   return tr;
@@ -5559,6 +5594,33 @@ function renderSpielerSimple() {
       columnDefs: [{ orderable: false, targets: -1 }]
     });
   }
+}
+
+async function _loadRegainHistory(playerId, container) {
+  try {
+    const { collection, query, where, orderBy, getDocs } = window._firestoreAPI;
+    const snap = await getDocs(query(
+      collection(window._firestoreDB, 'xp_regains'),
+      where('player_id', '==', playerId),
+      where('tenant_id', '==', window._currentTenantId),
+      orderBy('granted_at', 'desc')
+    ));
+    if (snap.empty) return;
+    const rows = [];
+    snap.forEach(d => {
+      const r = d.data();
+      const date = r.granted_at?.toDate ? r.granted_at.toDate().toLocaleDateString('de-AT') : '–';
+      rows.push(`<div class="d-flex gap-2 align-items-start py-1 border-bottom">
+        <span class="badge bg-success mt-1">+${r.amount} XP</span>
+        <div>
+          <div style="font-size:.8rem">${r.message}</div>
+          <div class="text-muted" style="font-size:.7rem">${date}</div>
+        </div>
+      </div>`);
+    });
+    container.insertAdjacentHTML('beforeend',
+      `<div class="mt-3"><div class="small fw-bold mb-1 text-muted"><i class="bi bi-arrow-up-circle-fill text-success me-1"></i>Regain-Verlauf (${rows.length})</div>${rows.join('')}</div>`);
+  } catch(e) { console.warn('[Regain] History:', e.message); }
 }
 
 window.openSpielerModalSimple = function(id) {
@@ -5626,6 +5688,8 @@ window.openSpielerModalSimple = function(id) {
         <div class="progress-bar ${bar}" style="width:${pct}%" role="progressbar"></div>
       </div>
       <div class="text-muted" style="font-size:.75rem">XP werden durch Trainingsteilnahme, Messungen und Leistungssteigerungen gesammelt.</div>`;
+    // Regain-History laden
+    _loadRegainHistory(s.id, xpContent);
     xpCard.style.display = '';
   } else {
     xpCard.style.display = 'none';
@@ -9965,6 +10029,51 @@ window.sitzungAbschliessen = async function(id) {
   } catch(e) { alert('Fehler: ' + e.message); }
 };
 
+window.openXpRegainModal = function(playerId) {
+  const sp = (window.spielerData || []).find(s => s.id === playerId);
+  if (!sp) return;
+  document.getElementById('regainPlayerId').value   = playerId;
+  document.getElementById('regainSpielerName').textContent = `${sp.vorname} ${sp.nachname}`;
+  document.getElementById('regainAmount').value  = '';
+  document.getElementById('regainMessage').value = '';
+  document.getElementById('regainError').classList.add('d-none');
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalXpRegain')).show();
+};
+
+window.xpRegainSpeichern = async function() {
+  const playerId = document.getElementById('regainPlayerId').value;
+  const amount   = parseInt(document.getElementById('regainAmount').value) || 0;
+  const message  = document.getElementById('regainMessage').value.trim();
+  const err      = document.getElementById('regainError');
+  err.classList.add('d-none');
+  if (!amount || amount < 1) { err.classList.remove('d-none'); err.textContent = 'Bitte einen Betrag > 0 eingeben.'; return; }
+  if (!message) { err.classList.remove('d-none'); err.textContent = 'Bitte eine Nachricht eingeben.'; return; }
+  try {
+    const { collection, addDoc, doc, getDoc, updateDoc, serverTimestamp } = window._firestoreAPI;
+    const tid = window._currentTenantId;
+    // Regain-Dokument anlegen
+    await addDoc(collection(window._firestoreDB, 'xp_regains'), {
+      player_id: playerId, tenant_id: tid,
+      amount, message,
+      granted_by: window.currentUserDoc?.uid || '',
+      granted_at: serverTimestamp(),
+      seen: false,
+    });
+    // XP auf player_seasons addieren
+    const sk  = (window.currentSeason || '2025/26').replace(/\//g, '-');
+    const ref = doc(window._firestoreDB, 'player_seasons', `${playerId}_${sk}`);
+    const snap = await getDoc(ref);
+    const curXp = snap.exists() ? (snap.data().xp || 0) : 0;
+    await updateDoc(ref, { xp: curXp + amount });
+    // Lokal aktualisieren
+    const sp = (window.spielerData || []).find(s => s.id === playerId);
+    if (sp) { sp.xp = curXp + amount; sp.regainCount = (sp.regainCount || 0) + 1; }
+    bootstrap.Modal.getInstance(document.getElementById('modalXpRegain')).hide();
+    renderSpielerSimple();
+    alert(`✅ ${amount} XP Regain für ${sp?.vorname} ${sp?.nachname} vergeben.`);
+  } catch(e) { err.classList.remove('d-none'); err.textContent = 'Fehler: ' + e.message; }
+};
+
 window.sitzungReaktivieren = async function(id) {
   if (!confirm('Sitzung reaktivieren? Danach können wieder Werte eingetragen werden.')) return;
   try {
@@ -12347,6 +12456,17 @@ async function fsLoadSpieler() {
       where('tenant_id', '==', tid),
       where('season',    '==', window.currentSeason)
     ));
+    // Regain-Counts laden
+    const regainSnap = await getDocs(query(
+      collection(db, 'xp_regains'),
+      where('tenant_id', '==', tid)
+    ));
+    const regainCounts = {};
+    regainSnap.forEach(d => {
+      const pid = d.data().player_id;
+      regainCounts[pid] = (regainCounts[pid] || 0) + 1;
+    });
+
     const result = [];
     sSnap.forEach(d => {
       const sd = d.data();
@@ -12363,6 +12483,7 @@ async function fsLoadSpieler() {
         skillBase:       sd.skillBase  || {},
         campScore:       sd.campScore  || {},
         xp:              sd.xp         || 0,
+        regainCount:     regainCounts[sd.player_id] || 0,
         lieblingsverein: sd.lieblingsverein || [],
         hauptverein:     sd.hauptverein || '',
         softDeleted:     sd.softDeleted || false,
