@@ -8686,9 +8686,14 @@ window.openNeueMessungSitzung = async function() {
       ? typen.map(t => `<div class="form-check"><input class="form-check-input" type="checkbox" id="sitzTyp_${t.id}" value="${t.id}" checked>
           <label class="form-check-label" for="sitzTyp_${t.id}">${t.name} <span class="text-muted small">(${katMap[t.skill_category_id] || '–'}, ${t.unit})</span></label></div>`).join('')
       : '<p class="text-muted small mb-0">Keine aktiven Messungstypen vorhanden.</p>';
-    // Spieler aus globalem spielerData laden
-    const spieler = (window.spielerData || []).slice().sort((a, b) =>
-      (a.nachname || '').localeCompare(b.nachname || '', 'de'));
+    // Spieler aus players-Collection laden (spielerData evtl. noch nicht befüllt)
+    const plSnap = await getDocs(query(
+      collection(window._firestoreDB, 'players'),
+      where('tenant_id', '==', tid)
+    ));
+    const spieler = [];
+    plSnap.forEach(d => spieler.push({ id: d.id, ...d.data() }));
+    spieler.sort((a, b) => (a.nachname || '').localeCompare(b.nachname || '', 'de'));
     spielerEl.innerHTML = spieler.length
       ? spieler.map(sp => `<div class="form-check"><input class="form-check-input" type="checkbox" id="sitzSp_${sp.id}" value="${sp.id}" checked>
           <label class="form-check-label" for="sitzSp_${sp.id}">${sp.nachname || ''} ${sp.vorname || ''}</label></div>`).join('')
