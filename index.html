@@ -584,7 +584,7 @@ body.sa-mode .sa-var{display:inline}
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.6</span> XP-System: Basis-XP + Bestwert-Bonus + Konsistenz-Bonus je Messungstyp konfigurierbar</li>
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.6</span> Teilnahme-XP: einmalige XP pro Spieler bei erster Werteingabe in einer Sitzung</li>
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.6</span> XP-Anzeige in Spieler-Tab: Balken (x / 1000 XP + %)</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.6</span> Quellen-Tracking je Messwert: <i class="bi bi-person-arms-up text-success"></i> Training · <i class="bi bi-house-heart-fill text-primary"></i> Zu Hause · <i class="bi bi-backpack-fill text-warning"></i> Camp · <i class="bi bi-slash-circle text-secondary"></i> Sonstiges</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.6</span> Quellen-Tracking je Messwert: <i class="bi bi-person-arms-up text-success"></i> Training · <i class="bi bi-house-heart-fill text-primary"></i> Zu Hause · <i class="bi bi-sun-fill text-warning"></i> Camp · <i class="bi bi-slash-circle text-secondary"></i> Sonstiges</li>
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.6</span> Zeitstempel je Messwert (Datum &amp; Uhrzeit der Erfassung)</li>
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.6</span> JUMP → DEF umbenannt (skill_key: def)</li>
         </ul>
@@ -9564,7 +9564,7 @@ window.openSpielerMessung = function(playerId, sitzungId) {
             <li><a class="dropdown-item" href="#" onclick="event.preventDefault();window._setMessSource('${tid}','home')">
               <i class="bi bi-house-heart-fill text-primary me-2"></i>Zu Hause</a></li>
             <li><a class="dropdown-item" href="#" onclick="event.preventDefault();window._setMessSource('${tid}','camp')">
-              <i class="bi bi-backpack-fill text-warning me-2"></i>Camp</a></li>
+              <i class="bi bi-sun-fill text-warning me-2"></i>Camp</a></li>
             <li><a class="dropdown-item" href="#" onclick="event.preventDefault();window._setMessSource('${tid}','other')">
               <i class="bi bi-heart-pulse-fill text-danger me-2"></i>Sonstiges</a></li>
           </ul>
@@ -9606,7 +9606,7 @@ window._getOrCreateMeasDoc = async function _getOrCreateMeasDoc(playerId, typId,
 
 function _sourceIcon(source) {
   if (source === 'home')  return '<i class="bi bi-house-heart-fill text-primary" title="Zu Hause" style="font-size:.9rem"></i>';
-  if (source === 'camp')  return '<i class="bi bi-backpack-fill text-warning" title="Camp" style="font-size:.9rem"></i>';
+  if (source === 'camp')  return '<i class="bi bi-sun-fill text-warning" title="Camp" style="font-size:.9rem"></i>';
   if (source === 'other') return '<i class="bi bi-heart-pulse-fill text-danger" title="Sonstiges" style="font-size:.9rem"></i>';
   return '<i class="bi bi-person-hearts text-success" title="Training" style="font-size:.9rem"></i>';
 }
