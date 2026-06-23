@@ -9340,7 +9340,7 @@ function _stdDev(arr) {
 function _clamp(v, min, max) { return Math.min(max, Math.max(min, v)); }
 
 function _calcSkill(vals, config) {
-  if (!vals || vals.length < 2) return null;           // Guard: mind. 2 Werte
+  if (!vals || vals.length < 1) return null;           // Guard: mind. 1 Wert
   if (!config.max_value)        return null;           // Guard: kein max_value → kein Score
 
   const invert = config.invert === true;
