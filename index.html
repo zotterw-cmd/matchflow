@@ -8900,6 +8900,11 @@ window.openMessungSSA = function(typId, playerId) {
   panel.style.display = 'block';
   overlay.style.display = 'block';
   document.body.style.overflow = 'hidden';
+  // Camp-spezifische Elemente verstecken
+  ['ssaSaveToCalcBtn','ssaSaveToPlayerBtn','ssaPlayerSaveCard'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+  ssaAttempts = [];
   ssaRenderAttempts(); // "Übernehmen"-Button einblenden
 };
 
@@ -8909,6 +8914,10 @@ window._messungSSAClose = function() {
     panel._ssaOrigParent.appendChild(panel);
     panel.style.display = panel._ssaOrigDisplay || 'none';
   }
+  // Camp-Elemente wieder einblenden
+  ['ssaPlayerSaveCard'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = '';
+  });
   const overlay = document.getElementById('_ssaMessOverlay');
   if (overlay) overlay.style.display = 'none';
   document.body.style.overflow = '';
@@ -8925,7 +8934,8 @@ window.ssaUebernehmenMessung = async function(idx) {
   const pid = document.getElementById('ssaPlayerSel')?.value ||
               document.getElementById('spielerMessungPlayerId')?.value;
   const sitzungId = document.getElementById('spielerMessungSitzungId')?.value;
-  if (!pid || !sitzungId) { alert('Kein aktiver Spieler/Sitzung.'); return; }
+  if (!pid)       { alert('Bitte Spieler auswählen.'); return; }
+  if (!sitzungId) { alert('Keine aktive Sitzung gefunden.'); return; }
   // Video optional hochladen
   let videoUrl = '';
   const cfg = window.getMediaConfig?.() || {};
@@ -8939,19 +8949,23 @@ window.ssaUebernehmenMessung = async function(idx) {
       if (j.url) videoUrl = j.url;
     } catch(e) { /* Video optional */ }
   }
-  // Direkt in Firestore speichern
-  const entry     = await _getOrCreateMeasDoc(pid, typId, sitzungId);
-  const newValues = [...(entry.values || []), { value: attempt.speed_kmh, recorded_at: new Date().toISOString(), ...(videoUrl ? { video_url: videoUrl } : {}) }];
-  const { doc, updateDoc } = window._firestoreAPI;
-  await updateDoc(doc(window._firestoreDB, 'measurements', entry.id), { values: newValues });
-  entry.values = newValues;
-  // Werteliste im Modal aktualisieren (ohne Modal zu schließen)
-  const typMap = window._aktTypMap || {};
-  _refreshMessTypBlock(typId, newValues, typMap[typId]?.unit || 'km/h');
-  const statusEl = document.getElementById('messVideoStatus_' + typId);
-  if (statusEl) statusEl.innerHTML = `<i class="bi bi-check-circle-fill text-success me-1"></i>${attempt.speed_kmh} km/h gespeichert`;
-  _recalcSkillBase(pid);
-  _messungSSAClose();
+  try {
+    // Direkt in Firestore speichern
+    const entry     = await window._getOrCreateMeasDoc(pid, typId, sitzungId);
+    const newValues = [...(entry.values || []), { value: attempt.speed_kmh, recorded_at: new Date().toISOString(), ...(videoUrl ? { video_url: videoUrl } : {}) }];
+    const { doc, updateDoc } = window._firestoreAPI;
+    await updateDoc(doc(window._firestoreDB, 'measurements', entry.id), { values: newValues });
+    entry.values = newValues;
+    // Werteliste im Modal aktualisieren
+    const typMap = window._aktTypMap || {};
+    window._refreshMessTypBlock(typId, newValues, typMap[typId]?.unit || 'km/h');
+    const statusEl = document.getElementById('messVideoStatus_' + typId);
+    if (statusEl) statusEl.innerHTML = `<i class="bi bi-check-circle-fill text-success me-1"></i>${attempt.speed_kmh} km/h gespeichert`;
+    _recalcSkillBase(pid);
+    _messungSSAClose();
+  } catch(e) {
+    alert('Fehler beim Speichern: ' + e.message);
+  }
 };
 
 window.messSSAHandleFile = function(input) {
