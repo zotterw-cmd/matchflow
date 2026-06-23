@@ -8952,12 +8952,9 @@ window._messungSSAClose = function() {
   if (ssaStream) { ssaStream.getTracks().forEach(t => t.stop()); ssaStream = null; }
 };
 
-window.ssaUebernehmenMessung = async function(idx) {
-  console.log('[SSA Übernehmen] idx=', idx, 'attempt=', ssaAttempts[idx], '_ssaMeasurementMode=', window._ssaMeasurementMode);
-  const attempt = ssaAttempts[idx];
-  const ctx     = window._ssaMeasurementMode;
-  if (!attempt) { alert('Kein Versuch gefunden (idx=' + idx + ')'); return; }
-  if (!ctx?.typId) { alert('_ssaMeasurementMode fehlt oder hat keine typId. Bitte Fenster schließen und erneut öffnen.'); return; }
+window.ssaUebernehmenMessung = async function(speed_kmh) {
+  const ctx = window._ssaMeasurementMode;
+  if (!ctx?.typId) { alert('Kein Messungstyp gefunden. Bitte Fenster schließen und erneut öffnen.'); return; }
   const { typId } = ctx;
   // Spieler: zuerst aus SSA-Dropdown, dann aus Modal-Hidden-Field
   const pid = document.getElementById('ssaPlayerSel')?.value ||
@@ -8983,15 +8980,14 @@ window.ssaUebernehmenMessung = async function(idx) {
   try {
     // Direkt in Firestore speichern
     const entry     = await window._getOrCreateMeasDoc(pid, typId, sitzungId);
-    const newValues = [...(entry.values || []), { value: attempt.speed_kmh, recorded_at: new Date().toISOString(), ...(videoUrl ? { video_url: videoUrl } : {}) }];
+    const newValues = [...(entry.values || []), { value: speed_kmh, recorded_at: new Date().toISOString(), ...(videoUrl ? { video_url: videoUrl } : {}) }];
     const { doc, updateDoc } = window._firestoreAPI;
     await updateDoc(doc(window._firestoreDB, 'measurements', entry.id), { values: newValues });
     entry.values = newValues;
-    // Werteliste im Modal aktualisieren
     const typMap = window._aktTypMap || {};
     window._refreshMessTypBlock(typId, newValues, typMap[typId]?.unit || 'km/h');
     const statusEl = document.getElementById('messVideoStatus_' + typId);
-    if (statusEl) statusEl.innerHTML = `<i class="bi bi-check-circle-fill text-success me-1"></i>${attempt.speed_kmh} km/h gespeichert`;
+    if (statusEl) statusEl.innerHTML = `<i class="bi bi-check-circle-fill text-success me-1"></i>${speed_kmh} km/h gespeichert`;
     _recalcSkillBase(pid);
     _messungSSAClose();
   } catch(e) {
@@ -11403,7 +11399,7 @@ window.ssaRenderAttempts = function() {
         <span class="fw-bold ${a.speed_kmh===best?'text-success':''}">${a.speed_kmh} km/h</span>
         <span class="text-muted small">${a.timeMs}ms | ${a.distance}m</span>
         <span class="badge bg-${a.confColor} ms-auto" style="font-size:.6rem">${a.confLabel}</span>
-        ${window._ssaMeasurementMode ? `<button class="btn btn-success btn-sm py-0 px-2" style="font-size:.72rem;white-space:nowrap" onclick="ssaUebernehmenMessung(${i})"><i class="bi bi-check-lg me-1"></i>Übernehmen</button>` : ''}
+        ${window._ssaMeasurementMode ? `<button class="btn btn-success btn-sm py-0 px-2" style="font-size:.72rem;white-space:nowrap" onclick="ssaUebernehmenMessung(${a.speed_kmh})"><i class="bi bi-check-lg me-1"></i>Übernehmen</button>` : ''}
       </div>`).join('')}`;
 };
 
