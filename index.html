@@ -1967,6 +1967,10 @@ body.sa-mode .sa-var{display:inline}
               <input class="form-check-input" type="radio" name="calcAggregation" id="calcAggMin" value="min">
               <label class="form-check-label" for="calcAggMin"><strong>Niedrigster Wert</strong> — kleinster Messwert wird verwendet (z.B. Sprint-Zeit)</label>
             </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="calcAggregation" id="calcAggSum" value="sum">
+              <label class="form-check-label" for="calcAggSum"><strong>Summe</strong> — alle Messwerte werden addiert (z.B. Tore, Punkte)</label>
+            </div>
           </div>
         </div>
         <div class="mb-3">
@@ -8854,9 +8858,10 @@ window.renderSitzungDetail = async function(sitzung, typMap, messMap) {
       let display = '–';
       if (vals.length) {
         const nums = vals.map(v => parseFloat(v.value) || 0);
-        const val  = aggFn === 'min' ? Math.min(...nums)
-                   : aggFn === 'avg' ? (nums.reduce((a,b)=>a+b,0)/nums.length)
+        const val  = aggFn === 'min'  ? Math.min(...nums)
+                   : aggFn === 'avg'  ? (nums.reduce((a,b)=>a+b,0)/nums.length)
                    : aggFn === 'last' ? nums[nums.length-1]
+                   : aggFn === 'sum'  ? nums.reduce((a,b)=>a+b,0)
                    : Math.max(...nums);
         const hasVideo = vals.some(v => v.video_url);
         const videoIcon = hasVideo ? ` <a href="${vals.find(v=>v.video_url)?.video_url}" target="_blank" title="Video ansehen"><i class="bi bi-play-circle-fill text-primary"></i></a>` : '';
@@ -9292,6 +9297,7 @@ window._recalcSkillBase = async function(playerId) {
       if      (agg === 'min')  raw = Math.min(...vals);
       else if (agg === 'avg')  raw = vals.reduce((a, b) => a + b, 0) / vals.length;
       else if (agg === 'last') raw = vals[vals.length - 1];
+      else if (agg === 'sum')  raw = vals.reduce((a, b) => a + b, 0);
       else                     raw = Math.max(...vals); // best
       const maxVal = kat.max_value || 100;
       const score  = Math.min(100, Math.round((raw / maxVal) * 100));
@@ -9553,7 +9559,7 @@ window.renderCalcMethodenView = async function() {
       el.innerHTML = '<p class="text-muted small py-3 text-center">Noch keine Berechnungsmethoden angelegt.</p>';
       return;
     }
-    const aggLabel = { best:'Bester Wert', min:'Niedrigster Wert', last:'Letzter Wert', avg:'Durchschnitt' };
+    const aggLabel = { best:'Bester Wert', min:'Niedrigster Wert', last:'Letzter Wert', avg:'Durchschnitt', sum:'Summe' };
     el.innerHTML = `<table class="table table-sm align-middle mb-0">
       <thead class="table-dark"><tr><th>Name</th><th>Aggregation</th><th>Gewichtung</th><th>Status</th><th></th></tr></thead>
       <tbody>${methods.map(m => `<tr style="${!m.active ? 'opacity:.5' : ''}">
@@ -9671,7 +9677,7 @@ window.renderMessungstypenView = async function() {
     const calcSnap = await getDocs(query(collection(window._firestoreDB, 'calc_methods'), where('tenant_id', '==', tid)));
     const calcMap = {};
     calcSnap.forEach(d => { calcMap[d.id] = d.data(); });
-    const calcLabel = { best:'Bester Wert', min:'Niedrigster Wert', last:'Letzter Wert', avg:'Durchschnitt' };
+    const calcLabel = { best:'Bester Wert', min:'Niedrigster Wert', last:'Letzter Wert', avg:'Durchschnitt', sum:'Summe' };
     el.innerHTML = `<table class="table table-sm align-middle mb-0">
       <thead class="table-dark"><tr><th>Name</th><th>Kategorie</th><th>Einheit</th><th>Berechnungsmethode</th><th>Status</th><th></th></tr></thead>
       <tbody>${typen.map(t => {
@@ -9713,7 +9719,7 @@ window.openMessungstypModal = async function(id) {
   const calcs = [];
   calcSnap.forEach(d => calcs.push({ id: d.id, ...d.data() }));
   calcs.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'de'));
-  const aggLabel = { best:'Bester Wert', min:'Niedrigster Wert', last:'Letzter Wert', avg:'Durchschnitt' };
+  const aggLabel = { best:'Bester Wert', min:'Niedrigster Wert', last:'Letzter Wert', avg:'Durchschnitt', sum:'Summe' };
   const selKat  = document.getElementById('messungstypKatId');
   const selCalc = document.getElementById('messungstypCalcId');
   selKat.innerHTML  = '<option value="">– Kategorie wählen –</option>' +
