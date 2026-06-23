@@ -2131,6 +2131,69 @@ body.sa-mode .sa-var{display:inline}
   </div>
 </div>
 
+<!-- MODAL: SSA für Leistungsmessungen -->
+<div class="modal fade" id="modalMessungSSA" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-fullscreen-lg-down">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title"><i class="bi bi-speedometer2 me-2"></i>Schuss-Analyse – Geschwindigkeit berechnen</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-2">
+        <input type="hidden" id="messSSATypId">
+        <!-- Video laden -->
+        <div class="card mb-2">
+          <div class="card-header py-2 fw-bold small"><i class="bi bi-camera-video me-1"></i>Video laden</div>
+          <div class="card-body p-2 d-flex gap-2 flex-wrap align-items-center">
+            <label class="btn btn-outline-secondary btn-sm mb-0">
+              <i class="bi bi-upload me-1"></i>Video hochladen
+              <input type="file" accept="video/*" class="d-none" onchange="messSSAHandleFile(this)">
+            </label>
+            <button class="btn btn-outline-secondary btn-sm" onclick="messSSAStartCamera()">
+              <i class="bi bi-camera-video me-1"></i>Kamera öffnen
+            </button>
+            <span id="messSSAFileLabel" class="text-muted small"></span>
+          </div>
+        </div>
+        <!-- Video Player + Marker -->
+        <div id="messSSAPlayerWrap" style="display:none">
+          <div class="card mb-2">
+            <div class="card-body p-2">
+              <video id="messSSAVideo" class="w-100 rounded mb-2" style="max-height:280px;background:#000" playsinline controls></video>
+              <div class="d-flex gap-2 flex-wrap align-items-center mb-2">
+                <button class="btn btn-outline-danger btn-sm" onclick="messSSASetMarker('start')"><i class="bi bi-record-circle me-1"></i>⚽ Ballkontakt</button>
+                <button class="btn btn-outline-success btn-sm" onclick="messSSASetMarker('end')"><i class="bi bi-record-circle me-1"></i>🥅 Tor</button>
+                <span id="messSSAMarkerInfo" class="text-muted small"></span>
+              </div>
+              <div class="d-flex gap-2 align-items-center flex-wrap">
+                <label class="small fw-bold mb-0">Distanz (m):</label>
+                <input type="number" id="messSSADist" class="form-control form-control-sm" style="width:80px" value="11" min="1" max="60">
+                <button class="btn btn-dark btn-sm" onclick="messSSACalc()"><i class="bi bi-lightning-fill me-1"></i>Berechnen</button>
+              </div>
+            </div>
+          </div>
+          <!-- Ergebnis -->
+          <div id="messSSAResultWrap" class="card border-danger mb-2" style="display:none">
+            <div class="card-body p-3 text-center">
+              <div style="font-size:3rem;font-weight:900;color:#dc3545;line-height:1" id="messSSASpeed">—</div>
+              <div class="text-muted fw-bold mb-1">km/h</div>
+              <div class="small text-muted mb-2" id="messSSATime"></div>
+              <div style="height:10px;background:#e9ecef;border-radius:6px;overflow:hidden;margin-bottom:12px">
+                <div id="messSSAGauge" style="height:100%;width:0%;background:#dc3545;transition:width .5s ease;border-radius:6px"></div>
+              </div>
+              <span id="messSSAConf" class="badge bg-secondary mb-2"></span>
+              <div class="d-flex gap-2 justify-content-center mt-2">
+                <button class="btn btn-success" onclick="messSSAUebernehmen()"><i class="bi bi-check-circle me-1"></i>Wert übernehmen</button>
+                <button class="btn btn-outline-secondary btn-sm" onclick="messSSACalc()"><i class="bi bi-arrow-clockwise me-1"></i>Neu berechnen</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: Neue Messsitzung -->
 <div class="modal fade" id="modalMessungSitzung" tabindex="-1">
   <div class="modal-dialog">
@@ -8873,6 +8936,115 @@ window.spielerZuordnungSpeichern = async function() {
   } catch(e) { alert('Fehler: ' + e.message); }
 };
 
+// ── SSA-Integration für Leistungsmessungen ──────────────────────────────────
+let _messSSAMarkerStart = null, _messSSAMarkerEnd = null, _messSSAStream = null;
+
+window.openMessungSSA = function(typId) {
+  _messSSAMarkerStart = null; _messSSAMarkerEnd = null;
+  document.getElementById('messSSATypId').value = typId;
+  document.getElementById('messSSAPlayerWrap').style.display = 'none';
+  document.getElementById('messSSAResultWrap').style.display = 'none';
+  document.getElementById('messSSAFileLabel').textContent = '';
+  document.getElementById('messSSAMarkerInfo').textContent = '';
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalMessungSSA')).show();
+};
+
+window.messSSAHandleFile = function(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const video = document.getElementById('messSSAVideo');
+  video.src = URL.createObjectURL(file);
+  video._sourceFile = file;
+  document.getElementById('messSSAFileLabel').textContent = file.name;
+  document.getElementById('messSSAPlayerWrap').style.display = 'block';
+  document.getElementById('messSSAResultWrap').style.display = 'none';
+  _messSSAMarkerStart = null; _messSSAMarkerEnd = null;
+  document.getElementById('messSSAMarkerInfo').textContent = '';
+};
+
+window.messSSAStartCamera = async function() {
+  try {
+    if (_messSSAStream) _messSSAStream.getTracks().forEach(t => t.stop());
+    _messSSAStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false
+    });
+    const video = document.getElementById('messSSAVideo');
+    video.srcObject = _messSSAStream;
+    video._sourceFile = null;
+    document.getElementById('messSSAPlayerWrap').style.display = 'block';
+    document.getElementById('messSSAFileLabel').textContent = 'Kamera aktiv';
+    if (screen.orientation?.lock) screen.orientation.lock('landscape').catch(() => {});
+  } catch(e) {
+    alert('Kamera nicht verfügbar: ' + e.message);
+  }
+};
+
+window.messSSASetMarker = function(which) {
+  const video = document.getElementById('messSSAVideo');
+  const t = video.currentTime;
+  if (which === 'start') { _messSSAMarkerStart = t; }
+  else                   { _messSSAMarkerEnd   = t; }
+  const sText = _messSSAMarkerStart !== null ? _messSSAMarkerStart.toFixed(3) + 's' : '–';
+  const eText = _messSSAMarkerEnd   !== null ? _messSSAMarkerEnd.toFixed(3) + 's'   : '–';
+  document.getElementById('messSSAMarkerInfo').textContent = `⚽ ${sText}  →  🥅 ${eText}`;
+};
+
+window.messSSACalc = function() {
+  if (_messSSAMarkerStart === null || _messSSAMarkerEnd === null) {
+    alert('Bitte beide Marker setzen (⚽ Ballkontakt + 🥅 Tor).'); return;
+  }
+  const timeSec = Math.abs(_messSSAMarkerEnd - _messSSAMarkerStart);
+  if (timeSec < 0.001) { alert('Zeitspanne zu kurz — Marker prüfen.'); return; }
+  const dist = parseFloat(document.getElementById('messSSADist').value) || 11;
+  const speed_kmh = Math.round((dist / timeSec) * 3.6);
+  const timeMs = Math.round(timeSec * 1000);
+  let confColor, confLabel;
+  if      (timeSec < 0.04)  { confColor = 'danger';    confLabel = '⚠️ Sehr niedrig (Marker prüfen)'; }
+  else if (timeSec < 0.15)  { confColor = 'success';   confLabel = '✅ Hoch'; }
+  else if (timeSec < 0.4)   { confColor = 'warning';   confLabel = '🟡 Mittel'; }
+  else                      { confColor = 'secondary';  confLabel = 'ℹ️ Niedrig'; }
+  window._messSSALastResult = { speed_kmh, timeMs, timeSec, confColor };
+  document.getElementById('messSSASpeed').textContent = speed_kmh;
+  document.getElementById('messSSATime').textContent  = `${timeMs} ms (${timeSec.toFixed(3)}s)`;
+  document.getElementById('messSSAConf').className    = 'badge bg-' + confColor + ' mb-2';
+  document.getElementById('messSSAConf').textContent  = confLabel;
+  const gauge = document.getElementById('messSSAGauge');
+  gauge.style.width = '0%';
+  gauge.style.background = speed_kmh > 100 ? '#dc3545' : speed_kmh > 70 ? '#d4ac0d' : '#198754';
+  setTimeout(() => { gauge.style.width = Math.min(100, (speed_kmh / 150) * 100) + '%'; }, 50);
+  document.getElementById('messSSAResultWrap').style.display = 'block';
+};
+
+window.messSSAUebernehmen = async function() {
+  const typId = document.getElementById('messSSATypId').value;
+  const result = window._messSSALastResult;
+  if (!result) return;
+  // Wert ins Messfeld schreiben
+  const wertInput = document.getElementById('messWert_' + typId);
+  if (wertInput) wertInput.value = result.speed_kmh;
+  // Video hochladen wenn Datei vorhanden
+  const video = document.getElementById('messSSAVideo');
+  const cfg = window.getMediaConfig?.() || {};
+  if (video._sourceFile && cfg.serverUrl) {
+    const statusEl = document.getElementById('messVideoStatus_' + typId);
+    if (statusEl) statusEl.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Video wird hochgeladen…';
+    try {
+      const fd = new FormData();
+      fd.append('file', video._sourceFile);
+      fd.append('dir', 'measurements');
+      const r = await fetch(`${cfg.serverUrl}/upload.php`, { method: 'POST', body: fd });
+      const j = await r.json();
+      if (j.url) {
+        const vidHidden = document.getElementById('messVideo_' + typId);
+        if (vidHidden) vidHidden.value = j.url;
+        if (statusEl) statusEl.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i>Video hochgeladen';
+      }
+    } catch(e) { /* Upload optional — Wert wurde bereits übernommen */ }
+  }
+  if (_messSSAStream) { _messSSAStream.getTracks().forEach(t => t.stop()); _messSSAStream = null; }
+  bootstrap.Modal.getInstance(document.getElementById('modalMessungSSA')).hide();
+};
+
 window._uploadMessungVideo = async function(input, typId) {
   const file = input.files[0];
   if (!file) return;
@@ -9072,13 +9244,18 @@ window.openSpielerMessung = function(playerId, sitzungId) {
       <input type="number" step="0.01" class="form-control mb-2" id="messWert_${tid}" value="${last}" placeholder="${t.unit}">
       <input type="hidden" id="messVideo_${tid}" value="${lastVideo}">
       <div class="d-flex gap-2 align-items-center flex-wrap">
-        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="_startMessungKamera('${tid}')">
-          <i class="bi bi-camera-video me-1"></i>Kamera
-        </button>
-        <label class="btn btn-outline-secondary btn-sm mb-0" style="cursor:pointer">
-          <i class="bi bi-upload me-1"></i>Video hochladen
-          <input type="file" accept="video/*" class="d-none" onchange="_uploadMessungVideo(this,'${tid}')">
-        </label>
+        ${t.unit && t.unit.toLowerCase().replace(/\s/g,'') === 'km/h'
+          ? `<button type="button" class="btn btn-danger btn-sm" onclick="openMessungSSA('${tid}')">
+               <i class="bi bi-speedometer2 me-1"></i>Schuss-Analyse
+             </button>`
+          : `<button type="button" class="btn btn-outline-secondary btn-sm" onclick="_startMessungKamera('${tid}')">
+               <i class="bi bi-camera-video me-1"></i>Kamera
+             </button>
+             <label class="btn btn-outline-secondary btn-sm mb-0" style="cursor:pointer">
+               <i class="bi bi-upload me-1"></i>Video hochladen
+               <input type="file" accept="video/*" class="d-none" onchange="_uploadMessungVideo(this,'${tid}')">
+             </label>`
+        }
         <span id="messVideoStatus_${tid}" class="text-muted small">${lastVideo ? '<i class="bi bi-check-circle-fill text-success me-1"></i>Video vorhanden' : ''}</span>
       </div>
       ${vals.length > 1 ? `<div class="form-text mt-1">Bisherige Werte: ${vals.map(v=>v.value).join(', ')} ${t.unit}</div>` : ''}
