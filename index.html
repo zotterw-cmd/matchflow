@@ -8859,6 +8859,80 @@ window.spielerZuordnungSpeichern = async function() {
   } catch(e) { alert('Fehler: ' + e.message); }
 };
 
+window._recalcSkillBase = async function(playerId) {
+  try {
+    const { collection, query, where, getDocs, doc, getDoc, setDoc } = window._firestoreAPI;
+    const tid = window._currentTenantId;
+
+    // 1. Alle Messungen des Spielers laden
+    const messSnap = await getDocs(query(
+      collection(window._firestoreDB, 'measurements'),
+      where('tenant_id', '==', tid),
+      where('player_id', '==', playerId)
+    ));
+    if (messSnap.empty) return;
+
+    // 2. Alle measurement_types + calc_methods + skill_categories laden (parallel)
+    const [typSnap, calcSnap, katSnap] = await Promise.all([
+      getDocs(query(collection(window._firestoreDB, 'measurement_types'), where('tenant_id', '==', tid))),
+      getDocs(query(collection(window._firestoreDB, 'calc_methods'),      where('tenant_id', '==', tid))),
+      getDocs(query(collection(window._firestoreDB, 'skill_categories'),  where('tenant_id', '==', tid))),
+    ]);
+    const typMap  = {}; calcSnap.forEach(d => {}); // init
+    typSnap.forEach(d  => { typMap[d.id]  = d.data(); });
+    const calcMap = {}; calcSnap.forEach(d => { calcMap[d.id] = d.data(); });
+    const katMap  = {}; katSnap.forEach(d  => { katMap[d.id]  = d.data(); });
+
+    // 3. Messungen pro measurement_type_id gruppieren
+    const byType = {}; // typId → [values]
+    messSnap.forEach(d => {
+      const m = d.data();
+      if (!byType[m.measurement_type_id]) byType[m.measurement_type_id] = [];
+      (m.values || []).forEach(v => byType[m.measurement_type_id].push(parseFloat(v.value) || 0));
+    });
+
+    // 4. skillBase-Keys berechnen
+    const skillBaseUpdate = {};
+    for (const [typId, vals] of Object.entries(byType)) {
+      if (!vals.length) continue;
+      const typ  = typMap[typId];
+      if (!typ) continue;
+      const calc = calcMap[typ.calc_method_id];
+      const agg  = calc?.aggregation || typ.calc_method || 'best';
+      const kat  = katMap[typ.skill_category_id];
+      if (!kat) continue;
+      const key  = kat.name.toLowerCase();
+      let score;
+      if      (agg === 'min')  score = Math.min(...vals);
+      else if (agg === 'avg')  score = vals.reduce((a, b) => a + b, 0) / vals.length;
+      else if (agg === 'last') score = vals[vals.length - 1];
+      else                     score = Math.max(...vals); // best
+      // Gewichtung (0-100) → auf 0-100 skillBase-Skala normalisieren (gesonderte Logik später)
+      skillBaseUpdate[key] = parseFloat(score.toFixed(2));
+    }
+    if (!Object.keys(skillBaseUpdate).length) return;
+
+    // 5. player_seasons mit merge schreiben — nur measurement-Keys überschreiben
+    const sk        = (window.currentSeason || '2025/26').replace(/\//g, '-');
+    const seasonRef = doc(window._firestoreDB, 'player_seasons', `${playerId}_${sk}`);
+    const skillBaseWrapped = {};
+    for (const [k, v] of Object.entries(skillBaseUpdate)) {
+      skillBaseWrapped[`skillBase.${k}`] = v;
+    }
+    const { updateDoc } = window._firestoreAPI;
+    await updateDoc(seasonRef, skillBaseWrapped);
+
+    // 6. Lokales spielerData aktualisieren
+    const sp = (window.spielerData || []).find(s => s.id === playerId);
+    if (sp) {
+      sp.skillBase = sp.skillBase || {};
+      Object.assign(sp.skillBase, skillBaseUpdate);
+    }
+  } catch(e) {
+    console.warn('skillBase Rückschreiben fehlgeschlagen:', e.message);
+  }
+};
+
 window.sitzungZurueck = function() {
   document.getElementById('leistungPanelSitzungDetail').style.display = 'none';
   document.querySelectorAll('#viewLeistung .nav-tabs').forEach(el => el.style.display = '');
@@ -8927,6 +9001,7 @@ window.spielerMessungSpeichern = async function() {
     }
     bootstrap.Modal.getInstance(document.getElementById('modalSpielerMessung')).hide();
     renderSitzungDetail(sitzung, typMap, messMap);
+    _recalcSkillBase(playerId); // async, im Hintergrund
   } catch(e) { err.classList.remove('d-none'); err.textContent = 'Fehler: ' + e.message; }
 };
 
