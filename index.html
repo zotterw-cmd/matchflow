@@ -1209,7 +1209,7 @@ body.sa-mode .sa-var{display:inline}
   <div class="card shadow-sm p-3">
     <div class="table-responsive">
       <table id="spielerTableSimple" class="table table-striped align-middle w-100">
-        <thead class="table-dark"><tr><th>Foto</th><th>RNr</th><th>Pos</th><th>Nachname</th><th>Vorname</th><th>Geb.</th><th>Team</th><th>SLV</th><th>SPD</th><th>ATK</th><th>BON</th><th>SHT</th><th>SKL</th><th>PAS</th><th>JMP</th><th>Notizen</th><th></th></tr></thead>
+        <thead class="table-dark"><tr><th>Foto</th><th>RNr</th><th>Pos</th><th>Nachname</th><th>Vorname</th><th>Geb.</th><th>Team</th><th>SLV</th><th>SPD</th><th>ATK</th><th>BON</th><th>SHT</th><th>SKL</th><th>PAS</th><th>DEF</th><th>XP</th><th>Notizen</th><th></th></tr></thead>
         <tbody id="spielerBodySimple"></tbody>
       </table>
     </div>
@@ -2289,6 +2289,23 @@ body.sa-mode .sa-var{display:inline}
           <div class="form-check">
             <input class="form-check-input" type="checkbox" id="messungstypUseForXp" checked>
             <label class="form-check-label fw-bold" for="messungstypUseForXp">XP vergeben</label>
+          </div>
+        </div>
+        <div class="mb-3 row g-2" id="xpConfigRow">
+          <div class="col-4">
+            <label class="form-label small fw-bold">Basis-XP</label>
+            <input type="number" id="messungstypXpBase" class="form-control form-control-sm" value="5" min="0">
+            <div class="form-text" style="font-size:.7rem">Immer vergeben</div>
+          </div>
+          <div class="col-4">
+            <label class="form-label small fw-bold">Bestwert-Bonus</label>
+            <input type="number" id="messungstypXpBest" class="form-control form-control-sm" value="15" min="0">
+            <div class="form-text" style="font-size:.7rem">Neuer Persönlichkeitsrekord</div>
+          </div>
+          <div class="col-4">
+            <label class="form-label small fw-bold">Konsistenz-Bonus</label>
+            <input type="number" id="messungstypXpConsistency" class="form-control form-control-sm" value="5" min="0">
+            <div class="form-text" style="font-size:.7rem">Konstante Leistung</div>
           </div>
         </div>
         <div class="mb-3 row g-2">
@@ -5436,6 +5453,7 @@ function _buildSpielerRow(s) {
     <td><span class="badge bg-dark">${s.team}</span></td>
     <td><strong>${slv}</strong></td>
     ${skillCell('speed')}${skillCell('attack')}${skillCell('bonus')}${skillCell('shoot')}${skillCell('skill')}${skillCell('pass')}${skillCell('def')}
+    <td>${(() => { const xp = s.xp || 0; const max = 1000; const pct = Math.min(100, Math.round(xp/max*100)); return `<div style="min-width:80px"><div class="d-flex justify-content-between" style="font-size:.7rem"><span class="fw-bold">${xp}</span><span class="text-muted">${max}</span></div><div class="progress" style="height:6px"><div class="progress-bar bg-warning" style="width:${pct}%"></div></div><div class="text-muted text-center" style="font-size:.65rem">${pct}%</div>`; })()}</td>
     <td><span class="badge ${nAnzahl>0?'bg-success':'bg-light text-dark border'}">${nAnzahl} Notiz${nAnzahl!==1?'en':''}</span></td>
     <td>${aktionen}</td>`;
   return tr;
@@ -9060,7 +9078,7 @@ window.ssaUebernehmenMessung = async function(speed_kmh) {
   try {
     // Direkt in Firestore speichern
     const entry     = await window._getOrCreateMeasDoc(pid, typId, sitzungId);
-    const newValues = [...(entry.values || []), { value: speed_kmh, recorded_at: new Date().toISOString(), ...(videoUrl ? { video_url: videoUrl } : {}) }];
+    const newValues = [...(entry.values || []), { value: speed_kmh, recorded_at: new Date().toISOString(), source: 'training', ...(videoUrl ? { video_url: videoUrl } : {}) }];
     const { doc, updateDoc } = window._firestoreAPI;
     await updateDoc(doc(window._firestoreDB, 'measurements', entry.id), { values: newValues });
     entry.values = newValues;
@@ -9088,7 +9106,7 @@ window.ssaAlleUebernehmen = async function() {
   try {
     const entry = await window._getOrCreateMeasDoc(pid, typId, sitzungId);
     const now   = new Date().toISOString();
-    const neueWerte = ssaAttempts.map(a => ({ value: a.speed_kmh, recorded_at: now }));
+    const neueWerte = ssaAttempts.map(a => ({ value: a.speed_kmh, recorded_at: now, source: 'training' }));
     const newValues = [...(entry.values || []), ...neueWerte];
     const { doc, updateDoc } = window._firestoreAPI;
     await updateDoc(doc(window._firestoreDB, 'measurements', entry.id), { values: newValues });
@@ -9480,9 +9498,11 @@ window.openSpielerMessung = function(playerId, sitzungId) {
     const hasVideo = t.video_analyse === true;
     const valRows = vals.map((v, i) => `
       <div class="d-flex gap-1 mb-1 align-items-center" id="messWertRow_${tid}_${i}">
+        ${_sourceIcon(v.source)}
         <input type="number" step="0.01" class="form-control form-control-sm" style="max-width:110px"
           id="messWertEdit_${tid}_${i}" value="${v.value}">
         <span class="text-muted small">${t.unit}</span>
+        <span class="text-muted" style="font-size:.7rem;white-space:nowrap">${_formatRecordedAt(v.recorded_at)}</span>
         ${v.video_url ? `<a href="${v.video_url}" target="_blank" class="btn btn-outline-primary btn-sm py-0 px-1"><i class="bi bi-play-circle"></i></a>` : ''}
         <button class="btn btn-outline-success btn-sm py-0 px-1 ms-auto" title="Speichern"
           onclick="messWertSpeichern('${tid}',${i})"><i class="bi bi-check-lg"></i></button>
@@ -9497,6 +9517,11 @@ window.openSpielerMessung = function(playerId, sitzungId) {
       <div class="d-flex gap-2 align-items-center flex-wrap mt-2 pt-2 border-top">
         <input type="number" step="0.01" class="form-control form-control-sm" style="max-width:110px"
           id="messWertNeu_${tid}" placeholder="${t.unit}">
+        <select class="form-select form-select-sm" style="max-width:150px" id="messWertSource_${tid}">
+          <option value="training">🏟️ Training</option>
+          <option value="home">🏠 Zuhause</option>
+          <option value="manual">✏️ Manuell</option>
+        </select>
         <input type="hidden" id="messVideo_${tid}" value="">
         ${hasVideo
           ? `<button type="button" class="btn btn-danger btn-sm" onclick="openMessungSSA('${tid}', document.getElementById('spielerMessungPlayerId').value)">
@@ -9532,6 +9557,45 @@ window._getOrCreateMeasDoc = async function _getOrCreateMeasDoc(playerId, typId,
   return messMap[playerId][typId];
 }
 
+function _sourceIcon(source) {
+  if (source === 'home')   return '<span title="Zuhause nachgemacht" style="font-size:.85rem">🏠</span>';
+  if (source === 'manual') return '<span title="Manuell nachgetragen" style="font-size:.85rem">✏️</span>';
+  return '<span title="Beim Training" style="font-size:.85rem">🏟️</span>';
+}
+
+function _formatRecordedAt(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('de-AT', { day:'2-digit', month:'2-digit', year:'2-digit' }) + ' ' +
+         d.toLocaleTimeString('de-AT', { hour:'2-digit', minute:'2-digit' });
+}
+
+async function _calculateAndAddXP(playerId, typId, newValue, allValues) {
+  try {
+    const typMap = window._aktTypMap || {};
+    const typ    = typMap[typId];
+    if (!typ?.use_for_xp) return;
+    const cfg    = typ.xp_config || {};
+    let xp       = cfg.base || 5;
+    const prevBest = allValues.length > 1 ? Math.max(...allValues.slice(0, -1).map(v => parseFloat(v.value) || 0)) : -Infinity;
+    if (parseFloat(newValue) >= prevBest && allValues.length > 1) xp += cfg.best_bonus || 15;
+    if (allValues.length >= 3) {
+      const nums = allValues.map(v => parseFloat(v.value) || 0);
+      if (_stdDev(nums) < 5) xp += cfg.consistency_bonus || 5;
+    }
+    const { doc, updateDoc, getDoc } = window._firestoreAPI;
+    const sk = (window.currentSeason || '2025/26').replace(/\//g, '-');
+    const ref = doc(window._firestoreDB, 'player_seasons', `${playerId}_${sk}`);
+    const snap = await getDoc(ref);
+    const curXp = snap.exists() ? (snap.data().xp || 0) : 0;
+    await updateDoc(ref, { xp: curXp + xp });
+    // Lokal aktualisieren
+    const sp = (window.spielerData || []).find(s => s.id === playerId);
+    if (sp) sp.xp = (sp.xp || 0) + xp;
+    console.log(`[XP] +${xp} XP für ${playerId} (Typ: ${typ.name})`);
+  } catch(e) { console.warn('[XP] Fehler:', e.message); }
+}
+
 window._refreshMessTypBlock = function _refreshMessTypBlock(typId, vals, unit) {
   const playerId = document.getElementById('spielerMessungPlayerId').value;
   const typMap   = window._aktTypMap || {};
@@ -9539,9 +9603,11 @@ window._refreshMessTypBlock = function _refreshMessTypBlock(typId, vals, unit) {
   const hasVideo = t?.video_analyse === true;
   const valRows  = vals.map((v, i) => `
     <div class="d-flex gap-1 mb-1 align-items-center" id="messWertRow_${typId}_${i}">
+      ${_sourceIcon(v.source)}
       <input type="number" step="0.01" class="form-control form-control-sm" style="max-width:110px"
         id="messWertEdit_${typId}_${i}" value="${v.value}">
       <span class="text-muted small">${unit}</span>
+      <span class="text-muted" style="font-size:.7rem;white-space:nowrap">${_formatRecordedAt(v.recorded_at)}</span>
       ${v.video_url ? `<a href="${v.video_url}" target="_blank" class="btn btn-outline-primary btn-sm py-0 px-1"><i class="bi bi-play-circle"></i></a>` : ''}
       <button class="btn btn-outline-success btn-sm py-0 px-1 ms-auto" onclick="messWertSpeichern('${typId}',${i})"><i class="bi bi-check-lg"></i></button>
       <button class="btn btn-outline-danger btn-sm py-0 px-1" onclick="messWertLoeschen('${typId}',${i})"><i class="bi bi-trash"></i></button>
@@ -9560,11 +9626,13 @@ window.messWertHinzufuegen = async function(typId) {
   const neuEl     = document.getElementById('messWertNeu_' + typId);
   const val       = neuEl?.value.trim();
   if (!val) return;
-  const statusEl = document.getElementById('messVideoStatus_' + typId);
+  const source    = document.getElementById('messWertSource_' + typId)?.value || 'training';
+  const statusEl  = document.getElementById('messVideoStatus_' + typId);
   try {
     const videoUrl  = document.getElementById('messVideo_' + typId)?.value || '';
     const entry     = await window._getOrCreateMeasDoc(playerId, typId, sitzungId);
-    const newValues = [...(entry.values || []), { value: parseFloat(val), recorded_at: new Date().toISOString(), ...(videoUrl ? { video_url: videoUrl } : {}) }];
+    const newEntry  = { value: parseFloat(val), recorded_at: new Date().toISOString(), source, ...(videoUrl ? { video_url: videoUrl } : {}) };
+    const newValues = [...(entry.values || []), newEntry];
     const { doc, updateDoc } = window._firestoreAPI;
     await updateDoc(doc(window._firestoreDB, 'measurements', entry.id), { values: newValues });
     entry.values = newValues;
@@ -9573,6 +9641,7 @@ window.messWertHinzufuegen = async function(typId) {
     document.getElementById('messVideo_' + typId).value = '';
     if (statusEl) statusEl.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i>Gespeichert';
     _recalcSkillBase(playerId);
+    _calculateAndAddXP(playerId, typId, parseFloat(val), newValues);
   } catch(e) {
     if (statusEl) statusEl.innerHTML = `<span class="text-danger">Fehler: ${e.message}</span>`;
   }
@@ -9876,7 +9945,10 @@ window.openMessungstypModal = async function(id) {
     selCalc.value = t.calc_method_id    || '';
     document.getElementById('messungstypUnit').value  = t.unit || '';
     document.getElementById('messungstypSort').value  = t.sort_order || 1;
-    document.getElementById('messungstypVideoAnalyse').checked = t.video_analyse === true;
+    document.getElementById('messungstypVideoAnalyse').checked  = t.video_analyse === true;
+    document.getElementById('messungstypXpBase').value          = t.xp_config?.base        ?? 5;
+    document.getElementById('messungstypXpBest').value          = t.xp_config?.best_bonus  ?? 15;
+    document.getElementById('messungstypXpConsistency').value   = t.xp_config?.consistency_bonus ?? 5;
     const mode = t.system_mode || 'performance';
     document.querySelector(`input[name="messungstypSystemMode"][value="${mode}"]`).checked = true;
     document.getElementById('messungstypUseForScore').checked = t.use_for_score !== false;
@@ -9891,7 +9963,10 @@ window.openMessungstypModal = async function(id) {
     selCalc.value = '';
     document.getElementById('messungstypUnit').value  = '';
     document.getElementById('messungstypSort').value  = '1';
-    document.getElementById('messungstypVideoAnalyse').checked = false;
+    document.getElementById('messungstypVideoAnalyse').checked  = false;
+    document.getElementById('messungstypXpBase').value          = '5';
+    document.getElementById('messungstypXpBest').value          = '15';
+    document.getElementById('messungstypXpConsistency').value   = '5';
     document.querySelector('input[name="messungstypSystemMode"][value="performance"]').checked = true;
     document.getElementById('messungstypUseForScore').checked = true;
     document.getElementById('messungstypUseForXp').checked    = true;
@@ -9908,6 +9983,10 @@ window.messungstypSpeichern = async function() {
   const calcId    = document.getElementById('messungstypCalcId').value;
   const sort         = parseInt(document.getElementById('messungstypSort').value) || 1;
   const videoAnalyse = document.getElementById('messungstypVideoAnalyse').checked;
+  const xpBase       = parseInt(document.getElementById('messungstypXpBase').value) || 5;
+  const xpBest       = parseInt(document.getElementById('messungstypXpBest').value) || 15;
+  const xpConsist    = parseInt(document.getElementById('messungstypXpConsistency').value) || 5;
+  const xpConfig     = { base: xpBase, best_bonus: xpBest, consistency_bonus: xpConsist };
   const systemMode   = document.querySelector('input[name="messungstypSystemMode"]:checked')?.value || 'performance';
   const useForScore  = document.getElementById('messungstypUseForScore').checked;
   const useForXp     = document.getElementById('messungstypUseForXp').checked;
@@ -9927,14 +10006,14 @@ window.messungstypSpeichern = async function() {
       await setDoc(doc(window._firestoreDB, 'measurement_types', existingId),
         { name, skill_category_id: katId, unit, calc_method_id: calcId, sort_order: sort,
           video_analyse: videoAnalyse, system_mode: systemMode, use_for_score: useForScore,
-          use_for_xp: useForXp, calc_config: { top_n: topN, invert },
+          use_for_xp: useForXp, xp_config: xpConfig, calc_config: { top_n: topN, invert },
           tenant_id: tid },
         { merge: true });
     } else {
       await addDoc(collection(window._firestoreDB, 'measurement_types'), {
         name, skill_category_id: katId, unit, calc_method_id: calcId,
         sort_order: sort, video_analyse: videoAnalyse, system_mode: systemMode,
-        use_for_score: useForScore, use_for_xp: useForXp,
+        use_for_score: useForScore, use_for_xp: useForXp, xp_config: xpConfig,
         calc_config: { top_n: topN, invert }, active: true,
         tenant_id: tid, created_at: serverTimestamp(),
         created_by: window.currentUserDoc?.uid || '',
@@ -12032,6 +12111,7 @@ async function fsLoadSpieler() {
         team:            sd.team       || '',
         skillBase:       sd.skillBase  || {},
         campScore:       sd.campScore  || {},
+        xp:              sd.xp         || 0,
         lieblingsverein: sd.lieblingsverein || [],
         hauptverein:     sd.hauptverein || '',
         softDeleted:     sd.softDeleted || false,
