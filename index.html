@@ -8960,7 +8960,7 @@ window.ssaUebernehmenMessung = async function(speed_kmh) {
   const pid = document.getElementById('ssaPlayerSel')?.value ||
               document.getElementById('spielerMessungPlayerId')?.value;
   const sitzungId = document.getElementById('spielerMessungSitzungId')?.value;
-  console.log('[SSA Übernehmen] typId=', typId, 'pid=', pid, 'sitzungId=', sitzungId, 'attempt=', attempt);
+  console.log('[SSA Übernehmen] speed_kmh=', speed_kmh, 'typId=', typId, 'pid=', pid, 'sitzungId=', sitzungId);
   if (!typId)     { alert('Kein Messungstyp gefunden (typId fehlt). Bitte Modal schließen und erneut öffnen.'); return; }
   if (!pid)       { alert('Bitte Spieler in der Versuche-Liste auswählen.'); return; }
   if (!sitzungId) { alert('Keine aktive Sitzung (Modal evtl. geschlossen). Bitte erneut öffnen.'); return; }
