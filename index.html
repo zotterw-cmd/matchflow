@@ -2323,21 +2323,60 @@ body.sa-mode .sa-var{display:inline}
             <label class="form-check-label fw-bold" for="messungstypUseForXp">XP vergeben</label>
           </div>
         </div>
-        <div class="mb-3 row g-2" id="xpConfigRow">
-          <div class="col-4">
-            <label class="form-label small fw-bold">Basis-XP</label>
-            <input type="number" id="messungstypXpBase" class="form-control form-control-sm" value="5" min="0">
-            <div class="form-text" style="font-size:.7rem">Immer vergeben</div>
+        <div id="xpConfigRow">
+          <!-- Übungs-XP -->
+          <div class="mb-2 row g-2 align-items-end">
+            <div class="col-4">
+              <label class="form-label small fw-bold">Übungs-XP</label>
+              <input type="number" id="messungstypXpExercise" class="form-control form-control-sm" value="5" min="0">
+              <div class="form-text" style="font-size:.7rem">Einmalig für diese Übung in der Sitzung</div>
+            </div>
           </div>
-          <div class="col-4">
-            <label class="form-label small fw-bold">Bestwert-Bonus</label>
-            <input type="number" id="messungstypXpBest" class="form-control form-control-sm" value="15" min="0">
-            <div class="form-text" style="font-size:.7rem">Neuer Persönlichkeitsrekord</div>
+          <!-- Startschwelle -->
+          <div class="mb-2 p-2 bg-light rounded">
+            <div class="small fw-bold mb-1 text-muted">Startwert-Meilenstein</div>
+            <div class="row g-2">
+              <div class="col-6">
+                <label class="form-label small">Ab Wert</label>
+                <input type="number" id="messungstypXpStartThreshold" class="form-control form-control-sm" placeholder="z.B. 50" min="0">
+                <div class="form-text" style="font-size:.7rem">Einheit wie beim Messungstyp</div>
+              </div>
+              <div class="col-6">
+                <label class="form-label small">Einmalig XP</label>
+                <input type="number" id="messungstypXpStartXp" class="form-control form-control-sm" placeholder="z.B. 50" min="0">
+                <div class="form-text" style="font-size:.7rem">Wenn Schwelle erstmals erreicht</div>
+              </div>
+            </div>
           </div>
-          <div class="col-4">
-            <label class="form-label small fw-bold">Konsistenz-Bonus</label>
-            <input type="number" id="messungstypXpConsistency" class="form-control form-control-sm" value="5" min="0">
-            <div class="form-text" style="font-size:.7rem">Konstante Leistung</div>
+          <!-- Steigerungs-XP -->
+          <div class="mb-2 p-2 bg-light rounded">
+            <div class="small fw-bold mb-1 text-muted">Steigerungs-XP</div>
+            <div class="row g-2">
+              <div class="col-6">
+                <label class="form-label small">Pro X Einheiten Verbesserung</label>
+                <input type="number" id="messungstypXpImprovUnit" class="form-control form-control-sm" value="1" min="0.01" step="0.01">
+              </div>
+              <div class="col-6">
+                <label class="form-label small">XP vergeben</label>
+                <input type="number" id="messungstypXpImprovXp" class="form-control form-control-sm" value="1" min="0">
+                <div class="form-text" style="font-size:.7rem">z.B. 1 Einheit = 1 XP</div>
+              </div>
+            </div>
+          </div>
+          <!-- Abzug bei Leistungsabfall -->
+          <div class="mb-2 p-2 bg-light rounded">
+            <div class="small fw-bold mb-1 text-muted">Abzug bei Leistungsabfall</div>
+            <div class="row g-2">
+              <div class="col-6">
+                <label class="form-label small">Nach X schlechten Versuchen</label>
+                <input type="number" id="messungstypXpDeclineAttempts" class="form-control form-control-sm" value="3" min="1">
+              </div>
+              <div class="col-6">
+                <label class="form-label small">XP abziehen</label>
+                <input type="number" id="messungstypXpDeclineXp" class="form-control form-control-sm" value="5" min="0">
+                <div class="form-text" style="font-size:.7rem">Trainer kann via Regain zurückgeben</div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="mb-3 row g-2">
@@ -9629,29 +9668,61 @@ function _formatRecordedAt(iso) {
          d.toLocaleTimeString('de-AT', { hour:'2-digit', minute:'2-digit' });
 }
 
-async function _calculateAndAddXP(playerId, typId, newValue, allValues) {
+async function _calculateAndAddXP(playerId, typId, newValue, allValues, sitzungId) {
   try {
     const typMap = window._aktTypMap || {};
     const typ    = typMap[typId];
     if (!typ?.use_for_xp) return;
-    const cfg    = typ.xp_config || {};
-    let xp       = cfg.base || 5;
-    const prevBest = allValues.length > 1 ? Math.max(...allValues.slice(0, -1).map(v => parseFloat(v.value) || 0)) : -Infinity;
-    if (parseFloat(newValue) >= prevBest && allValues.length > 1) xp += cfg.best_bonus || 15;
-    if (allValues.length >= 3) {
-      const nums = allValues.map(v => parseFloat(v.value) || 0);
-      if (_stdDev(nums) < 5) xp += cfg.consistency_bonus || 5;
+    const cfg  = typ.xp_config || {};
+    const nums = allValues.map(v => parseFloat(v.value) || 0);
+    const val  = parseFloat(newValue);
+    let xp = 0;
+    let log = [];
+
+    // 1. Übungs-XP: einmalig pro Typ in dieser Sitzung
+    if (allValues.length === 1) {
+      xp += cfg.exercise_xp || 5;
+      log.push(`+${cfg.exercise_xp || 5} Übungs-XP`);
     }
+
+    // 2. Startwert-Meilenstein: einmalig wenn Schwelle erstmals erreicht
+    if (cfg.start_threshold && cfg.start_xp) {
+      const prevVals = nums.slice(0, -1);
+      const prevMax = prevVals.length ? Math.max(...prevVals) : -Infinity;
+      if (val >= cfg.start_threshold && prevMax < cfg.start_threshold) {
+        xp += cfg.start_xp;
+        log.push(`+${cfg.start_xp} Meilenstein-XP (${cfg.start_threshold})`);
+      }
+    }
+
+    // 3. Steigerungs-XP: pro Einheit Verbesserung gegenüber bisherigem Bestwert
+    if (allValues.length > 1 && cfg.improvement_unit && cfg.improvement_xp) {
+      const prevBest = Math.max(...nums.slice(0, -1));
+      const delta = val - prevBest;
+      if (delta > 0) {
+        const earned = Math.floor(delta / cfg.improvement_unit) * cfg.improvement_xp;
+        if (earned > 0) { xp += earned; log.push(`+${earned} Steigerungs-XP`); }
+      }
+    }
+
+    // 4. Abzug bei Leistungsabfall (X schlechte Versuche in Folge)
+    if (cfg.decline_attempts && cfg.decline_xp && nums.length >= cfg.decline_attempts) {
+      const last = nums.slice(-cfg.decline_attempts);
+      const allDecline = last.every((v, i) => i === 0 || v < last[i - 1]);
+      if (allDecline) { xp -= cfg.decline_xp; log.push(`-${cfg.decline_xp} Abzug (Leistungsabfall)`); }
+    }
+
+    if (xp === 0) return;
+
     const { doc, updateDoc, getDoc } = window._firestoreAPI;
     const sk = (window.currentSeason || '2025/26').replace(/\//g, '-');
     const ref = doc(window._firestoreDB, 'player_seasons', `${playerId}_${sk}`);
     const snap = await getDoc(ref);
-    const curXp = snap.exists() ? (snap.data().xp || 0) : 0;
-    await updateDoc(ref, { xp: curXp + xp });
-    // Lokal aktualisieren
+    const curXp = Math.max(0, (snap.exists() ? (snap.data().xp || 0) : 0) + xp);
+    await updateDoc(ref, { xp: curXp });
     const sp = (window.spielerData || []).find(s => s.id === playerId);
-    if (sp) sp.xp = (sp.xp || 0) + xp;
-    console.log(`[XP] +${xp} XP für ${playerId} (Typ: ${typ.name})`);
+    if (sp) sp.xp = curXp;
+    console.log(`[XP] ${log.join(', ')} für ${playerId} (Typ: ${typ.name}) → Gesamt: ${curXp}`);
   } catch(e) { console.warn('[XP] Fehler:', e.message); }
 }
 
@@ -10031,9 +10102,13 @@ window.openMessungstypModal = async function(id) {
     document.getElementById('messungstypUnit').value  = t.unit || '';
     document.getElementById('messungstypSort').value  = t.sort_order || 1;
     document.getElementById('messungstypVideoAnalyse').checked  = t.video_analyse === true;
-    document.getElementById('messungstypXpBase').value          = t.xp_config?.base        ?? 5;
-    document.getElementById('messungstypXpBest').value          = t.xp_config?.best_bonus  ?? 15;
-    document.getElementById('messungstypXpConsistency').value   = t.xp_config?.consistency_bonus ?? 5;
+    document.getElementById('messungstypXpExercise').value        = t.xp_config?.exercise_xp        ?? 5;
+    document.getElementById('messungstypXpStartThreshold').value  = t.xp_config?.start_threshold   ?? '';
+    document.getElementById('messungstypXpStartXp').value         = t.xp_config?.start_xp          ?? '';
+    document.getElementById('messungstypXpImprovUnit').value      = t.xp_config?.improvement_unit  ?? 1;
+    document.getElementById('messungstypXpImprovXp').value        = t.xp_config?.improvement_xp    ?? 1;
+    document.getElementById('messungstypXpDeclineAttempts').value = t.xp_config?.decline_attempts  ?? 3;
+    document.getElementById('messungstypXpDeclineXp').value       = t.xp_config?.decline_xp        ?? 5;
     const mode = t.system_mode || 'performance';
     document.querySelector(`input[name="messungstypSystemMode"][value="${mode}"]`).checked = true;
     document.getElementById('messungstypUseForScore').checked = t.use_for_score !== false;
@@ -10049,9 +10124,13 @@ window.openMessungstypModal = async function(id) {
     document.getElementById('messungstypUnit').value  = '';
     document.getElementById('messungstypSort').value  = '1';
     document.getElementById('messungstypVideoAnalyse').checked  = false;
-    document.getElementById('messungstypXpBase').value          = '5';
-    document.getElementById('messungstypXpBest').value          = '15';
-    document.getElementById('messungstypXpConsistency').value   = '5';
+    document.getElementById('messungstypXpExercise').value        = '5';
+    document.getElementById('messungstypXpStartThreshold').value  = '';
+    document.getElementById('messungstypXpStartXp').value         = '';
+    document.getElementById('messungstypXpImprovUnit').value      = '1';
+    document.getElementById('messungstypXpImprovXp').value        = '1';
+    document.getElementById('messungstypXpDeclineAttempts').value = '3';
+    document.getElementById('messungstypXpDeclineXp').value       = '5';
     document.querySelector('input[name="messungstypSystemMode"][value="performance"]').checked = true;
     document.getElementById('messungstypUseForScore').checked = true;
     document.getElementById('messungstypUseForXp').checked    = true;
@@ -10068,10 +10147,15 @@ window.messungstypSpeichern = async function() {
   const calcId    = document.getElementById('messungstypCalcId').value;
   const sort         = parseInt(document.getElementById('messungstypSort').value) || 1;
   const videoAnalyse = document.getElementById('messungstypVideoAnalyse').checked;
-  const xpBase       = parseInt(document.getElementById('messungstypXpBase').value) || 5;
-  const xpBest       = parseInt(document.getElementById('messungstypXpBest').value) || 15;
-  const xpConsist    = parseInt(document.getElementById('messungstypXpConsistency').value) || 5;
-  const xpConfig     = { base: xpBase, best_bonus: xpBest, consistency_bonus: xpConsist };
+  const xpConfig = {
+    exercise_xp:       parseInt(document.getElementById('messungstypXpExercise').value)        || 5,
+    start_threshold:   parseFloat(document.getElementById('messungstypXpStartThreshold').value) || null,
+    start_xp:          parseInt(document.getElementById('messungstypXpStartXp').value)          || null,
+    improvement_unit:  parseFloat(document.getElementById('messungstypXpImprovUnit').value)     || 1,
+    improvement_xp:    parseInt(document.getElementById('messungstypXpImprovXp').value)         || 1,
+    decline_attempts:  parseInt(document.getElementById('messungstypXpDeclineAttempts').value)  || 3,
+    decline_xp:        parseInt(document.getElementById('messungstypXpDeclineXp').value)        || 5,
+  };
   const systemMode   = document.querySelector('input[name="messungstypSystemMode"]:checked')?.value || 'performance';
   const useForScore  = document.getElementById('messungstypUseForScore').checked;
   const useForXp     = document.getElementById('messungstypUseForXp').checked;
