@@ -1999,6 +1999,25 @@ body.sa-mode .sa-var{display:inline}
           </div>
         </div>
         <div class="mb-3">
+          <label class="form-label fw-bold">Skill-Key (Spielertabelle)</label>
+          <select id="skillKatKey" class="form-select">
+            <option value="">— kein Mapping —</option>
+            <option value="shoot">shoot → SHT (Schuss)</option>
+            <option value="speed">speed → SPD (Sprint)</option>
+            <option value="attack">attack → ATK (Angriff)</option>
+            <option value="bonus">bonus → BON (Bonus)</option>
+            <option value="skill">skill → SKL (Skill)</option>
+            <option value="pass">pass → PAS (Pass)</option>
+            <option value="jump">jump → JMP (Sprung)</option>
+          </select>
+          <div class="form-text">Welche Spalte in der Spielertabelle soll dieser Wert aktualisieren?</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Max-Wert (= 100 Punkte)</label>
+          <input type="number" id="skillKatMax" class="form-control" value="100" min="1" placeholder="z.B. 130 für km/h, 10 für Sekunden">
+          <div class="form-text">Messwert bei dem 100 Punkte erreicht werden. Wird für die Normalisierung in die Spielertabelle verwendet.</div>
+        </div>
+        <div class="mb-3">
           <label class="form-label fw-bold">Sortierung</label>
           <input type="number" id="skillKatSort" class="form-control" value="1" min="1">
         </div>
@@ -8525,10 +8544,12 @@ window.renderSkillKatView = async function() {
       return;
     }
     el.innerHTML = `<table class="table table-sm align-middle mb-0">
-      <thead class="table-dark"><tr><th>Name</th><th>Farbe</th><th>Sortierung</th><th>Status</th><th></th></tr></thead>
+      <thead class="table-dark"><tr><th>Name</th><th>Farbe</th><th>Skill-Key</th><th>Max-Wert</th><th>Sort</th><th>Status</th><th></th></tr></thead>
       <tbody>${kats.map(k => `<tr style="${!k.active ? 'opacity:.5' : ''}">
         <td><strong>${k.name}</strong></td>
-        <td><span style="display:inline-block;width:24px;height:24px;border-radius:4px;background:${k.color || '#0d6efd'};border:1px solid rgba(0,0,0,.15)" title="${k.color || '#0d6efd'}"></span></td>
+        <td><span style="display:inline-block;width:24px;height:24px;border-radius:4px;background:${k.color || '#0d6efd'};border:1px solid rgba(0,0,0,.15)"></span></td>
+        <td>${k.skill_key ? `<code>${k.skill_key}</code>` : '<span class="text-muted small">–</span>'}</td>
+        <td>${k.max_value || 100}</td>
         <td>${k.sort_order || 1}</td>
         <td><span class="badge ${k.active ? 'bg-success' : 'bg-secondary'}">${k.active ? 'Aktiv' : 'Inaktiv'}</span></td>
         <td><div class="d-flex gap-1">
@@ -8556,21 +8577,27 @@ window.openSkillKatModal = async function(id) {
     document.getElementById('skillKatId').value    = id;
     document.getElementById('skillKatName').value   = k.name || '';
     document.getElementById('skillKatColor').value  = k.color || '#0d6efd';
+    document.getElementById('skillKatKey').value    = k.skill_key || '';
+    document.getElementById('skillKatMax').value    = k.max_value || 100;
     document.getElementById('skillKatSort').value   = k.sort_order || 1;
   } else {
     titleEl.innerHTML = '<i class="bi bi-tags me-2"></i>Neue Skill-Kategorie';
     document.getElementById('skillKatId').value    = '';
     document.getElementById('skillKatName').value  = '';
     document.getElementById('skillKatColor').value = '#0d6efd';
+    document.getElementById('skillKatKey').value   = '';
+    document.getElementById('skillKatMax').value   = '100';
     document.getElementById('skillKatSort').value  = '1';
   }
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSkillKat')).show();
 };
 
 window.skillKatSpeichern = async function() {
-  const name  = document.getElementById('skillKatName').value.trim().toUpperCase();
-  const color = document.getElementById('skillKatColor').value || '#0d6efd';
-  const err   = document.getElementById('skillKatError');
+  const name      = document.getElementById('skillKatName').value.trim().toUpperCase();
+  const color     = document.getElementById('skillKatColor').value || '#0d6efd';
+  const skill_key = document.getElementById('skillKatKey').value || '';
+  const max_value = parseFloat(document.getElementById('skillKatMax').value) || 100;
+  const err       = document.getElementById('skillKatError');
   err.classList.add('d-none');
   if (!name) { err.classList.remove('d-none'); err.textContent = 'Name ist erforderlich.'; return; }
   const sort = parseInt(document.getElementById('skillKatSort').value) || 1;
@@ -8580,10 +8607,10 @@ window.skillKatSpeichern = async function() {
   try {
     if (existingId) {
       await setDoc(doc(window._firestoreDB, 'skill_categories', existingId),
-        { name, color, sort_order: sort, tenant_id: tid }, { merge: true });
+        { name, color, sort_order: sort, skill_key, max_value, tenant_id: tid }, { merge: true });
     } else {
       await addDoc(collection(window._firestoreDB, 'skill_categories'), {
-        name, color, sort_order: sort, active: true,
+        name, color, sort_order: sort, skill_key, max_value, active: true,
         tenant_id: tid, created_at: serverTimestamp(),
         created_by: window.currentUserDoc?.uid || '',
       });
@@ -9238,15 +9265,16 @@ window._recalcSkillBase = async function(playerId) {
       const calc = calcMap[typ.calc_method_id];
       const agg  = calc?.aggregation || typ.calc_method || 'best';
       const kat  = katMap[typ.skill_category_id];
-      if (!kat) continue;
-      const key  = kat.name.toLowerCase();
-      let score;
-      if      (agg === 'min')  score = Math.min(...vals);
-      else if (agg === 'avg')  score = vals.reduce((a, b) => a + b, 0) / vals.length;
-      else if (agg === 'last') score = vals[vals.length - 1];
-      else                     score = Math.max(...vals); // best
-      // Gewichtung (0-100) → auf 0-100 skillBase-Skala normalisieren (gesonderte Logik später)
-      skillBaseUpdate[key] = parseFloat(score.toFixed(2));
+      if (!kat || !kat.skill_key) continue; // kein Mapping → überspringen
+      const key  = kat.skill_key;
+      let raw;
+      if      (agg === 'min')  raw = Math.min(...vals);
+      else if (agg === 'avg')  raw = vals.reduce((a, b) => a + b, 0) / vals.length;
+      else if (agg === 'last') raw = vals[vals.length - 1];
+      else                     raw = Math.max(...vals); // best
+      const maxVal = kat.max_value || 100;
+      const score  = Math.min(100, Math.round((raw / maxVal) * 100));
+      skillBaseUpdate[key] = score;
     }
     if (!Object.keys(skillBaseUpdate).length) return;
 
@@ -9260,11 +9288,14 @@ window._recalcSkillBase = async function(playerId) {
     const { updateDoc } = window._firestoreAPI;
     await updateDoc(seasonRef, skillBaseWrapped);
 
-    // 6. Lokales spielerData aktualisieren
+    // 6. Lokales spielerData aktualisieren + Tabelle refreshen
     const sp = (window.spielerData || []).find(s => s.id === playerId);
     if (sp) {
       sp.skillBase = sp.skillBase || {};
       Object.assign(sp.skillBase, skillBaseUpdate);
+      if (document.getElementById('viewSpieler')?.style.display !== 'none') {
+        renderSpielerSimple?.();
+      }
     }
   } catch(e) {
     console.warn('skillBase Rückschreiben fehlgeschlagen:', e.message);
