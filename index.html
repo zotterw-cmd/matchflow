@@ -8920,8 +8920,10 @@ window.ssaUebernehmenMessung = async function(idx) {
   const attempt = ssaAttempts[idx];
   const ctx     = window._ssaMeasurementMode;
   if (!attempt || !ctx?.typId) return;
-  const { typId, playerId } = ctx;
-  const pid       = playerId || document.getElementById('spielerMessungPlayerId')?.value;
+  const { typId } = ctx;
+  // Spieler: zuerst aus SSA-Dropdown, dann aus Modal-Hidden-Field
+  const pid = document.getElementById('ssaPlayerSel')?.value ||
+              document.getElementById('spielerMessungPlayerId')?.value;
   const sitzungId = document.getElementById('spielerMessungSitzungId')?.value;
   if (!pid || !sitzungId) { alert('Kein aktiver Spieler/Sitzung.'); return; }
   // Video optional hochladen
@@ -9321,7 +9323,7 @@ window.openSpielerMessung = function(playerId, sitzungId) {
 };
 
 // Hilfsfunktion: Firestore-Dokument für (playerId, typId) holen oder anlegen
-async function _getOrCreateMeasDoc(playerId, typId, sitzungId) {
+window._getOrCreateMeasDoc = async function _getOrCreateMeasDoc(playerId, typId, sitzungId) {
   const { collection, doc, addDoc, serverTimestamp } = window._firestoreAPI;
   const tid = window._currentTenantId;
   const messMap = window._aktMessMap || {};
@@ -9337,7 +9339,7 @@ async function _getOrCreateMeasDoc(playerId, typId, sitzungId) {
   return messMap[playerId][typId];
 }
 
-function _refreshMessTypBlock(typId, vals, unit) {
+window._refreshMessTypBlock = function _refreshMessTypBlock(typId, vals, unit) {
   const playerId = document.getElementById('spielerMessungPlayerId').value;
   const typMap   = window._aktTypMap || {};
   const t        = typMap[typId];
@@ -9365,17 +9367,22 @@ window.messWertHinzufuegen = async function(typId) {
   const neuEl     = document.getElementById('messWertNeu_' + typId);
   const val       = neuEl?.value.trim();
   if (!val) return;
-  const videoUrl  = document.getElementById('messVideo_' + typId)?.value || '';
-  const entry     = await _getOrCreateMeasDoc(playerId, typId, sitzungId);
-  const newValues = [...(entry.values || []), { value: parseFloat(val), recorded_at: new Date().toISOString(), ...(videoUrl ? { video_url: videoUrl } : {}) }];
-  const { doc, updateDoc } = window._firestoreAPI;
-  await updateDoc(doc(window._firestoreDB, 'measurements', entry.id), { values: newValues });
-  entry.values = newValues;
-  const typMap = window._aktTypMap || {};
-  _refreshMessTypBlock(typId, newValues, typMap[typId]?.unit || '');
-  document.getElementById('messVideo_' + typId).value = '';
-  document.getElementById('messVideoStatus_' + typId).innerHTML = '';
-  _recalcSkillBase(playerId);
+  const statusEl = document.getElementById('messVideoStatus_' + typId);
+  try {
+    const videoUrl  = document.getElementById('messVideo_' + typId)?.value || '';
+    const entry     = await window._getOrCreateMeasDoc(playerId, typId, sitzungId);
+    const newValues = [...(entry.values || []), { value: parseFloat(val), recorded_at: new Date().toISOString(), ...(videoUrl ? { video_url: videoUrl } : {}) }];
+    const { doc, updateDoc } = window._firestoreAPI;
+    await updateDoc(doc(window._firestoreDB, 'measurements', entry.id), { values: newValues });
+    entry.values = newValues;
+    const typMap = window._aktTypMap || {};
+    window._refreshMessTypBlock(typId, newValues, typMap[typId]?.unit || '');
+    document.getElementById('messVideo_' + typId).value = '';
+    if (statusEl) statusEl.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i>Gespeichert';
+    _recalcSkillBase(playerId);
+  } catch(e) {
+    if (statusEl) statusEl.innerHTML = `<span class="text-danger">Fehler: ${e.message}</span>`;
+  }
 };
 
 window.messWertSpeichern = async function(typId, idx) {
