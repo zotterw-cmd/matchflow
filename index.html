@@ -2024,7 +2024,7 @@ body.sa-mode .sa-var{display:inline}
             <option value="bonus">bonus → BON (Bonus)</option>
             <option value="skill">skill → SKL (Skill)</option>
             <option value="pass">pass → PAS (Pass)</option>
-            <option value="jump">jump → JMP (Sprung)</option>
+            <option value="def">def → DEF (Defence)</option>
           </select>
           <div class="form-text">Welche Spalte in der Spielertabelle soll dieser Wert aktualisieren?</div>
         </div>
@@ -2773,7 +2773,7 @@ body.sa-mode .sa-var{display:inline}
           <div class="col-6"><label class="form-label fw-bold mb-1">SHOOT</label><input type="number" id="sw_shoot" class="form-control" min="0" max="100" value="50"></div>
           <div class="col-6"><label class="form-label fw-bold mb-1">SKILL</label><input type="number" id="sw_skill" class="form-control" min="0" max="100" value="50"></div>
           <div class="col-6"><label class="form-label fw-bold mb-1">PASS</label><input type="number" id="sw_pass" class="form-control" min="0" max="100" value="50"></div>
-          <div class="col-12"><label class="form-label fw-bold mb-1">JUMP</label><input type="number" id="sw_jump" class="form-control" min="0" max="100" value="50"></div>
+          <div class="col-12"><label class="form-label fw-bold mb-1">DEF</label><input type="number" id="sw_def" class="form-control" min="0" max="100" value="50"></div>
         </div>
       </div>
       <div class="modal-footer">
@@ -5384,7 +5384,7 @@ function _buildSpielerRow(s) {
     <td data-order="${s.geb || ''}">${s.geb ? new Date(s.geb+'T12:00').toLocaleDateString('de-AT') : '—'}</td>
     <td><span class="badge bg-dark">${s.team}</span></td>
     <td><strong>${slv}</strong></td>
-    ${skillCell('speed')}${skillCell('attack')}${skillCell('bonus')}${skillCell('shoot')}${skillCell('skill')}${skillCell('pass')}${skillCell('jump')}
+    ${skillCell('speed')}${skillCell('attack')}${skillCell('bonus')}${skillCell('shoot')}${skillCell('skill')}${skillCell('pass')}${skillCell('def')}
     <td><span class="badge ${nAnzahl>0?'bg-success':'bg-light text-dark border'}">${nAnzahl} Notiz${nAnzahl!==1?'en':''}</span></td>
     <td>${aktionen}</td>`;
   return tr;
@@ -5677,12 +5677,12 @@ window.notizHardDelete = function(sid, nid) {
 // SPIELER-SKILL-SYSTEM
 // Drei Quellen: Basis (Trainer), Messungen (Camp/Test), Spiel-Bonus
 // ══════════════════════════════════════════════════════════════
-const SKILL_TYPES = ['speed','attack','bonus','shoot','skill','pass','jump'];
-const SKILL_LABELS = { speed:'SPEED', attack:'ATTACK', bonus:'BONUS', shoot:'SHOOT', skill:'SKILL', pass:'PASS', jump:'JUMP' };
+const SKILL_TYPES = ['speed','attack','bonus','shoot','skill','pass','def'];
+const SKILL_LABELS = { speed:'SPEED', attack:'ATTACK', bonus:'BONUS', shoot:'SHOOT', skill:'SKILL', pass:'PASS', def:'DEF' };
 
 function _gameBonus(playerId) {
   // Returns per-type game bonus derived from all training game events
-  const bonus = { speed:0, attack:0, bonus:0, shoot:0, skill:0, pass:0, jump:0 };
+  const bonus = { speed:0, attack:0, bonus:0, shoot:0, skill:0, pass:0, def:0 };
   (trainingsListe || []).forEach(t => {
     (t.gameEvents || []).forEach(e => {
       if (e.type === 'tor') {
@@ -5754,13 +5754,13 @@ function buildKarte(s) {
     const color = val >= 70 ? '#27ae60' : val >= 45 ? '#d4ac0d' : '#c0392b';
     return `<div class="ma-skill-row"><span class="ma-skill-label">${SKILL_LABELS[t]}</span><div class="ma-skill-bar-wrap"><div class="ma-skill-bar" style="width:${val}%;background:${color}"></div></div><span class="ma-skill-val">${val}</span></div>`;
   }).join('');
-  const jumpVal = playerScore(s, 'jump');
+  const defVal = playerScore(s, 'def');
   return `<div class="ma-card">
     <div class="ma-card-header"><div class="ma-name-col">${s.nachname.toUpperCase()}</div><div class="ma-photo-wrap">${foto}</div><div class="ma-slv-badge">${slv}</div><div class="ma-pos-badge">${s.pos}</div></div>
     <div style="padding:3px 7px 2px;background:rgba(0,0,0,.5)"><span style="font-size:.62rem;font-weight:700;color:#c0392b;letter-spacing:1px;text-transform:uppercase">${s.vorname} ${s.nachname}</span></div>
     <div class="ma-skills">${bars}</div>
     <div class="ma-footer">
-      <div class="ma-footer-stat"><div class="label">JUMP</div><div class="value" style="font-size:.85rem">${jumpVal}</div></div>
+      <div class="ma-footer-stat"><div class="label">DEF</div><div class="value" style="font-size:.85rem">${defVal}</div></div>
       <div class="ma-team-badge" style="font-size:.65rem">${s.team}</div>
       <div class="ma-footer-stat"><div class="label">SLV</div><div class="value">${slv}</div></div>
     </div>
@@ -6238,7 +6238,7 @@ function campScore(type, values) {
     case 'shoot':  raw = Math.max(...vals); return Math.round(Math.max(0, Math.min(100, (raw - 30) / (130 - 30) * 100)));
     case 'skill':  raw = Math.min(...vals); return Math.round(Math.max(0, Math.min(100, (10   - raw) / (10 - 3.5)    * 100)));
     case 'pass':   raw = Math.max(...vals); return Math.round(Math.max(0, Math.min(100,  raw / 20 * 100)));
-    case 'jump':   raw = Math.max(...vals); return Math.round(Math.max(0, Math.min(100, (raw - 1.0) / (2.5 - 1.0)   * 100)));
+    case 'def':    raw = Math.max(...vals); return Math.round(Math.max(0, Math.min(100, (raw - 1.0) / (2.5 - 1.0)   * 100)));
     default: return 0;
   }
 }
