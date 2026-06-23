@@ -1583,6 +1583,18 @@ body.sa-mode .sa-var{display:inline}
                 </div>
               </div>
             </div>
+
+            <hr class="my-2">
+            <div class="fw-bold small mb-1"><i class="bi bi-person-walking me-1 text-primary"></i>Parcour / Dribbling-Messung</div>
+            <div class="alert alert-success py-1 px-2 mb-1" style="font-size:.75rem">
+              <strong>🥇 Beste Position:</strong> Kamera <strong>seitlich zur Laufrichtung</strong>, sodass der gesamte Parcour im Bild sichtbar ist. Marker setzen: Startpunkt (Ballkontakt) → Endpunkt (Tor/Linie).
+            </div>
+            <div class="alert alert-warning py-1 px-2 mb-1" style="font-size:.75rem">
+              <strong>💡 Tipp:</strong> Kamera auf Stativ stellen und <strong>nicht schwenken</strong> — nur fixe Kameraposition liefert genaue Zeitmessungen.
+            </div>
+            <div class="alert alert-info py-1 px-2 mb-0" style="font-size:.75rem">
+              <strong>📏 Distanz:</strong> Parcour-Länge in Metern abmessen und im Distanzfeld eingeben (z.B. 20m für einen Standardparcour mit Torabschluss).
+            </div>
           </div>
         </div><!-- /visual guide -->
 
@@ -2228,6 +2240,15 @@ body.sa-mode .sa-var{display:inline}
         <div class="mb-3">
           <label class="form-label fw-bold">Sortierung</label>
           <input type="number" id="messungstypSort" class="form-control" value="1" min="1">
+        </div>
+        <div class="mb-3">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="messungstypVideoAnalyse">
+            <label class="form-check-label fw-bold" for="messungstypVideoAnalyse">
+              <i class="bi bi-camera-video me-1 text-danger"></i>Video-Analyse aktivieren
+            </label>
+          </div>
+          <div class="form-text">Wenn aktiviert, erscheint ein "Video-Analyse"-Button beim Erfassen von Werten für diesen Typ.</div>
         </div>
       </div>
       <div class="modal-footer">
@@ -8911,7 +8932,7 @@ window.openMessungSSA = function(typId, playerId) {
     overlay.innerHTML = `
       <div class="bg-dark text-white d-flex align-items-center gap-3 px-3 py-2" style="position:sticky;top:0;z-index:2">
         <button class="btn btn-outline-light btn-sm" onclick="_messungSSAClose()"><i class="bi bi-arrow-left me-1"></i>Zurück</button>
-        <span class="fw-bold"><i class="bi bi-speedometer2 me-2"></i>Schuss-Analyse</span>
+        <span class="fw-bold"><i class="bi bi-camera-video me-2"></i>Video-Analyse</span>
         <span class="badge bg-warning text-dark" id="_ssaMessLabel"></span>
         <span class="text-muted small ms-auto">Versuch berechnen → "Übernehmen" klicken</span>
       </div>
@@ -9323,7 +9344,7 @@ window.openSpielerMessung = function(playerId, sitzungId) {
     const t    = typMap[tid];
     if (!t) return '';
     const vals = messMap[playerId]?.[tid]?.values || [];
-    const isKmh = t.unit && t.unit.toLowerCase().replace(/\s/g,'') === 'km/h';
+    const hasVideo = t.video_analyse === true;
     const valRows = vals.map((v, i) => `
       <div class="d-flex gap-1 mb-1 align-items-center" id="messWertRow_${tid}_${i}">
         <input type="number" step="0.01" class="form-control form-control-sm" style="max-width:110px"
@@ -9344,17 +9365,11 @@ window.openSpielerMessung = function(playerId, sitzungId) {
         <input type="number" step="0.01" class="form-control form-control-sm" style="max-width:110px"
           id="messWertNeu_${tid}" placeholder="${t.unit}">
         <input type="hidden" id="messVideo_${tid}" value="">
-        ${isKmh
+        ${hasVideo
           ? `<button type="button" class="btn btn-danger btn-sm" onclick="openMessungSSA('${tid}', document.getElementById('spielerMessungPlayerId').value)">
-               <i class="bi bi-speedometer2 me-1"></i>Schuss-Analyse
+               <i class="bi bi-camera-video me-1"></i>Video-Analyse
              </button>`
-          : `<button type="button" class="btn btn-outline-secondary btn-sm" onclick="_startMessungKamera('${tid}')">
-               <i class="bi bi-camera-video me-1"></i>Kamera
-             </button>
-             <label class="btn btn-outline-secondary btn-sm mb-0" style="cursor:pointer">
-               <i class="bi bi-upload me-1"></i>Video
-               <input type="file" accept="video/*" class="d-none" onchange="_uploadMessungVideo(this,'${tid}')">
-             </label>`
+          : ''
         }
         <button class="btn btn-dark btn-sm" onclick="messWertHinzufuegen('${tid}')">
           <i class="bi bi-plus-lg me-1"></i>Hinzufügen
@@ -9388,7 +9403,7 @@ window._refreshMessTypBlock = function _refreshMessTypBlock(typId, vals, unit) {
   const playerId = document.getElementById('spielerMessungPlayerId').value;
   const typMap   = window._aktTypMap || {};
   const t        = typMap[typId];
-  const isKmh    = unit && unit.toLowerCase().replace(/\s/g,'') === 'km/h';
+  const hasVideo = t?.video_analyse === true;
   const valRows  = vals.map((v, i) => `
     <div class="d-flex gap-1 mb-1 align-items-center" id="messWertRow_${typId}_${i}">
       <input type="number" step="0.01" class="form-control form-control-sm" style="max-width:110px"
@@ -9715,6 +9730,7 @@ window.openMessungstypModal = async function(id) {
     selCalc.value = t.calc_method_id    || '';
     document.getElementById('messungstypUnit').value  = t.unit || '';
     document.getElementById('messungstypSort').value  = t.sort_order || 1;
+    document.getElementById('messungstypVideoAnalyse').checked = t.video_analyse === true;
   } else {
     titleEl.innerHTML = '<i class="bi bi-sliders me-2"></i>Neuer Messungstyp';
     document.getElementById('messungstypId').value    = '';
@@ -9723,6 +9739,7 @@ window.openMessungstypModal = async function(id) {
     selCalc.value = '';
     document.getElementById('messungstypUnit').value  = '';
     document.getElementById('messungstypSort').value  = '1';
+    document.getElementById('messungstypVideoAnalyse').checked = false;
   }
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalMessungstyp')).show();
 };
@@ -9732,8 +9749,9 @@ window.messungstypSpeichern = async function() {
   const katId     = document.getElementById('messungstypKatId').value;
   const unit      = document.getElementById('messungstypUnit').value.trim();
   const calcId    = document.getElementById('messungstypCalcId').value;
-  const sort      = parseInt(document.getElementById('messungstypSort').value) || 1;
-  const err       = document.getElementById('messungstypError');
+  const sort         = parseInt(document.getElementById('messungstypSort').value) || 1;
+  const videoAnalyse = document.getElementById('messungstypVideoAnalyse').checked;
+  const err          = document.getElementById('messungstypError');
   err.classList.add('d-none');
   if (!name)   { err.classList.remove('d-none'); err.textContent = 'Name ist erforderlich.'; return; }
   if (!katId)  { err.classList.remove('d-none'); err.textContent = 'Skill-Kategorie ist erforderlich.'; return; }
@@ -9745,12 +9763,12 @@ window.messungstypSpeichern = async function() {
   try {
     if (existingId) {
       await setDoc(doc(window._firestoreDB, 'measurement_types', existingId),
-        { name, skill_category_id: katId, unit, calc_method_id: calcId, sort_order: sort, tenant_id: tid },
+        { name, skill_category_id: katId, unit, calc_method_id: calcId, sort_order: sort, video_analyse: videoAnalyse, tenant_id: tid },
         { merge: true });
     } else {
       await addDoc(collection(window._firestoreDB, 'measurement_types'), {
         name, skill_category_id: katId, unit, calc_method_id: calcId,
-        sort_order: sort, active: true,
+        sort_order: sort, video_analyse: videoAnalyse, active: true,
         tenant_id: tid, created_at: serverTimestamp(),
         created_by: window.currentUserDoc?.uid || '',
       });
