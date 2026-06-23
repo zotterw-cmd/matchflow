@@ -8967,7 +8967,7 @@ window.ssaUebernehmenMessung = async function(speed_kmh) {
   // Video optional hochladen
   let videoUrl = '';
   const cfg = window.getMediaConfig?.() || {};
-  if (ssaCurrentFile && cfg.serverUrl) {
+  if (typeof ssaCurrentFile !== 'undefined' && ssaCurrentFile && cfg.serverUrl) {
     try {
       const fd = new FormData();
       fd.append('file', ssaCurrentFile);
