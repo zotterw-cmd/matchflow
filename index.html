@@ -8876,8 +8876,8 @@ window.spielerZuordnungSpeichern = async function() {
 // ── SSA-Integration für Leistungsmessungen ──────────────────────────────────
 window._ssaMeasurementMode = null; // { typId } wenn aus Leistungsmessungen geöffnet
 
-window.openMessungSSA = function(typId) {
-  window._ssaMeasurementMode = { typId };
+window.openMessungSSA = function(typId, playerId) {
+  window._ssaMeasurementMode = { typId, playerId: playerId || null };
   ssaAttempts = []; ssaRenderAttempts();
   // Fullscreen-Overlay anlegen falls nicht vorhanden
   let overlay = document.getElementById('_ssaMessOverlay');
@@ -9285,7 +9285,7 @@ window.openSpielerMessung = function(playerId, sitzungId) {
       <input type="hidden" id="messVideo_${tid}" value="${lastVideo}">
       <div class="d-flex gap-2 align-items-center flex-wrap">
         ${t.unit && t.unit.toLowerCase().replace(/\s/g,'') === 'km/h'
-          ? `<button type="button" class="btn btn-danger btn-sm" onclick="openMessungSSA('${tid}')">
+          ? `<button type="button" class="btn btn-danger btn-sm" onclick="openMessungSSA('${tid}', document.getElementById('spielerMessungPlayerId').value)">
                <i class="bi bi-speedometer2 me-1"></i>Schuss-Analyse
              </button>`
           : `<button type="button" class="btn btn-outline-secondary btn-sm" onclick="_startMessungKamera('${tid}')">
@@ -11278,6 +11278,16 @@ window.ssaSaveToPlayer = function() {
 window.ssaFillPlayerSel = function() {
   const sel = document.getElementById('ssaPlayerSel');
   if (!sel) return;
+  // Measurement-Mode: Sitzungsspieler verwenden
+  if (window._ssaMeasurementMode) {
+    const liste = (window._aktAlleSpieler || []).slice().sort((a,b) => (a.nachname||'').localeCompare(b.nachname||''));
+    let html = `<option value="">— Spieler auswählen (${liste.length}) —</option>`;
+    html += liste.map(s => `<option value="${s.id}">${s.nachname} ${s.vorname}</option>`).join('');
+    sel.innerHTML = html;
+    const preId = window._ssaMeasurementMode.playerId;
+    if (preId) sel.value = preId;
+    return;
+  }
   const mode = document.querySelector('input[name="ssaPlayerMode"]:checked')?.value || 'verein';
   if (mode === 'camp') {
     const camp = _aktCamp();
