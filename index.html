@@ -8953,9 +8953,11 @@ window._messungSSAClose = function() {
 };
 
 window.ssaUebernehmenMessung = async function(idx) {
+  console.log('[SSA Übernehmen] idx=', idx, 'attempt=', ssaAttempts[idx], '_ssaMeasurementMode=', window._ssaMeasurementMode);
   const attempt = ssaAttempts[idx];
   const ctx     = window._ssaMeasurementMode;
-  if (!attempt || !ctx?.typId) return;
+  if (!attempt) { alert('Kein Versuch gefunden (idx=' + idx + ')'); return; }
+  if (!ctx?.typId) { alert('_ssaMeasurementMode fehlt oder hat keine typId. Bitte Fenster schließen und erneut öffnen.'); return; }
   const { typId } = ctx;
   // Spieler: zuerst aus SSA-Dropdown, dann aus Modal-Hidden-Field
   const pid = document.getElementById('ssaPlayerSel')?.value ||
