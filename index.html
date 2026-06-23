@@ -1473,7 +1473,10 @@ body.sa-mode .sa-var{display:inline}
         <div class="card shadow-sm mb-3">
           <div class="card-header bg-dark text-white py-2 d-flex justify-content-between align-items-center">
             <span class="fw-bold"><i class="bi bi-list-ol me-2"></i>Versuche</span>
-            <button class="btn btn-outline-light btn-sm py-0" onclick="ssaAttempts=[];ssaRenderAttempts()">Reset</button>
+            <div class="d-flex gap-1">
+              <button id="ssaAlleUebernehmenBtn" class="btn btn-success btn-sm py-0 px-2 d-none" onclick="ssaAlleUebernehmen()"><i class="bi bi-check-all me-1"></i>Alle übernehmen</button>
+              <button class="btn btn-outline-light btn-sm py-0" onclick="ssaAttempts=[];ssaRenderAttempts()">Reset</button>
+            </div>
           </div>
           <div class="card-body p-2" id="ssaAttemptsList">
             <p class="text-muted small p-2 mb-0">Noch keine Versuche. Berechne deine erste Schussgeschwindigkeit!</p>
@@ -9069,6 +9072,35 @@ window.ssaUebernehmenMessung = async function(speed_kmh) {
   }
 };
 
+window.ssaAlleUebernehmen = async function() {
+  if (!ssaAttempts.length) return;
+  const ctx = window._ssaMeasurementMode;
+  const pid = document.getElementById('ssaPlayerSel')?.value ||
+              document.getElementById('spielerMessungPlayerId')?.value;
+  const sitzungId = document.getElementById('spielerMessungSitzungId')?.value;
+  if (!ctx?.typId) { alert('Kein Messungstyp.'); return; }
+  if (!pid)        { alert('Kein Spieler gewählt.'); return; }
+  if (!sitzungId)  { alert('Keine Sitzung.'); return; }
+  const { typId } = ctx;
+  try {
+    const entry = await window._getOrCreateMeasDoc(pid, typId, sitzungId);
+    const now   = new Date().toISOString();
+    const neueWerte = ssaAttempts.map(a => ({ value: a.speed_kmh, recorded_at: now }));
+    const newValues = [...(entry.values || []), ...neueWerte];
+    const { doc, updateDoc } = window._firestoreAPI;
+    await updateDoc(doc(window._firestoreDB, 'measurements', entry.id), { values: newValues });
+    entry.values = newValues;
+    const typMap = window._aktTypMap || {};
+    window._refreshMessTypBlock(typId, newValues, typMap[typId]?.unit || 'km/h');
+    const statusEl = document.getElementById('messVideoStatus_' + typId);
+    if (statusEl) statusEl.innerHTML = `<i class="bi bi-check-circle-fill text-success me-1"></i>${ssaAttempts.length} Werte gespeichert`;
+    _recalcSkillBase(pid);
+    _messungSSAClose();
+  } catch(e) {
+    alert('Fehler beim Speichern: ' + e.message);
+  }
+};
+
 window.messSSAHandleFile = function(input) {
   const file = input.files[0];
   if (!file) return;
@@ -11475,6 +11507,8 @@ window.ssaCalculate = function() {
 window.ssaRenderAttempts = function() {
   const el = document.getElementById('ssaAttemptsList');
   if (!el) return;
+  const alleBtn = document.getElementById('ssaAlleUebernehmenBtn');
+  if (alleBtn) alleBtn.classList.toggle('d-none', !window._ssaMeasurementMode || !ssaAttempts.length);
   if (!ssaAttempts.length) {
     el.innerHTML = '<p class="text-muted small p-2 mb-0">Noch keine Versuche.</p>'; return;
   }
