@@ -283,7 +283,7 @@ body.sa-mode .sa-var{display:inline}
   <div class="sb-header">
     <div class="sb-brand">
       <span style="font-size:1.3rem">⚽</span>
-      <span>MatchFlow <span class="logo-small">v1.7.5</span></span>
+      <span>MatchFlow <span class="logo-small">v1.7.6</span></span>
     </div>
     <button class="sb-close-btn" onclick="toggleSidebar()" title="Menü schließen">
       <i class="bi bi-x-lg" style="font-size:1rem"></i>
@@ -453,7 +453,7 @@ body.sa-mode .sa-var{display:inline}
   <!-- Implementierungsstand -->
   <div class="card shadow-sm p-3 mb-3" id="dashRoadmapCard">
     <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-      <h6 class="fw-bold mb-0"><i class="bi bi-kanban text-primary me-2"></i>Implementierungsstand MatchFlow <span class="badge bg-dark">v1.7.5</span></h6>
+      <h6 class="fw-bold mb-0"><i class="bi bi-kanban text-primary me-2"></i>Implementierungsstand MatchFlow <span class="badge bg-dark">v1.7.6</span></h6>
       <div class="d-flex gap-2">
         <button class="btn btn-outline-secondary btn-sm" onclick="document.querySelectorAll('.rm-collapse').forEach(el=>bootstrap.Collapse.getOrCreateInstance(el).show())">Alle ausklappen</button>
         <button class="btn btn-outline-secondary btn-sm" onclick="document.querySelectorAll('.rm-collapse').forEach(el=>bootstrap.Collapse.getOrCreateInstance(el).hide())">Alle einklappen</button>
@@ -541,15 +541,14 @@ body.sa-mode .sa-var{display:inline}
       </div>
     </div>
 
-    <!-- v1.7.5.1–9 (heute) -->
-    <div class="border rounded border-success mb-2">
+    <!-- v1.7.5.1–9 -->
+    <div class="border rounded mb-2">
       <button class="btn btn-link text-start w-100 fw-bold text-decoration-none d-flex justify-content-between align-items-center px-3 py-2"
         onclick="bootstrap.Collapse.getOrCreateInstance(document.getElementById('rm175x')).toggle()">
-        <span><i class="bi bi-stars text-warning me-2"></i>v1.7.5.1 – v1.7.5.9 &nbsp;<span class="fw-normal text-muted small">Foto-Upload, DataTable-Update, Notizen, Registrierung</span></span>
-        <span class="badge bg-success ms-2">Heute 22.06.2025</span>
+        <span><i class="bi bi-check-circle-fill text-success me-2"></i>v1.7.5.1 – v1.7.5.9 &nbsp;<span class="fw-normal text-muted small">Foto-Upload, DataTable-Update, Notizen, Registrierung</span></span>
         <i class="bi bi-chevron-down text-muted small"></i>
       </button>
-      <div class="collapse show rm-collapse" id="rm175x">
+      <div class="collapse rm-collapse" id="rm175x">
         <ul class="list-unstyled small mb-0 px-3 pb-2">
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.5.1</span> Foto-Upload: URL-Pfad in upload.php dynamisch (nicht mehr hardcoded), Fallback auf bestehendes Foto bei Fehler</li>
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.5.2</span> Spieler-Tabelle: DataTable per <code>clear()/row.add()/draw()</code> aktualisieren – Werte sofort sichtbar nach Save</li>
@@ -560,6 +559,34 @@ body.sa-mode .sa-var{display:inline}
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.5.7</span> Benutzerverwaltung: Tab "Registrierung" – Admin konfiguriert welche Rollen beim Registrieren wählbar sind (SuperAdmin ausgeschlossen)</li>
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.5.8</span> Benutzer bearbeiten: Zugewiesene Mannschaften dynamisch aus Mannschaftsliste (nicht mehr hardcoded)</li>
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.5.9</span> Dashboard: Implementierungsstand kollabierbar nach Hauptversionen (Baum-Ansicht)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- v1.7.6 – Leistungsmessungen & XP-System -->
+    <div class="border rounded border-success mb-2">
+      <button class="btn btn-link text-start w-100 fw-bold text-decoration-none d-flex justify-content-between align-items-center px-3 py-2"
+        onclick="bootstrap.Collapse.getOrCreateInstance(document.getElementById('rm176')).toggle()">
+        <span><i class="bi bi-stars text-warning me-2"></i>v1.7.6 &nbsp;<span class="fw-normal text-muted small">Leistungsmessungen, XP-System, Video-Analyse, Skill-Berechnung</span></span>
+        <span class="badge bg-success ms-2">23.06.2026</span>
+        <i class="bi bi-chevron-down text-muted small"></i>
+      </button>
+      <div class="collapse show rm-collapse" id="rm176">
+        <ul class="list-unstyled small mb-0 px-3 pb-2">
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.6</span> Leistungsmessungen: Skill-Kategorien, Messungstypen, Berechnungsmethoden (CRUD)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.6</span> Messsitzungen: anlegen, Spieler zuordnen, Werte erfassen pro Spieler &amp; Typ</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.6</span> Duales System: 🎮 Fun-Card (Daten ohne Wertung) vs. 📈 Performance (calcSkill, Scoring)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.6</span> calcSkill-Formel: Performance 60% + Konsistenz 25% + Fortschritt 15%, konfigurierbar je Typ</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.6</span> Aggregationsregeln: BEST / MIN / LAST / AVG / SUMME (in Berechnungsmethoden)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.6</span> Video-Analyse (SSA): Schussgeschwindigkeit per Kamera erfassen, direkt in Sitzung übernehmen</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.6</span> SSA: Alle Versuche auf einmal übernehmen ("Alle übernehmen")</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.6</span> Sitzung reaktivieren: geschlossene Sitzung wieder öffnen &amp; Werte nachträglich bearbeiten</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.6</span> XP-System: Basis-XP + Bestwert-Bonus + Konsistenz-Bonus je Messungstyp konfigurierbar</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.6</span> Teilnahme-XP: einmalige XP pro Spieler bei erster Werteingabe in einer Sitzung</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.6</span> XP-Anzeige in Spieler-Tab: Balken (x / 1000 XP + %)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.6</span> Quellen-Tracking je Messwert: <i class="bi bi-person-arms-up text-success"></i> Training · <i class="bi bi-house-heart-fill text-primary"></i> Zu Hause · <i class="bi bi-backpack-fill text-warning"></i> Camp · <i class="bi bi-slash-circle text-secondary"></i> Sonstiges</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.6</span> Zeitstempel je Messwert (Datum &amp; Uhrzeit der Erfassung)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.6</span> JUMP → DEF umbenannt (skill_key: def)</li>
         </ul>
       </div>
     </div>
