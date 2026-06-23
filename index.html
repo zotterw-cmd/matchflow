@@ -8807,7 +8807,9 @@ window.renderSitzungDetail = function(sitzung, typMap, messMap) {
                    : aggFn === 'avg' ? (nums.reduce((a,b)=>a+b,0)/nums.length)
                    : aggFn === 'last' ? nums[nums.length-1]
                    : Math.max(...nums);
-        display = `<strong>${parseFloat(val.toFixed(2))}</strong> <span class="text-muted">${t.unit}</span>`;
+        const hasVideo = vals.some(v => v.video_url);
+        const videoIcon = hasVideo ? ` <a href="${vals.find(v=>v.video_url)?.video_url}" target="_blank" title="Video ansehen"><i class="bi bi-play-circle-fill text-primary"></i></a>` : '';
+        display = `<strong>${parseFloat(val.toFixed(2))}</strong> <span class="text-muted">${t.unit}</span>${videoIcon}`;
       }
       return `<td class="text-center small">${display}</td>`;
     }).join('');
@@ -8862,6 +8864,103 @@ window.spielerZuordnungSpeichern = async function() {
     bootstrap.Modal.getInstance(document.getElementById('modalSpielerZuordnung')).hide();
     renderSitzungDetail(window._aktSitzung, window._aktTypMap, window._aktMessMap);
   } catch(e) { alert('Fehler: ' + e.message); }
+};
+
+window._uploadMessungVideo = async function(input, typId) {
+  const file = input.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById('messVideoStatus_' + typId);
+  statusEl.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Wird hochgeladen…';
+  const cfg = window.getMediaConfig?.() || {};
+  if (!cfg.serverUrl) { statusEl.innerHTML = '<span class="text-danger">Kein Media Server konfiguriert.</span>'; return; }
+  try {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('dir', 'measurements');
+    const r = await fetch(`${cfg.serverUrl}/upload.php`, { method: 'POST', body: fd });
+    const j = await r.json();
+    if (j.url) {
+      document.getElementById('messVideo_' + typId).value = j.url;
+      statusEl.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i>Video bereit';
+    } else {
+      statusEl.innerHTML = `<span class="text-danger">${j.error || 'Upload fehlgeschlagen'}</span>`;
+    }
+  } catch(e) {
+    statusEl.innerHTML = `<span class="text-danger">Fehler: ${e.message}</span>`;
+  }
+};
+
+window._startMessungKamera = async function(typId) {
+  const statusEl = document.getElementById('messVideoStatus_' + typId);
+  const cfg = window.getMediaConfig?.() || {};
+  if (!cfg.serverUrl) { statusEl.innerHTML = '<span class="text-danger">Kein Media Server konfiguriert.</span>'; return; }
+  try {
+    // Querformat anfordern
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, aspectRatio: { ideal: 16/9 } },
+      audio: false,
+    });
+    // Kamera-Modal dynamisch erstellen
+    let camModal = document.getElementById('_messungKamModal');
+    if (!camModal) {
+      camModal = document.createElement('div');
+      camModal.id = '_messungKamModal';
+      camModal.style.cssText = 'position:fixed;inset:0;background:#000;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px';
+      camModal.innerHTML = `
+        <video id="_messungKamVideo" autoplay playsinline muted style="max-width:100%;max-height:70vh;border-radius:8px"></video>
+        <div class="d-flex gap-3">
+          <button id="_messungKamRec" class="btn btn-danger btn-lg px-4"><i class="bi bi-record-circle me-1"></i>Aufnehmen</button>
+          <button id="_messungKamStop" class="btn btn-secondary btn-lg px-4 d-none"><i class="bi bi-stop-circle me-1"></i>Stop</button>
+          <button id="_messungKamAbort" class="btn btn-outline-light btn-lg px-4"><i class="bi bi-x-circle me-1"></i>Abbrechen</button>
+        </div>
+        <div id="_messungKamStatus" class="text-white small"></div>`;
+      document.body.appendChild(camModal);
+    }
+    camModal.style.display = 'flex';
+    const video = document.getElementById('_messungKamVideo');
+    video.srcObject = stream;
+    let recorder, chunks = [];
+    document.getElementById('_messungKamAbort').onclick = () => {
+      stream.getTracks().forEach(t => t.stop());
+      camModal.style.display = 'none';
+    };
+    document.getElementById('_messungKamRec').onclick = () => {
+      chunks = [];
+      recorder = new MediaRecorder(stream);
+      recorder.ondataavailable = e => chunks.push(e.data);
+      recorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        camModal.style.display = 'none';
+        const blob = new Blob(chunks, { type: 'video/mp4' });
+        const file = new File([blob], `messung_${typId}_${Date.now()}.mp4`, { type: 'video/mp4' });
+        statusEl.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Wird hochgeladen…';
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('dir', 'measurements');
+        try {
+          const r = await fetch(`${cfg.serverUrl}/upload.php`, { method: 'POST', body: fd });
+          const j = await r.json();
+          if (j.url) {
+            document.getElementById('messVideo_' + typId).value = j.url;
+            statusEl.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i>Video bereit';
+          } else {
+            statusEl.innerHTML = `<span class="text-danger">${j.error || 'Upload fehlgeschlagen'}</span>`;
+          }
+        } catch(e) { statusEl.innerHTML = `<span class="text-danger">Fehler: ${e.message}</span>`; }
+      };
+      recorder.start();
+      document.getElementById('_messungKamRec').classList.add('d-none');
+      document.getElementById('_messungKamStop').classList.remove('d-none');
+      document.getElementById('_messungKamStatus').textContent = '● Aufnahme läuft…';
+    };
+    document.getElementById('_messungKamStop').onclick = () => recorder?.stop();
+    // Querformat-Hinweis auf Mobilgeräten
+    if (screen.orientation && screen.orientation.lock) {
+      screen.orientation.lock('landscape').catch(() => {});
+    }
+  } catch(e) {
+    statusEl.innerHTML = `<span class="text-danger">Kamera nicht verfügbar: ${e.message}</span>`;
+  }
 };
 
 window._recalcSkillBase = async function(playerId) {
@@ -8960,10 +9059,22 @@ window.openSpielerMessung = function(playerId, sitzungId) {
     if (!t) return '';
     const vals = messMap[playerId]?.[tid]?.values || [];
     const last = vals.length ? vals[vals.length - 1].value : '';
-    return `<div class="mb-3">
-      <label class="form-label fw-bold">${t.name} <span class="text-muted small fw-normal">(${t.unit})</span></label>
-      <input type="number" step="0.01" class="form-control" id="messWert_${tid}" value="${last}" placeholder="${t.unit}">
-      ${vals.length > 1 ? `<div class="form-text">Bisherige Werte: ${vals.map(v=>v.value).join(', ')} ${t.unit}</div>` : ''}
+    const lastVideo = vals.length ? (vals[vals.length-1].video_url || '') : '';
+    return `<div class="mb-3 border rounded p-3">
+      <label class="form-label fw-bold mb-2">${t.name} <span class="text-muted small fw-normal">(${t.unit})</span></label>
+      <input type="number" step="0.01" class="form-control mb-2" id="messWert_${tid}" value="${last}" placeholder="${t.unit}">
+      <input type="hidden" id="messVideo_${tid}" value="${lastVideo}">
+      <div class="d-flex gap-2 align-items-center flex-wrap">
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="_startMessungKamera('${tid}')">
+          <i class="bi bi-camera-video me-1"></i>Kamera
+        </button>
+        <label class="btn btn-outline-secondary btn-sm mb-0" style="cursor:pointer">
+          <i class="bi bi-upload me-1"></i>Video hochladen
+          <input type="file" accept="video/*" class="d-none" onchange="_uploadMessungVideo(this,'${tid}')">
+        </label>
+        <span id="messVideoStatus_${tid}" class="text-muted small">${lastVideo ? '<i class="bi bi-check-circle-fill text-success me-1"></i>Video vorhanden' : ''}</span>
+      </div>
+      ${vals.length > 1 ? `<div class="form-text mt-1">Bisherige Werte: ${vals.map(v=>v.value).join(', ')} ${t.unit}</div>` : ''}
     </div>`;
   }).join('');
   document.getElementById('spielerMessungFelder').innerHTML = felder || '<p class="text-muted">Keine Messungstypen in dieser Sitzung.</p>';
@@ -8987,14 +9098,15 @@ window.spielerMessungSpeichern = async function() {
       if (!input) continue;
       const val = input.value.trim();
       if (val === '') continue;
+      const videoUrl = document.getElementById('messVideo_' + typId)?.value || '';
       const existingDoc = messMap[playerId]?.[typId];
       if (existingDoc) {
-        const newValues = [...(existingDoc.values || []), { value: parseFloat(val), recorded_at: now }];
+        const newValues = [...(existingDoc.values || []), { value: parseFloat(val), recorded_at: now, ...(videoUrl ? { video_url: videoUrl } : {}) }];
         await updateDoc(doc(window._firestoreDB, 'measurements', existingDoc.id), { values: newValues });
         if (!messMap[playerId]) messMap[playerId] = {};
         messMap[playerId][typId] = { id: existingDoc.id, values: newValues };
       } else {
-        const newValues = [{ value: parseFloat(val), recorded_at: now }];
+        const newValues = [{ value: parseFloat(val), recorded_at: now, ...(videoUrl ? { video_url: videoUrl } : {}) }];
         const ref = await addDoc(collection(window._firestoreDB, 'measurements'), {
           session_id: sitzungId, player_id: playerId,
           measurement_type_id: typId, values: newValues,
