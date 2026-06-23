@@ -9552,12 +9552,23 @@ window.openSpielerMessung = function(playerId, sitzungId) {
       <div class="d-flex gap-2 align-items-center flex-wrap mt-2 pt-2 border-top">
         <input type="number" step="0.01" class="form-control form-control-sm" style="max-width:110px"
           id="messWertNeu_${tid}" placeholder="${t.unit}">
-        <select class="form-select form-select-sm" style="max-width:150px" id="messWertSource_${tid}">
-          <option value="training">Training</option>
-          <option value="home">Zu Hause</option>
-          <option value="camp">Camp</option>
-          <option value="other">Sonstiges</option>
-        </select>
+        <input type="hidden" id="messWertSourceVal_${tid}" value="training">
+        <div class="dropdown">
+          <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" id="messWertSourceBtn_${tid}"
+            data-bs-toggle="dropdown" aria-expanded="false" style="white-space:nowrap">
+            <i class="bi bi-person-hearts text-success"></i> <span class="ms-1">Training</span>
+          </button>
+          <ul class="dropdown-menu" style="min-width:160px">
+            <li><a class="dropdown-item" href="#" onclick="event.preventDefault();window._setMessSource('${tid}','training')">
+              <i class="bi bi-person-hearts text-success me-2"></i>Training</a></li>
+            <li><a class="dropdown-item" href="#" onclick="event.preventDefault();window._setMessSource('${tid}','home')">
+              <i class="bi bi-house-heart-fill text-primary me-2"></i>Zu Hause</a></li>
+            <li><a class="dropdown-item" href="#" onclick="event.preventDefault();window._setMessSource('${tid}','camp')">
+              <i class="bi bi-backpack-fill text-warning me-2"></i>Camp</a></li>
+            <li><a class="dropdown-item" href="#" onclick="event.preventDefault();window._setMessSource('${tid}','other')">
+              <i class="bi bi-heart-pulse-fill text-danger me-2"></i>Sonstiges</a></li>
+          </ul>
+        </div>
         <input type="hidden" id="messVideo_${tid}" value="">
         ${hasVideo
           ? `<button type="button" class="btn btn-danger btn-sm" onclick="openMessungSSA('${tid}', document.getElementById('spielerMessungPlayerId').value)">
@@ -9596,9 +9607,20 @@ window._getOrCreateMeasDoc = async function _getOrCreateMeasDoc(playerId, typId,
 function _sourceIcon(source) {
   if (source === 'home')  return '<i class="bi bi-house-heart-fill text-primary" title="Zu Hause" style="font-size:.9rem"></i>';
   if (source === 'camp')  return '<i class="bi bi-backpack-fill text-warning" title="Camp" style="font-size:.9rem"></i>';
-  if (source === 'other') return '<i class="bi bi-slash-circle text-secondary" title="Sonstiges" style="font-size:.9rem"></i>';
-  return '<i class="bi bi-person-arms-up text-success" title="Training" style="font-size:.9rem"></i>';
+  if (source === 'other') return '<i class="bi bi-heart-pulse-fill text-danger" title="Sonstiges" style="font-size:.9rem"></i>';
+  return '<i class="bi bi-person-hearts text-success" title="Training" style="font-size:.9rem"></i>';
 }
+function _sourceLabel(source) {
+  if (source === 'home')  return 'Zu Hause';
+  if (source === 'camp')  return 'Camp';
+  if (source === 'other') return 'Sonstiges';
+  return 'Training';
+}
+window._setMessSource = function(typId, source) {
+  document.getElementById('messWertSourceVal_' + typId).value = source;
+  const btn = document.getElementById('messWertSourceBtn_' + typId);
+  if (btn) btn.innerHTML = _sourceIcon(source) + ' <span class="ms-1">' + _sourceLabel(source) + '</span> <i class="bi bi-chevron-down ms-1" style="font-size:.7rem"></i>';
+};
 
 function _formatRecordedAt(iso) {
   if (!iso) return '';
@@ -9688,7 +9710,7 @@ window.messWertHinzufuegen = async function(typId) {
   const neuEl     = document.getElementById('messWertNeu_' + typId);
   const val       = neuEl?.value.trim();
   if (!val) return;
-  const source    = document.getElementById('messWertSource_' + typId)?.value || 'training';
+  const source    = document.getElementById('messWertSourceVal_' + typId)?.value || 'training';
   const statusEl  = document.getElementById('messVideoStatus_' + typId);
   try {
     const videoUrl  = document.getElementById('messVideo_' + typId)?.value || '';
