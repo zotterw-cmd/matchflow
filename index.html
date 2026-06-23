@@ -8961,8 +8961,10 @@ window.ssaUebernehmenMessung = async function(idx) {
   const pid = document.getElementById('ssaPlayerSel')?.value ||
               document.getElementById('spielerMessungPlayerId')?.value;
   const sitzungId = document.getElementById('spielerMessungSitzungId')?.value;
-  if (!pid)       { alert('Bitte Spieler auswählen.'); return; }
-  if (!sitzungId) { alert('Keine aktive Sitzung gefunden.'); return; }
+  console.log('[SSA Übernehmen] typId=', typId, 'pid=', pid, 'sitzungId=', sitzungId, 'attempt=', attempt);
+  if (!typId)     { alert('Kein Messungstyp gefunden (typId fehlt). Bitte Modal schließen und erneut öffnen.'); return; }
+  if (!pid)       { alert('Bitte Spieler in der Versuche-Liste auswählen.'); return; }
+  if (!sitzungId) { alert('Keine aktive Sitzung (Modal evtl. geschlossen). Bitte erneut öffnen.'); return; }
   // Video optional hochladen
   let videoUrl = '';
   const cfg = window.getMediaConfig?.() || {};
@@ -11366,10 +11368,12 @@ window.ssaCalculate = function() {
     setTimeout(() => { gaugeBar.style.width = pct + '%'; }, 50);
   }
 
-  // Save-Buttons einblenden + Dropdown aktuell befüllen
-  document.getElementById('ssaSaveToCalcBtn').style.display  = 'inline-flex';
-  document.getElementById('ssaSaveToPlayerBtn').style.display = 'inline-flex';
-  document.getElementById('ssaPlayerSaveCard').style.display  = 'block';
+  // Save-Buttons nur im Camp-Modus einblenden
+  if (!window._ssaMeasurementMode) {
+    document.getElementById('ssaSaveToCalcBtn').style.display  = 'inline-flex';
+    document.getElementById('ssaSaveToPlayerBtn').style.display = 'inline-flex';
+    document.getElementById('ssaPlayerSaveCard').style.display  = 'block';
+  }
   ssaFillPlayerSel(); // Immer neu befüllen – Firestore-Daten könnten jetzt da sein
 
   // History
