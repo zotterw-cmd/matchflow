@@ -2124,8 +2124,7 @@ body.sa-mode .sa-var{display:inline}
         <div id="spielerMessungFelder"></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Abbrechen</button>
-        <button type="button" class="btn btn-dark btn-sm" onclick="spielerMessungSpeichern()"><i class="bi bi-save me-1"></i>Werte speichern</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" onclick="renderSitzungDetail(window._aktSitzung, window._aktTypMap, window._aktMessMap)">Schließen</button>
       </div>
     </div>
   </div>
@@ -8922,34 +8921,37 @@ window._messungSSAClose = function() {
 
 window.ssaUebernehmenMessung = async function(idx) {
   const attempt = ssaAttempts[idx];
-  const typId   = window._ssaMeasurementMode?.typId;
-  if (!attempt || !typId) return;
-  const wertInput = document.getElementById('messWert_' + typId);
-  if (wertInput) wertInput.value = attempt.speed_kmh;
-  // Video hochladen wenn vorhanden
+  const ctx     = window._ssaMeasurementMode;
+  if (!attempt || !ctx?.typId) return;
+  const { typId, playerId } = ctx;
+  const pid       = playerId || document.getElementById('spielerMessungPlayerId')?.value;
+  const sitzungId = document.getElementById('spielerMessungSitzungId')?.value;
+  if (!pid || !sitzungId) { alert('Kein aktiver Spieler/Sitzung.'); return; }
+  // Video optional hochladen
+  let videoUrl = '';
   const cfg = window.getMediaConfig?.() || {};
   if (ssaCurrentFile && cfg.serverUrl) {
-    const statusEl = document.getElementById('messVideoStatus_' + typId);
-    if (statusEl) statusEl.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Video wird hochgeladen…';
     try {
       const fd = new FormData();
       fd.append('file', ssaCurrentFile);
       fd.append('dir', 'measurements');
       const r = await fetch(`${cfg.serverUrl}/upload.php`, { method: 'POST', body: fd });
       const j = await r.json();
-      if (j.url) {
-        const vidHidden = document.getElementById('messVideo_' + typId);
-        if (vidHidden) vidHidden.value = j.url;
-        if (statusEl) statusEl.innerHTML = `<i class="bi bi-check-circle-fill text-success me-1"></i>${attempt.speed_kmh} km/h übernommen + Video hochgeladen`;
-      }
-    } catch(e) {
-      const statusEl = document.getElementById('messVideoStatus_' + typId);
-      if (statusEl) statusEl.innerHTML = `<i class="bi bi-check-circle-fill text-success me-1"></i>${attempt.speed_kmh} km/h übernommen`;
-    }
-  } else {
-    const statusEl = document.getElementById('messVideoStatus_' + typId);
-    if (statusEl) statusEl.innerHTML = `<i class="bi bi-check-circle-fill text-success me-1"></i>${attempt.speed_kmh} km/h übernommen`;
+      if (j.url) videoUrl = j.url;
+    } catch(e) { /* Video optional */ }
   }
+  // Direkt in Firestore speichern
+  const entry     = await _getOrCreateMeasDoc(pid, typId, sitzungId);
+  const newValues = [...(entry.values || []), { value: attempt.speed_kmh, recorded_at: new Date().toISOString(), ...(videoUrl ? { video_url: videoUrl } : {}) }];
+  const { doc, updateDoc } = window._firestoreAPI;
+  await updateDoc(doc(window._firestoreDB, 'measurements', entry.id), { values: newValues });
+  entry.values = newValues;
+  // Werteliste im Modal aktualisieren (ohne Modal zu schließen)
+  const typMap = window._aktTypMap || {};
+  _refreshMessTypBlock(typId, newValues, typMap[typId]?.unit || 'km/h');
+  const statusEl = document.getElementById('messVideoStatus_' + typId);
+  if (statusEl) statusEl.innerHTML = `<i class="bi bi-check-circle-fill text-success me-1"></i>${attempt.speed_kmh} km/h gespeichert`;
+  _recalcSkillBase(pid);
   _messungSSAClose();
 };
 
@@ -9277,14 +9279,28 @@ window.openSpielerMessung = function(playerId, sitzungId) {
     const t    = typMap[tid];
     if (!t) return '';
     const vals = messMap[playerId]?.[tid]?.values || [];
-    const last = vals.length ? vals[vals.length - 1].value : '';
-    const lastVideo = vals.length ? (vals[vals.length-1].video_url || '') : '';
-    return `<div class="mb-3 border rounded p-3">
-      <label class="form-label fw-bold mb-2">${t.name} <span class="text-muted small fw-normal">(${t.unit})</span></label>
-      <input type="number" step="0.01" class="form-control mb-2" id="messWert_${tid}" value="${last}" placeholder="${t.unit}">
-      <input type="hidden" id="messVideo_${tid}" value="${lastVideo}">
-      <div class="d-flex gap-2 align-items-center flex-wrap">
-        ${t.unit && t.unit.toLowerCase().replace(/\s/g,'') === 'km/h'
+    const isKmh = t.unit && t.unit.toLowerCase().replace(/\s/g,'') === 'km/h';
+    const valRows = vals.map((v, i) => `
+      <div class="d-flex gap-1 mb-1 align-items-center" id="messWertRow_${tid}_${i}">
+        <input type="number" step="0.01" class="form-control form-control-sm" style="max-width:110px"
+          id="messWertEdit_${tid}_${i}" value="${v.value}">
+        <span class="text-muted small">${t.unit}</span>
+        ${v.video_url ? `<a href="${v.video_url}" target="_blank" class="btn btn-outline-primary btn-sm py-0 px-1"><i class="bi bi-play-circle"></i></a>` : ''}
+        <button class="btn btn-outline-success btn-sm py-0 px-1 ms-auto" title="Speichern"
+          onclick="messWertSpeichern('${tid}',${i})"><i class="bi bi-check-lg"></i></button>
+        <button class="btn btn-outline-danger btn-sm py-0 px-1" title="Löschen"
+          onclick="messWertLoeschen('${tid}',${i})"><i class="bi bi-trash"></i></button>
+      </div>`).join('');
+    return `<div class="mb-3 border rounded p-3" id="messTypBlock_${tid}">
+      <div class="fw-bold mb-2">${t.name} <span class="text-muted small fw-normal">(${t.unit})</span>
+        <span class="badge bg-secondary ms-2" id="messWertCount_${tid}">${vals.length} Wert${vals.length!==1?'e':''}</span>
+      </div>
+      <div id="messWertListe_${tid}">${valRows || '<p class="text-muted small mb-2">Noch keine Werte.</p>'}</div>
+      <div class="d-flex gap-2 align-items-center flex-wrap mt-2 pt-2 border-top">
+        <input type="number" step="0.01" class="form-control form-control-sm" style="max-width:110px"
+          id="messWertNeu_${tid}" placeholder="${t.unit}">
+        <input type="hidden" id="messVideo_${tid}" value="">
+        ${isKmh
           ? `<button type="button" class="btn btn-danger btn-sm" onclick="openMessungSSA('${tid}', document.getElementById('spielerMessungPlayerId').value)">
                <i class="bi bi-speedometer2 me-1"></i>Schuss-Analyse
              </button>`
@@ -9292,17 +9308,103 @@ window.openSpielerMessung = function(playerId, sitzungId) {
                <i class="bi bi-camera-video me-1"></i>Kamera
              </button>
              <label class="btn btn-outline-secondary btn-sm mb-0" style="cursor:pointer">
-               <i class="bi bi-upload me-1"></i>Video hochladen
+               <i class="bi bi-upload me-1"></i>Video
                <input type="file" accept="video/*" class="d-none" onchange="_uploadMessungVideo(this,'${tid}')">
              </label>`
         }
-        <span id="messVideoStatus_${tid}" class="text-muted small">${lastVideo ? '<i class="bi bi-check-circle-fill text-success me-1"></i>Video vorhanden' : ''}</span>
+        <button class="btn btn-dark btn-sm" onclick="messWertHinzufuegen('${tid}')">
+          <i class="bi bi-plus-lg me-1"></i>Hinzufügen
+        </button>
+        <span id="messVideoStatus_${tid}" class="text-muted small"></span>
       </div>
-      ${vals.length > 1 ? `<div class="form-text mt-1">Bisherige Werte: ${vals.map(v=>v.value).join(', ')} ${t.unit}</div>` : ''}
     </div>`;
   }).join('');
   document.getElementById('spielerMessungFelder').innerHTML = felder || '<p class="text-muted">Keine Messungstypen in dieser Sitzung.</p>';
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSpielerMessung')).show();
+};
+
+// Hilfsfunktion: Firestore-Dokument für (playerId, typId) holen oder anlegen
+async function _getOrCreateMeasDoc(playerId, typId, sitzungId) {
+  const { collection, doc, addDoc, serverTimestamp } = window._firestoreAPI;
+  const tid = window._currentTenantId;
+  const messMap = window._aktMessMap || {};
+  if (messMap[playerId]?.[typId]) return messMap[playerId][typId];
+  // neu anlegen
+  const ref = await addDoc(collection(window._firestoreDB, 'measurements'), {
+    session_id: sitzungId, player_id: playerId,
+    measurement_type_id: typId, values: [],
+    tenant_id: tid, created_at: serverTimestamp(),
+  });
+  if (!messMap[playerId]) messMap[playerId] = {};
+  messMap[playerId][typId] = { id: ref.id, values: [] };
+  return messMap[playerId][typId];
+}
+
+function _refreshMessTypBlock(typId, vals, unit) {
+  const playerId = document.getElementById('spielerMessungPlayerId').value;
+  const typMap   = window._aktTypMap || {};
+  const t        = typMap[typId];
+  const isKmh    = unit && unit.toLowerCase().replace(/\s/g,'') === 'km/h';
+  const valRows  = vals.map((v, i) => `
+    <div class="d-flex gap-1 mb-1 align-items-center" id="messWertRow_${typId}_${i}">
+      <input type="number" step="0.01" class="form-control form-control-sm" style="max-width:110px"
+        id="messWertEdit_${typId}_${i}" value="${v.value}">
+      <span class="text-muted small">${unit}</span>
+      ${v.video_url ? `<a href="${v.video_url}" target="_blank" class="btn btn-outline-primary btn-sm py-0 px-1"><i class="bi bi-play-circle"></i></a>` : ''}
+      <button class="btn btn-outline-success btn-sm py-0 px-1 ms-auto" onclick="messWertSpeichern('${typId}',${i})"><i class="bi bi-check-lg"></i></button>
+      <button class="btn btn-outline-danger btn-sm py-0 px-1" onclick="messWertLoeschen('${typId}',${i})"><i class="bi bi-trash"></i></button>
+    </div>`).join('');
+  const listeEl = document.getElementById('messWertListe_' + typId);
+  if (listeEl) listeEl.innerHTML = valRows || '<p class="text-muted small mb-2">Noch keine Werte.</p>';
+  const countEl = document.getElementById('messWertCount_' + typId);
+  if (countEl) countEl.textContent = `${vals.length} Wert${vals.length!==1?'e':''}`;
+  const neuEl = document.getElementById('messWertNeu_' + typId);
+  if (neuEl) neuEl.value = '';
+}
+
+window.messWertHinzufuegen = async function(typId) {
+  const playerId  = document.getElementById('spielerMessungPlayerId').value;
+  const sitzungId = document.getElementById('spielerMessungSitzungId').value;
+  const neuEl     = document.getElementById('messWertNeu_' + typId);
+  const val       = neuEl?.value.trim();
+  if (!val) return;
+  const videoUrl  = document.getElementById('messVideo_' + typId)?.value || '';
+  const entry     = await _getOrCreateMeasDoc(playerId, typId, sitzungId);
+  const newValues = [...(entry.values || []), { value: parseFloat(val), recorded_at: new Date().toISOString(), ...(videoUrl ? { video_url: videoUrl } : {}) }];
+  const { doc, updateDoc } = window._firestoreAPI;
+  await updateDoc(doc(window._firestoreDB, 'measurements', entry.id), { values: newValues });
+  entry.values = newValues;
+  const typMap = window._aktTypMap || {};
+  _refreshMessTypBlock(typId, newValues, typMap[typId]?.unit || '');
+  document.getElementById('messVideo_' + typId).value = '';
+  document.getElementById('messVideoStatus_' + typId).innerHTML = '';
+  _recalcSkillBase(playerId);
+};
+
+window.messWertSpeichern = async function(typId, idx) {
+  const playerId = document.getElementById('spielerMessungPlayerId').value;
+  const val      = parseFloat(document.getElementById(`messWertEdit_${typId}_${idx}`)?.value);
+  if (isNaN(val)) return;
+  const entry = window._aktMessMap?.[playerId]?.[typId];
+  if (!entry) return;
+  entry.values[idx] = { ...entry.values[idx], value: val };
+  const { doc, updateDoc } = window._firestoreAPI;
+  await updateDoc(doc(window._firestoreDB, 'measurements', entry.id), { values: entry.values });
+  const typMap = window._aktTypMap || {};
+  _refreshMessTypBlock(typId, entry.values, typMap[typId]?.unit || '');
+  _recalcSkillBase(playerId);
+};
+
+window.messWertLoeschen = async function(typId, idx) {
+  const playerId = document.getElementById('spielerMessungPlayerId').value;
+  const entry    = window._aktMessMap?.[playerId]?.[typId];
+  if (!entry) return;
+  entry.values.splice(idx, 1);
+  const { doc, updateDoc } = window._firestoreAPI;
+  await updateDoc(doc(window._firestoreDB, 'measurements', entry.id), { values: entry.values });
+  const typMap = window._aktTypMap || {};
+  _refreshMessTypBlock(typId, entry.values, typMap[typId]?.unit || '');
+  _recalcSkillBase(playerId);
 };
 
 window.spielerMessungSpeichern = async function() {
