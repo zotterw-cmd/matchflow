@@ -2994,6 +2994,11 @@ body.sa-mode .sa-var{display:inline}
           <h6 class="fw-bold mb-3"><i class="bi bi-bar-chart-line-fill text-warning me-1"></i>Skills – Startwerte &amp; Messungen</h6>
           <div class="row g-2" id="spSkillRows"></div>
         </div>
+        <!-- XP -->
+        <div class="card p-3 mt-3" id="spXpCard" style="display:none">
+          <h6 class="fw-bold mb-2"><i class="bi bi-star-fill text-warning me-1"></i>XP – Erfahrungspunkte</h6>
+          <div id="spXpContent"></div>
+        </div>
         <div id="spError" class="alert alert-danger d-none mt-3"></div>
       </div>
       <div class="modal-footer">
@@ -5604,6 +5609,27 @@ window.openSpielerModalSimple = function(id) {
       <div style="font-size:.68rem;color:#aaa">${SKILL_DESCS[t]}</div>
     </div>`;
   }).join('');
+  // XP-Anzeige
+  const xpCard    = document.getElementById('spXpCard');
+  const xpContent = document.getElementById('spXpContent');
+  if (s) {
+    const xp  = s.xp || 0;
+    const max = 1000;
+    const pct = Math.min(100, Math.round(xp / max * 100));
+    const bar = pct >= 70 ? 'bg-success' : pct >= 40 ? 'bg-warning' : 'bg-danger';
+    xpContent.innerHTML = `
+      <div class="d-flex justify-content-between mb-1" style="font-size:.85rem">
+        <span class="fw-bold fs-5">${xp} <span class="text-muted fw-normal" style="font-size:.8rem">/ ${max} XP</span></span>
+        <span class="badge bg-secondary">${pct}%</span>
+      </div>
+      <div class="progress mb-2" style="height:10px">
+        <div class="progress-bar ${bar}" style="width:${pct}%" role="progressbar"></div>
+      </div>
+      <div class="text-muted" style="font-size:.75rem">XP werden durch Trainingsteilnahme, Messungen und Leistungssteigerungen gesammelt.</div>`;
+    xpCard.style.display = '';
+  } else {
+    xpCard.style.display = 'none';
+  }
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSpieler')).show();
 };
 
