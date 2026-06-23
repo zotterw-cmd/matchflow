@@ -2197,10 +2197,11 @@ body.sa-mode .sa-var{display:inline}
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Neue Messsitzung</h5>
+        <h5 class="modal-title" id="modalMessungSitzungTitle"><i class="bi bi-plus-circle me-2"></i>Neue Messsitzung</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
+        <input type="hidden" id="messungSitzungId">
         <div id="messungSitzungError" class="alert alert-danger d-none"></div>
         <div class="mb-3">
           <label class="form-label fw-bold">Bezeichnung <span class="text-danger">*</span></label>
@@ -2238,7 +2239,7 @@ body.sa-mode .sa-var{display:inline}
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Abbrechen</button>
-        <button type="button" class="btn btn-dark btn-sm" onclick="messungSitzungSpeichern()"><i class="bi bi-save me-1"></i>Sitzung anlegen</button>
+        <button type="button" class="btn btn-dark btn-sm" id="messungSitzungSpeichernBtn" onclick="messungSitzungSpeichern()"><i class="bi bi-save me-1"></i>Sitzung anlegen</button>
       </div>
     </div>
   </div>
@@ -8841,6 +8842,7 @@ window.renderMessungenView = async function() {
         </div>
         <div class="d-flex align-items-center gap-2">
           ${badge}
+          <button class="btn btn-outline-secondary btn-sm" onclick="openSitzungBearbeiten('${s.id}')"><i class="bi bi-pencil"></i></button>
           <button class="btn btn-outline-primary btn-sm" onclick="openMessungSitzung('${s.id}')"><i class="bi bi-arrow-right-circle me-1"></i>Öffnen</button>
         </div>
       </div>`;
@@ -8850,10 +8852,54 @@ window.renderMessungenView = async function() {
   }
 };
 
+window.openSitzungBearbeiten = async function(id) {
+  const { doc, getDoc, collection, query, where, getDocs } = window._firestoreAPI;
+  const tid = window._currentTenantId;
+  const snap = await getDoc(doc(window._firestoreDB, 'measurement_sessions', id));
+  if (!snap.exists()) return;
+  const s = snap.data();
+  document.getElementById('messungSitzungId').value    = id;
+  document.getElementById('messungSitzungName').value  = s.name || '';
+  document.getElementById('messungSitzungDatum').value = s.date || '';
+  document.getElementById('messungSitzungTeilnahmeXp').value = s.participation_xp ?? 10;
+  document.getElementById('messungSitzungError').classList.add('d-none');
+  document.getElementById('modalMessungSitzungTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>Messsitzung bearbeiten';
+  document.getElementById('messungSitzungSpeichernBtn').innerHTML = '<i class="bi bi-save me-1"></i>Änderungen speichern';
+  const typenEl   = document.getElementById('messungSitzungTypen');
+  const spielerEl = document.getElementById('messungSitzungSpieler');
+  typenEl.innerHTML   = '<div class="text-muted small">Wird geladen…</div>';
+  spielerEl.innerHTML = '<div class="text-muted small">Wird geladen…</div>';
+  try {
+    const [typSnap, katSnap, plSnap] = await Promise.all([
+      getDocs(query(collection(window._firestoreDB, 'measurement_types'), where('tenant_id', '==', tid), where('active', '==', true))),
+      getDocs(query(collection(window._firestoreDB, 'skill_categories'),  where('tenant_id', '==', tid))),
+      getDocs(query(collection(window._firestoreDB, 'players'),           where('tenant_id', '==', tid))),
+    ]);
+    const katMap = {};
+    katSnap.forEach(d => { katMap[d.id] = d.data().name; });
+    const typen = [];
+    typSnap.forEach(d => typen.push({ id: d.id, ...d.data() }));
+    typen.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    const checkedTypen = s.measurement_type_ids || [];
+    typenEl.innerHTML = typen.map(t => `<div class="form-check"><input class="form-check-input" type="checkbox" id="sitzTyp_${t.id}" value="${t.id}" ${checkedTypen.includes(t.id) ? 'checked' : ''}>
+        <label class="form-check-label" for="sitzTyp_${t.id}">${t.name} <span class="text-muted small">(${katMap[t.skill_category_id] || '–'}, ${t.unit})</span></label></div>`).join('') || '<p class="text-muted small mb-0">Keine aktiven Messungstypen.</p>';
+    const spieler = [];
+    plSnap.forEach(d => spieler.push({ id: d.id, ...d.data() }));
+    spieler.sort((a, b) => (a.nachname || '').localeCompare(b.nachname || '', 'de'));
+    const checkedSpieler = s.player_ids || [];
+    spielerEl.innerHTML = spieler.map(sp => `<div class="form-check"><input class="form-check-input" type="checkbox" id="sitzSp_${sp.id}" value="${sp.id}" ${checkedSpieler.includes(sp.id) ? 'checked' : ''}>
+        <label class="form-check-label" for="sitzSp_${sp.id}">${sp.nachname || ''} ${sp.vorname || ''}</label></div>`).join('') || '<p class="text-muted small mb-0">Keine Spieler.</p>';
+  } catch(e) { typenEl.innerHTML = `<div class="text-danger small">Fehler: ${e.message}</div>`; }
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalMessungSitzung')).show();
+};
+
 window.openNeueMessungSitzung = async function() {
+  document.getElementById('messungSitzungId').value   = '';
   document.getElementById('messungSitzungError').classList.add('d-none');
   document.getElementById('messungSitzungName').value  = '';
   document.getElementById('messungSitzungDatum').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('modalMessungSitzungTitle').innerHTML  = '<i class="bi bi-plus-circle me-2"></i>Neue Messsitzung';
+  document.getElementById('messungSitzungSpeichernBtn').innerHTML = '<i class="bi bi-save me-1"></i>Sitzung anlegen';
   const typenEl   = document.getElementById('messungSitzungTypen');
   const spielerEl = document.getElementById('messungSitzungSpieler');
   typenEl.innerHTML   = '<div class="text-muted small">Wird geladen…</div>';
@@ -8907,19 +8953,29 @@ window.messungSitzungSpeichern = async function() {
   const checkedSpieler = [...document.querySelectorAll('#messungSitzungSpieler input:checked')].map(cb => cb.value);
   const teilnahmeXp    = parseInt(document.getElementById('messungSitzungTeilnahmeXp').value) || 0;
   if (!checkedTypen.length) { err.classList.remove('d-none'); err.textContent = 'Mindestens ein Messungstyp muss gewählt sein.'; return; }
-  const tid = window._currentTenantId;
-  const { collection, addDoc, serverTimestamp } = window._firestoreAPI;
+  const tid      = window._currentTenantId;
+  const editId   = document.getElementById('messungSitzungId').value;
+  const { collection, addDoc, doc, updateDoc, serverTimestamp } = window._firestoreAPI;
   try {
-    await addDoc(collection(window._firestoreDB, 'measurement_sessions'), {
-      name, date: datum, status: 'open',
-      measurement_type_ids: checkedTypen,
-      player_ids: checkedSpieler,
-      participation_xp: teilnahmeXp,
-      xp_awarded_players: [],
-      tenant_id: tid,
-      created_at: serverTimestamp(),
-      created_by: window.currentUserDoc?.uid || '',
-    });
+    if (editId) {
+      await updateDoc(doc(window._firestoreDB, 'measurement_sessions', editId), {
+        name, date: datum,
+        measurement_type_ids: checkedTypen,
+        player_ids: checkedSpieler,
+        participation_xp: teilnahmeXp,
+      });
+    } else {
+      await addDoc(collection(window._firestoreDB, 'measurement_sessions'), {
+        name, date: datum, status: 'open',
+        measurement_type_ids: checkedTypen,
+        player_ids: checkedSpieler,
+        participation_xp: teilnahmeXp,
+        xp_awarded_players: [],
+        tenant_id: tid,
+        created_at: serverTimestamp(),
+        created_by: window.currentUserDoc?.uid || '',
+      });
+    }
     bootstrap.Modal.getInstance(document.getElementById('modalMessungSitzung')).hide();
     renderMessungenView();
   } catch(e) { err.classList.remove('d-none'); err.textContent = 'Fehler: ' + e.message; }
