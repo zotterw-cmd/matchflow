@@ -9247,7 +9247,7 @@ window.openSitzungBearbeiten = async function(id) {
     const checkedSpieler = s.player_ids || [];
     // Spieler aus spielerData anreichern (teams, group_ids)
     const spMap = {};
-    (window.spielerData || []).forEach(sd => { spMap[sd.id] = sd; });
+    (spielerData || []).forEach(sd => { spMap[sd.id] = sd; });
     const spielerRich = spieler.map(sp => ({ ...sp, ...(spMap[sp.id] || {}) }));
 
     // Filter-Dropdowns befüllen
