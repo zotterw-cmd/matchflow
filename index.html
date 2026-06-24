@@ -1257,6 +1257,7 @@ body.sa-mode .sa-var{display:inline}
         <option value="" selected>Alle Mannschaften</option>
       </select>
       <button class="btn btn-outline-secondary btn-sm" onclick="openStartwerteModal()" title="Basis-Skillwerte für ein Team setzen"><i class="bi bi-sliders me-1"></i>Startwerte</button>
+      <button class="btn btn-outline-primary btn-sm" onclick="openSpielerCsvImport()"><i class="bi bi-file-earmark-arrow-up me-1"></i>CSV Import</button>
       <button class="btn btn-dark btn-sm" onclick="openSpielerModalSimple(null)"><i class="bi bi-person-plus-fill"></i> Neuer Spieler</button>
     </div>
   </div>
@@ -3588,6 +3589,60 @@ body.sa-mode .sa-var{display:inline}
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Schließen</button>
         <button type="button" class="btn btn-dark" id="csvImportBtn" style="display:none" onclick="csvImportStarten()"><i class="bi bi-upload me-1"></i>Import starten</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Spieler CSV Import -->
+<div class="modal fade" id="modalSpielerCsvImport" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title"><i class="bi bi-file-earmark-arrow-up me-2"></i>Spieler CSV Import</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold">CSV-Datei <span class="text-muted fw-normal small">(Semikolon-getrennt, erste Zeile = Kopfzeile)</span></label>
+            <input type="file" id="spCsvFile" class="form-control" accept=".csv,.txt" onchange="spCsvVorschau(event)">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-bold">Mannschaft zuweisen</label>
+            <select id="spCsvMannschaft" class="form-select">
+              <option value="">— Bitte wählen —</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-bold">Bei Duplikat</label>
+            <select id="spCsvDuplikat" class="form-select">
+              <option value="skip">Überspringen</option>
+              <option value="update">Aktualisieren</option>
+            </select>
+          </div>
+        </div>
+        <div id="spCsvVorschauBereich" style="display:none">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-bold mb-0">Vorschau <span id="spCsvInfo" class="text-muted fw-normal small"></span></h6>
+          </div>
+          <div class="table-responsive" style="max-height:340px;overflow-y:auto">
+            <table class="table table-sm align-middle" style="font-size:.82rem">
+              <thead class="table-dark sticky-top"><tr>
+                <th>#</th><th>Vorname</th><th>Nachname</th><th>Geb.</th><th>Geschl.</th>
+                <th>Gruppe</th><th>Hauptverein</th><th>Lieblingsvereine</th><th>Status</th>
+              </tr></thead>
+              <tbody id="spCsvVorschauBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="spCsvErgebnis" class="mt-3" style="display:none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Schließen</button>
+        <button type="button" class="btn btn-primary" id="spCsvImportBtn" style="display:none" onclick="spCsvImportStarten()">
+          <i class="bi bi-upload me-1"></i>Import starten (<span id="spCsvImportCount">0</span> Spieler)
+        </button>
       </div>
     </div>
   </div>
@@ -5960,6 +6015,184 @@ window.openSpielerModalSimple = function(id) {
     xpCard.style.display = 'none';
   }
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSpieler')).show();
+};
+
+// ── Spieler CSV Import ───────────────────────────────────────────────────────
+let _spCsvParsed = [];
+const _CSV_PLACEHOLDER = 'anderer verein / eigener verein / fantasieverein';
+
+window.openSpielerCsvImport = function() {
+  const sel = document.getElementById('spCsvMannschaft');
+  if (sel) {
+    sel.innerHTML = '<option value="">— Bitte wählen —</option>' +
+      mannschaftenListe.filter(m => !m.softDeleted && m.aktiv !== false)
+        .map(m => `<option value="${m.name}">${m.name}</option>`).join('');
+  }
+  document.getElementById('spCsvFile').value = '';
+  document.getElementById('spCsvVorschauBereich').style.display = 'none';
+  document.getElementById('spCsvErgebnis').style.display = 'none';
+  document.getElementById('spCsvImportBtn').style.display = 'none';
+  _spCsvParsed = [];
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSpielerCsvImport')).show();
+};
+
+function _spCsvCleanVereine(raw) {
+  if (!raw) return [];
+  return raw.split(',')
+    .map(v => v.trim().replace(/^'+/, '').trim())
+    .filter(v => v && v.toLowerCase() !== _CSV_PLACEHOLDER && v !== '-' && v !== "'-");
+}
+
+function _spCsvParseDate(str) {
+  if (!str) return '';
+  str = str.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  const m = str.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  return '';
+}
+
+window.spCsvVorschau = function(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const lines = e.target.result.split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) return;
+    const header = lines[0].split(';');
+    // Spalten-Indizes aus dem tatsächlichen Header ermitteln
+    const ci = name => header.findIndex(h => h.trim().toLowerCase().includes(name.toLowerCase()));
+    const iVorname    = ci('Vorname');
+    const iNachname   = ci('Nachname');
+    const iGeb        = ci('Geburtsdatum');
+    const iGeschlecht = ci('Bub');
+    const iGruppe     = ci('Gruppe');
+    const iLieblings  = ci('Lieblingsverein(e)');
+    const iWeitere    = ci('andere/r');
+    const iHaupt      = ci('Hauptverein');
+
+    _spCsvParsed = [];
+    const existNames = new Set(spielerData.map(s => `${s.vorname}|${s.nachname}`.toLowerCase()));
+
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(';');
+      const vorname  = (cols[iVorname]  || '').trim();
+      const nachname = (cols[iNachname] || '').trim();
+      if (!vorname || !nachname) continue;
+
+      const geschlRaw = (cols[iGeschlecht] || '').trim().toLowerCase();
+      const geschl    = geschlRaw === 'mädchen' ? 'w' : 'm';
+      const geb       = _spCsvParseDate(cols[iGeb]);
+      const gruppe    = (cols[iGruppe] || '').trim();
+
+      // Lieblingsvereine aus Spalte 7 + 8 zusammenführen
+      const lv1 = _spCsvCleanVereine(cols[iLieblings] || '');
+      const lv2 = _spCsvCleanVereine(cols[iWeitere]   || '');
+      const lieblingsverein = [...new Set([...lv1, ...lv2])];
+
+      const hauptverein = (cols[iHaupt] || '').trim().replace(/^'+/, '').trim();
+      const isDuplikat  = existNames.has(`${vorname}|${nachname}`.toLowerCase());
+
+      _spCsvParsed.push({ vorname, nachname, geb, geschl, gruppe, lieblingsverein, hauptverein, isDuplikat });
+    }
+
+    const tbody = document.getElementById('spCsvVorschauBody');
+    tbody.innerHTML = _spCsvParsed.map((p, i) => {
+      const grpMatch = (window._playerGroups||[]).find(g => g.name.toLowerCase() === p.gruppe.toLowerCase());
+      const grpDot   = grpMatch ? `<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${grpMatch.color||'#888'};vertical-align:middle;margin-right:4px"></span>` : '';
+      const status   = p.isDuplikat
+        ? '<span class="badge bg-warning text-dark">Duplikat</span>'
+        : '<span class="badge bg-success">Neu</span>';
+      return `<tr>
+        <td class="text-muted">${i+1}</td>
+        <td>${p.vorname}</td><td>${p.nachname}</td>
+        <td>${p.geb||'—'}</td><td>${p.geschl}</td>
+        <td>${grpDot}${p.gruppe||'—'}</td>
+        <td><small>${p.hauptverein||'—'}</small></td>
+        <td><small>${p.lieblingsverein.slice(0,3).join(', ')||'—'}${p.lieblingsverein.length>3?'…':''}</small></td>
+        <td>${status}</td>
+      </tr>`;
+    }).join('');
+
+    const neuCount = _spCsvParsed.filter(p => !p.isDuplikat).length;
+    const dupCount = _spCsvParsed.filter(p =>  p.isDuplikat).length;
+    document.getElementById('spCsvInfo').textContent = `${_spCsvParsed.length} Zeilen — ${neuCount} neu, ${dupCount} Duplikate`;
+    document.getElementById('spCsvVorschauBereich').style.display = '';
+    document.getElementById('spCsvImportCount').textContent = _spCsvParsed.length;
+    document.getElementById('spCsvImportBtn').style.display = _spCsvParsed.length ? '' : 'none';
+  };
+  reader.readAsText(file, 'UTF-8');
+};
+
+window.spCsvImportStarten = async function() {
+  const mannschaft = document.getElementById('spCsvMannschaft').value;
+  const dupModus   = document.getElementById('spCsvDuplikat').value;
+  const btn        = document.getElementById('spCsvImportBtn');
+  if (!mannschaft) { alert('Bitte eine Mannschaft auswählen.'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Importiere…';
+
+  let imported = 0, skipped = 0, updated = 0, errors = 0;
+
+  for (const p of _spCsvParsed) {
+    try {
+      const existing = spielerData.find(s => s.vorname.toLowerCase() === p.vorname.toLowerCase() && s.nachname.toLowerCase() === p.nachname.toLowerCase());
+      if (existing && dupModus === 'skip') { skipped++; continue; }
+
+      // Gruppe → group_id
+      const grpMatch  = (window._playerGroups||[]).find(g => g.name.toLowerCase() === p.gruppe.toLowerCase());
+      const group_ids = grpMatch ? [grpMatch.id] : [];
+
+      const spId = existing ? existing.id : ('p' + (++spielerCounter));
+      const obj  = {
+        id: spId,
+        vorname:  p.vorname,
+        nachname: p.nachname,
+        geb:      p.geb,
+        geschl:   p.geschl,
+        teams:    [mannschaft],
+        group_ids,
+        lieblingsverein: p.lieblingsverein,
+        hauptverein:     p.hauptverein,
+        foto: existing?.foto || '',
+        rnr:  existing?.rnr  || 0,
+        pos:  existing?.pos  || 'MF',
+        skillBase: existing?.skillBase || {},
+        skills: existing?.skills || {},
+        slv:    existing?.slv    || 60,
+      };
+      SKILL_TYPES.forEach(t => { obj[t] = existing?.[t] || []; });
+
+      await fsSaveSpieler(obj);
+
+      if (existing) {
+        const idx = spielerData.findIndex(s => s.id === spId);
+        if (idx >= 0) spielerData[idx] = { ...spielerData[idx], ...obj };
+        updated++;
+      } else {
+        spielerData.push(obj);
+        imported++;
+      }
+    } catch(e) {
+      console.warn('Import-Fehler:', p.vorname, p.nachname, e.message);
+      errors++;
+    }
+  }
+
+  renderSpielerSimple?.();
+  btn.disabled = false;
+  btn.innerHTML = '<i class="bi bi-upload me-1"></i>Import starten';
+
+  const ergebnis = document.getElementById('spCsvErgebnis');
+  ergebnis.style.display = '';
+  ergebnis.innerHTML = `<div class="alert alert-success mb-0">
+    <strong>Import abgeschlossen:</strong>
+    <span class="ms-2">✅ ${imported} neu importiert</span>
+    <span class="ms-3">🔄 ${updated} aktualisiert</span>
+    <span class="ms-3">⏭ ${skipped} übersprungen</span>
+    ${errors ? `<span class="ms-3 text-danger">❌ ${errors} Fehler</span>` : ''}
+  </div>`;
 };
 
 window.spielerSimpleSpeichern = async function() {
