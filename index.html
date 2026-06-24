@@ -283,7 +283,7 @@ body.sa-mode .sa-var{display:inline}
   <div class="sb-header">
     <div class="sb-brand">
       <span style="font-size:1.3rem">⚽</span>
-      <span>MatchFlow <span class="logo-small">v1.7.7</span></span>
+      <span>MatchFlow <span class="logo-small">v1.7.8</span></span>
     </div>
     <button class="sb-close-btn" onclick="toggleSidebar()" title="Menü schließen">
       <i class="bi bi-x-lg" style="font-size:1rem"></i>
@@ -453,7 +453,7 @@ body.sa-mode .sa-var{display:inline}
   <!-- Implementierungsstand -->
   <div class="card shadow-sm p-3 mb-3" id="dashRoadmapCard">
     <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-      <h6 class="fw-bold mb-0"><i class="bi bi-kanban text-primary me-2"></i>Implementierungsstand MatchFlow <span class="badge bg-dark">v1.7.7</span></h6>
+      <h6 class="fw-bold mb-0"><i class="bi bi-kanban text-primary me-2"></i>Implementierungsstand MatchFlow <span class="badge bg-dark">v1.7.8</span></h6>
       <div class="d-flex gap-2">
         <button class="btn btn-outline-secondary btn-sm" onclick="document.querySelectorAll('.rm-collapse').forEach(el=>bootstrap.Collapse.getOrCreateInstance(el).show())">Alle ausklappen</button>
         <button class="btn btn-outline-secondary btn-sm" onclick="document.querySelectorAll('.rm-collapse').forEach(el=>bootstrap.Collapse.getOrCreateInstance(el).hide())">Alle einklappen</button>
@@ -615,8 +615,12 @@ body.sa-mode .sa-var{display:inline}
       </button>
       <div class="collapse rm-collapse" id="rmPlanned">
         <ul class="list-unstyled small mb-0 px-3 pb-2">
-          <li class="mb-1">⏳ <span class="text-muted" style="font-size:.7rem">v1.7.8 – nächster Schritt</span> Skill-Kategorien: <code>skill_key</code> + <code>max_value</code> in der App setzbar → aktiviert calcSkill Score-Berechnung</li>
-          <li class="mb-1">⏳ <span class="text-muted" style="font-size:.7rem">v1.7.x</span> Spieler-Uploads / Trainer-Review (Spieler reicht Heimwert ein, Trainer genehmigt)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.8</span> Skill-Kategorien: <code>skill_key</code> + <code>max_value</code> in der App setzbar → aktiviert calcSkill Score-Berechnung</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.8</span> Registrierung: Rollen-Dropdown lädt direkt aus Firestore (ohne Login)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.8</span> Benutzerverwaltung: Reaktivieren-Button für inaktive Benutzer</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.8</span> Permissions: beim Login live aus Firestore-Rollen berechnet (kein Cache-Problem mehr)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.8</span> Leistungsmessungen: Admin-Tabs über <code>measurements.admin</code> Permission steuerbar</li>
+          <li class="mb-1">⏳ <span class="text-muted" style="font-size:.7rem">v1.7.9 – nächster Schritt</span> Spieler-Uploads / Trainer-Review (Spieler reicht Heimwert ein, Trainer genehmigt)</li>
           <li class="mb-1">⏳ <span class="text-muted" style="font-size:.7rem">v1.7.x</span> Camp-Tab bereinigen + Berechtigungen finalisieren</li>
           <li class="mb-1">📅 PPTX-Vorlage finalisieren &amp; testen</li>
           <li class="mb-1">📅 Spielerprofil-Export (Word/PDF)</li>
@@ -2104,9 +2108,9 @@ body.sa-mode .sa-var{display:inline}
   </div>
   <ul class="nav nav-tabs mb-3">
     <li class="nav-item"><a class="nav-link active" href="#" onclick="showLeistungTab('messungen',this);return false"><i class="bi bi-list-check me-1"></i>Messungen</a></li>
-    <li class="nav-item sa-only"><a class="nav-link" href="#" onclick="showLeistungTab('typen',this);return false"><i class="bi bi-sliders me-1"></i>Messungstypen</a></li>
-    <li class="nav-item sa-only"><a class="nav-link" href="#" onclick="showLeistungTab('calcs',this);return false"><i class="bi bi-calculator me-1"></i>Berechnungsmethoden</a></li>
-    <li class="nav-item sa-only"><a class="nav-link" href="#" onclick="showLeistungTab('kategorien',this);return false"><i class="bi bi-tags me-1"></i>Skill-Kategorien</a></li>
+    <li class="nav-item meas-admin-only"><a class="nav-link" href="#" onclick="showLeistungTab('typen',this);return false"><i class="bi bi-sliders me-1"></i>Messungstypen</a></li>
+    <li class="nav-item meas-admin-only"><a class="nav-link" href="#" onclick="showLeistungTab('calcs',this);return false"><i class="bi bi-calculator me-1"></i>Berechnungsmethoden</a></li>
+    <li class="nav-item meas-admin-only"><a class="nav-link" href="#" onclick="showLeistungTab('kategorien',this);return false"><i class="bi bi-tags me-1"></i>Skill-Kategorien</a></li>
   </ul>
   <div id="leistungPanelMessungen">
     <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
@@ -2117,7 +2121,7 @@ body.sa-mode .sa-var{display:inline}
           <option value="closed">Abgeschlossen</option>
         </select>
       </div>
-      <button class="btn btn-dark btn-sm" onclick="openNeueMessungSitzung()"><i class="bi bi-plus-circle me-1"></i>Neue Messsitzung</button>
+      <button class="btn btn-dark btn-sm meas-edit-btn" onclick="openNeueMessungSitzung()"><i class="bi bi-plus-circle me-1"></i>Neue Messsitzung</button>
     </div>
     <div id="messungenContent"><div class="text-center py-5 text-muted"><div class="spinner-border mb-2"></div><br>Wird geladen…</div></div>
   </div>
@@ -3846,6 +3850,10 @@ window.applyPermissions = function() {
   document.getElementById('saAdminTools')?.classList.toggle('d-none', !isSA);
   document.body.classList.toggle('sa-mode', isSA);
   document.querySelectorAll('.sa-only').forEach(el => el.style.display = isSA ? '' : 'none');
+  const canMeasAdmin = isSA || hasPermission('measurements.admin');
+  document.querySelectorAll('.meas-admin-only').forEach(el => el.style.display = canMeasAdmin ? '' : 'none');
+  const canMeasEdit = hasPermission('measurements.edit');
+  document.querySelectorAll('.meas-edit-btn').forEach(el => el.style.display = canMeasEdit ? '' : 'none');
   window._updateTWAdminUI?.();
   // Anzeige des eingeloggten Benutzers in Sidebar + TopBar
   const displayName = window.currentUserDoc ? (window.currentUserDoc.displayName || window.currentUserDoc.email || '') : '';
@@ -3938,7 +3946,10 @@ window.renderUsersView = async function() {
         const editBtn = hasPermission('users.edit')
           ? `<button class="btn btn-outline-secondary btn-sm" onclick="openBenutzerBearbeiten('${u.id}')" title="Bearbeiten"><i class="bi bi-pencil"></i></button>` : '';
         const deaktBtn = (!isSA && !isSelf && hasPermission('users.edit'))
-          ? `<button class="btn btn-warning btn-sm" onclick="benutzerDeaktivieren('${u.id}')" title="Deaktivieren"><i class="bi bi-person-x"></i></button>` : '';
+          ? (u.status === 'active'
+            ? `<button class="btn btn-warning btn-sm" onclick="benutzerDeaktivieren('${u.id}')" title="Deaktivieren"><i class="bi bi-person-x"></i></button>`
+            : `<button class="btn btn-success btn-sm" onclick="benutzerReaktivieren('${u.id}')" title="Reaktivieren"><i class="bi bi-person-check"></i></button>`)
+          : '';
         return `<tr>
           <td>${saIcon}<strong>${u.displayName||'—'}</strong>${isSelf?' <span class="badge bg-light text-dark">Ich</span>':''}</td>
           <td>${u.email||'—'}</td>
@@ -4315,6 +4326,13 @@ window.benutzerDeaktivieren = async function(uid) {
   if (!confirm('Benutzer wirklich deaktivieren?')) return;
   const { doc, updateDoc } = window._firestoreAPI;
   await updateDoc(doc(window._firestoreDB,'users',uid), { status:'deleted' });
+  renderUsersView();
+};
+
+window.benutzerReaktivieren = async function(uid) {
+  if (!confirm('Benutzer reaktivieren?')) return;
+  const { doc, updateDoc } = window._firestoreAPI;
+  await updateDoc(doc(window._firestoreDB,'users',uid), { status:'active' });
   renderUsersView();
 };
 
@@ -10438,19 +10456,26 @@ window.showRegPanel = async function() {
   document.getElementById('regFormPanel').style.display = '';
   document.getElementById('regError').classList.add('d-none');
   document.getElementById('regSuccess').classList.add('d-none');
-  // Erlaubte Rollen laden
+  // Erlaubte Rollen laden (ohne Login – direkt aus Firestore)
   const sel = document.getElementById('regRolle');
   sel.innerHTML = '<option value="">-- Rolle wählen --</option>';
   try {
-    const { doc, getDoc } = window._firestoreAPI;
-    const snap = await getDoc(doc(window._firestoreDB, 'settings', 'registration_config'));
-    const allowedIds = snap.exists() ? (snap.data().allowedRoleIds || []) : [];
-    if (!Object.keys(window._cachedRoles || {}).length) await renderRollenView();
-    allowedIds.forEach(rid => {
-      const r = window._cachedRoles?.[rid];
-      if (r) sel.insertAdjacentHTML('beforeend', `<option value="${rid}">${r.name}</option>`);
-    });
-    if (sel.options.length <= 1) sel.insertAdjacentHTML('beforeend', '<option disabled>Keine Rollen konfiguriert</option>');
+    const { doc, getDoc, collection, query, where, getDocs } = window._firestoreAPI;
+    const db = window._firestoreDB;
+    const tid = TENANT_ID;
+    const [configSnap, snapGlobal, snapTenant] = await Promise.all([
+      getDoc(doc(db, 'settings', 'registration_config')),
+      getDocs(query(collection(db, 'roles'), where('tenantId', '==', null))),
+      getDocs(query(collection(db, 'roles'), where('tenantId', '==', tid))),
+    ]);
+    const allowedIds = configSnap.exists() ? (configSnap.data().allowedRoleIds || []) : [];
+    const allRoles = [
+      ...snapGlobal.docs.map(d => ({ id: d.id, ...d.data() })),
+      ...snapTenant.docs.map(d => ({ id: d.id, ...d.data() })),
+    ].filter(r => !r.isSystem && r.id !== 'role_superadmin' && r.name?.toLowerCase() !== 'superadmin');
+    const rolesToShow = allowedIds.length ? allRoles.filter(r => allowedIds.includes(r.id)) : allRoles;
+    rolesToShow.forEach(r => sel.insertAdjacentHTML('beforeend', `<option value="${r.id}">${r.name}</option>`));
+    if (sel.options.length <= 1) sel.insertAdjacentHTML('beforeend', '<option disabled>Keine Rollen verfügbar</option>');
   } catch(e) {}
 };
 
@@ -11157,7 +11182,7 @@ async function seedIfNeeded() {
     { id:'role_superadmin', name:'SuperAdmin', priority:100, tenantId:null, isSystem:true, isDeletable:false,
       permissions: Object.fromEntries(ALL_PERM_KEYS.map(k=>[k,'allow'])) },
     { id:'role_admin', name:'Admin', priority:90, tenantId:TENANT_ID, isSystem:false, isDeletable:true,
-      permissions: Object.fromEntries(['spieler.view','spieler.edit','spieler.delete','camp.view','camp.edit','camp.delete','training.view','training.edit','training.delete','mannschaften.view','mannschaften.edit','users.view','users.edit','users.invite','roles.view'].map(k=>[k,'allow'])) },
+      permissions: Object.fromEntries(['spieler.view','spieler.edit','spieler.delete','camp.view','camp.edit','camp.delete','training.view','training.edit','training.delete','mannschaften.view','mannschaften.edit','users.view','users.edit','users.invite','roles.view','measurements.view','measurements.edit','measurements.admin'].map(k=>[k,'allow'])) },
     { id:'role_trainer', name:'Trainer', priority:80, tenantId:TENANT_ID, isSystem:false, isDeletable:true,
       permissions: Object.fromEntries(['spieler.view','spieler.edit','camp.view','camp.edit','training.view','training.edit','training.delete','mannschaften.view','measurements.view','measurements.edit'].map(k=>[k,'allow'])) },
     { id:'role_eltern', name:'Eltern', priority:50, tenantId:TENANT_ID, isSystem:false, isDeletable:true,
@@ -11196,7 +11221,25 @@ async function loadOrCreateUserDoc(user) {
     }
     if (!data.teamIds)         updates.teamIds = [];
     if (!data.childPlayerIds)  updates.childPlayerIds = [];
+    // Permissions immer live aus aktuellen Rollen neu berechnen
+    const tid = data.tenantId || TENANT_ID;
+    const [snapGlobal, snapTenant] = await Promise.all([
+      getDocs(query(collection(db,'roles'), where('tenantId','==',null))),
+      getDocs(query(collection(db,'roles'), where('tenantId','==',tid))),
+    ]);
+    const rolesMap = {};
+    [...snapGlobal.docs, ...snapTenant.docs].forEach(d => { rolesMap[d.id] = d.data(); });
+    const freshPerms = {};
+    (data.roleIds || []).forEach(rid => {
+      const role = rolesMap[rid];
+      if (!role) return;
+      Object.entries(role.permissions || {}).forEach(([key, val]) => {
+        if (freshPerms[key] !== 'deny') freshPerms[key] = val;
+      });
+    });
+    updates.effectivePermissions = freshPerms;
     updateDoc(userRef, updates);
+    return { id: snap.id, ...snap.data(), effectivePermissions: freshPerms };
   }
   return { id: snap.id, ...snap.data() };
 }
@@ -11206,9 +11249,25 @@ onAuthStateChanged(auth, async user => {
   if (user) {
     try {
       const userDoc = await loadOrCreateUserDoc(user);
-      window.currentUserDoc    = userDoc;
-      window.currentPermissions = userDoc.effectivePermissions || {};
-      window._currentTenantId  = userDoc.tenantId || TENANT_ID;
+      window.currentUserDoc   = userDoc;
+      window._currentTenantId = userDoc.tenantId || TENANT_ID;
+      // Rollen live laden und Permissions neu berechnen
+      const tid = userDoc.tenantId || TENANT_ID;
+      const [rSnapGlobal, rSnapTenant] = await Promise.all([
+        getDocs(query(collection(db,'roles'), where('tenantId','==',null))),
+        getDocs(query(collection(db,'roles'), where('tenantId','==',tid))),
+      ]);
+      window._cachedRoles = {};
+      [...rSnapGlobal.docs, ...rSnapTenant.docs].forEach(d => { window._cachedRoles[d.id] = { id:d.id, ...d.data() }; });
+      const livePerms = {};
+      (userDoc.roleIds || []).forEach(rid => {
+        const role = window._cachedRoles[rid];
+        if (!role) return;
+        Object.entries(role.permissions || {}).forEach(([key, val]) => {
+          if (livePerms[key] !== 'deny') livePerms[key] = val;
+        });
+      });
+      window.currentPermissions = livePerms;
       // Ausstehend-Badge aktualisieren falls im Users-View
       if (userDoc.status === 'pending') {
         document.getElementById('loginScreen').style.display = 'flex';
