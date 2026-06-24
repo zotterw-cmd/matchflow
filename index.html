@@ -1248,7 +1248,7 @@ body.sa-mode .sa-var{display:inline}
     <h4 class="mb-0"><i class="bi bi-people-fill text-primary me-2"></i>Spieler</h4>
     <div class="d-flex gap-2 flex-wrap">
       <select id="spFilterTeam" class="form-select form-select-sm" style="width:auto" onchange="renderSpielerSimple()">
-        <option value="" selected>Alle</option><option value="U10">U10</option><option value="U12">U12</option>
+        <option value="" selected>Alle Mannschaften</option>
       </select>
       <button class="btn btn-outline-secondary btn-sm" onclick="openStartwerteModal()" title="Basis-Skillwerte für ein Team setzen"><i class="bi bi-sliders me-1"></i>Startwerte</button>
       <button class="btn btn-dark btn-sm" onclick="openSpielerModalSimple(null)"><i class="bi bi-person-plus-fill"></i> Neuer Spieler</button>
@@ -2981,8 +2981,8 @@ body.sa-mode .sa-var{display:inline}
                 <div class="col-4"><label class="form-label">Position</label>
                   <select id="spPosition" class="form-select"><option>GK</option><option>IV</option><option>LV</option><option>RV</option><option>DM</option><option>ZM</option><option>OM</option><option>LA</option><option>RA</option><option selected>MF</option><option>ST</option></select>
                 </div>
-                <div class="col-4"><label class="form-label">Mannschaft</label>
-                  <select id="spTeam" class="form-select"><option value="U10">U10</option><option value="U12">U12</option></select>
+                <div class="col-12"><label class="form-label">Mannschaften <span class="text-muted fw-normal small">(Mehrfachauswahl möglich)</span></label>
+                  <div id="spTeamCheckboxes" class="d-flex flex-wrap gap-2 p-2 border rounded" style="min-height:38px;background:#f8f9fa"></div>
                 </div>
                 <div class="col-6"><label class="form-label">Nachname</label><input type="text" id="spNachname" class="form-control"></div>
                 <div class="col-6"><label class="form-label">Vorname</label><input type="text" id="spVorname" class="form-control"></div>
@@ -5607,7 +5607,7 @@ function _buildSpielerRow(s) {
     <td><span class="badge bg-secondary">${s.pos}</span></td>
     <td><strong>${s.nachname}</strong></td><td>${s.vorname}</td>
     <td data-order="${s.geb || ''}">${s.geb ? new Date(s.geb+'T12:00').toLocaleDateString('de-AT') : '—'}</td>
-    <td><span class="badge bg-dark">${s.team}</span></td>
+    <td>${(s.teams||[s.team]).filter(Boolean).map(t=>`<span class="badge bg-dark me-1">${t}</span>`).join('') || '–'}</td>
     <td><strong>${slv}</strong></td>
     ${skillCell('speed')}${skillCell('attack')}${skillCell('bonus')}${skillCell('shoot')}${skillCell('skill')}${skillCell('pass')}${skillCell('def')}
     <td>${(() => { const xp = s.xp || 0; const max = 1000; const pct = Math.min(100, Math.round(xp/max*100)); return `<div style="min-width:80px"><div class="d-flex justify-content-between" style="font-size:.7rem"><span class="fw-bold">${xp}</span><span class="text-muted">${max}</span></div><div class="progress" style="height:6px"><div class="progress-bar bg-warning" style="width:${pct}%"></div></div><div class="text-muted text-center" style="font-size:.65rem">${pct}%</div>`; })()}</td>
@@ -5617,12 +5617,19 @@ function _buildSpielerRow(s) {
 }
 
 function renderSpielerSimple() {
-  const filter = document.getElementById('spFilterTeam').value;
+  // Dropdown dynamisch aus mannschaftenListe befüllen
+  const filterEl = document.getElementById('spFilterTeam');
+  const currentFilter = filterEl.value;
+  const allTeams = [...new Set((spielerData).flatMap(s => s.teams || (s.team ? [s.team] : [])))].sort();
+  filterEl.innerHTML = '<option value="">Alle Mannschaften</option>' +
+    allTeams.map(t => `<option value="${t}" ${t === currentFilter ? 'selected' : ''}>${t}</option>`).join('');
+
+  const filter = filterEl.value;
   const allowedTeams = _getAllowedTeams();
   let data = allowedTeams !== null
-    ? spielerData.filter(s => allowedTeams.includes(s.team))
+    ? spielerData.filter(s => (s.teams || [s.team]).some(t => allowedTeams.includes(t)))
     : spielerData;
-  if (filter) data = data.filter(s => s.team === filter);
+  if (filter) data = data.filter(s => (s.teams || [s.team]).includes(filter));
 
   if (dtSpielerSimple) {
     // DataTable existiert: Daten direkt per API aktualisieren (kein Destroy)
@@ -5688,8 +5695,14 @@ window.openSpielerModalSimple = function(id) {
   document.getElementById('spNachname').value = s?.nachname || '';
   document.getElementById('spVorname').value  = s?.vorname  || '';
   document.getElementById('spGebDatum').value = s?.geb      || '';
-  document.getElementById('spPosition').value = s?.pos      || 'MF';
-  document.getElementById('spTeam').value     = s?.team     || 'U10';
+  document.getElementById('spPosition').value = s?.pos || 'MF';
+  const playerTeams = s?.teams || (s?.team ? [s.team] : []);
+  document.getElementById('spTeamCheckboxes').innerHTML = (mannschaftenListe || []).map(m =>
+    `<div class="form-check me-1 mb-1">
+      <input class="form-check-input" type="checkbox" id="spTeamCb_${m.id}" value="${m.name}" ${playerTeams.includes(m.name) ? 'checked' : ''}>
+      <label class="form-check-label small" for="spTeamCb_${m.id}">${m.name}</label>
+    </div>`
+  ).join('') || '<span class="text-muted small">Keine Mannschaften angelegt</span>';
   document.getElementById('spError').classList.add('d-none');
   editingNotizSpielerID = id || null;
   renderNotizKatSelect();
@@ -5775,7 +5788,7 @@ window.spielerSimpleSpeichern = async function() {
     pos:      document.getElementById('spPosition').value,
     nachname, vorname,
     geb:      document.getElementById('spGebDatum').value,
-    team:     document.getElementById('spTeam').value,
+    teams:    [...document.querySelectorAll('#spTeamCheckboxes input:checked')].map(cb => cb.value),
     foto:     fotoUrl,
     skills:{}, slv:60,
   };
@@ -5996,7 +6009,7 @@ function playerSLV(s) {
 window.openStartwerteModal = function() {
   const team = document.getElementById('spFilterTeam').value || 'U10';
   document.getElementById('swTeam').value = team;
-  const teamPlayers = spielerData.filter(s => !s.softDeleted && s.team === team);
+  const teamPlayers = spielerData.filter(s => !s.softDeleted && (s.teams || [s.team]).includes(team));
   if (teamPlayers.length) {
     // Show current average base values for the team
     SKILL_TYPES.forEach(t => {
@@ -6013,7 +6026,7 @@ window.startwerteSpeichern = function() {
   const base = {};
   SKILL_TYPES.forEach(t => { base[t] = parseInt(document.getElementById('sw_' + t).value) || 50; });
   spielerData.forEach(s => {
-    if (s.team === team && !s.softDeleted) {
+    if ((s.teams || [s.team]).includes(team) && !s.softDeleted) {
       s.skillBase = Object.assign({}, s.skillBase || {}, base);
     }
   });
@@ -9240,14 +9253,43 @@ window.renderSitzungDetail = async function(sitzung, typMap, messMap) {
 
 window.openSpielerZuordnung = function(sitzungId) {
   const sitzung = window._aktSitzung;
-  const alleSpiefer = (window._aktAlleSpieler || window.spielerData || []).slice().sort((a, b) =>
-    (a.nachname || '').localeCompare(b.nachname || '', 'de'));
+  const allePlayers = (window._aktAlleSpieler || window.spielerData || []).slice()
+    .sort((a, b) => (a.nachname || '').localeCompare(b.nachname || '', 'de'));
   const assigned = new Set(sitzung.player_ids || []);
-  const html = alleSpiefer.map(sp =>
-    `<div class="form-check"><input class="form-check-input" type="checkbox" id="zuordSp_${sp.id}" value="${sp.id}" ${assigned.size === 0 || assigned.has(sp.id) ? 'checked' : ''}>
-     <label class="form-check-label" for="zuordSp_${sp.id}">${sp.nachname || ''} ${sp.vorname || ''}</label></div>`
-  ).join('');
-  document.getElementById('spielerZuordnungContent').innerHTML = html || '<p class="text-muted small">Keine Spieler vorhanden.</p>';
+
+  const allTeams = [...new Set(allePlayers.flatMap(sp => sp.teams || (sp.team ? [sp.team] : [])).filter(Boolean))].sort();
+
+  window._renderZuordnungList = function(teamFilter) {
+    const filtered = teamFilter
+      ? allePlayers.filter(sp => (sp.teams || [sp.team]).includes(teamFilter))
+      : allePlayers;
+    const html = filtered.map(sp => {
+      const badges = (sp.teams || [sp.team]).filter(Boolean)
+        .map(t => `<span class="badge bg-secondary ms-1" style="font-size:.68rem">${t}</span>`).join('');
+      return `<div class="form-check d-flex align-items-center">
+        <input class="form-check-input me-2" type="checkbox" id="zuordSp_${sp.id}" value="${sp.id}" ${assigned.size === 0 || assigned.has(sp.id) ? 'checked' : ''}>
+        <label class="form-check-label flex-grow-1" for="zuordSp_${sp.id}">${sp.nachname || ''} ${sp.vorname || ''}${badges}</label>
+      </div>`;
+    }).join('');
+    document.getElementById('_zuordList').innerHTML = html || '<p class="text-muted small mb-0">Keine Spieler.</p>';
+    document.getElementById('_zuordCount').textContent = filtered.length + ' Spieler';
+  };
+
+  window._filterZuordnung = function() {
+    window._renderZuordnungList(document.getElementById('_zuordTeamFilter').value);
+  };
+
+  document.getElementById('spielerZuordnungContent').innerHTML = `
+    <div class="d-flex gap-2 align-items-center mb-2">
+      <select id="_zuordTeamFilter" class="form-select form-select-sm" style="width:auto" onchange="window._filterZuordnung()">
+        <option value="">Alle Mannschaften</option>
+        ${allTeams.map(t => `<option value="${t}">${t}</option>`).join('')}
+      </select>
+      <span class="text-muted small" id="_zuordCount"></span>
+    </div>
+    <div id="_zuordList"></div>`;
+
+  window._renderZuordnungList('');
   document.getElementById('spielerZuordnungSitzungId').value = sitzungId;
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSpielerZuordnung')).show();
 };
@@ -12553,7 +12595,8 @@ window.fsSaveSpieler = async function fsSaveSpieler(obj) {
       tenant_id:    tid || '',
       rnr:          obj.rnr || 0,
       pos:          obj.pos || '',
-      team:         obj.team || '',
+      team:         (obj.teams || [])[0] || '',
+      teams:        obj.teams || [],
       skillBase:    obj.skillBase || {},
       campScore:    obj.campScore || {},
       lieblingsverein: obj.lieblingsverein || [],
@@ -12608,7 +12651,8 @@ async function fsLoadSpieler() {
         foto:            pd.foto_url   || '',
         rnr:             sd.rnr        || 0,
         pos:             sd.pos        || '',
-        team:            sd.team       || '',
+        teams:           sd.teams || (sd.team ? [sd.team] : []),
+        team:            (sd.teams || [])[0] || sd.team || '',
         skillBase:       sd.skillBase  || {},
         campScore:       sd.campScore  || {},
         xp:              sd.xp         || 0,
