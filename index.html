@@ -10304,8 +10304,17 @@ window.renderMessungstypenView = async function() {
     calcSnap.forEach(d => { calcMap[d.id] = d.data(); });
     const calcLabel = { best:'Bester Wert', min:'Niedrigster Wert', last:'Letzter Wert', avg:'Durchschnitt', sum:'Summe' };
     const modeIcon = m => m === 'fun' ? '🎮' : m === 'both' ? '🎮📈' : '📈';
+    const xpSummary = cfg => {
+      if (!cfg) return '<span class="text-muted small">–</span>';
+      const parts = [];
+      if (cfg.exercise_xp)    parts.push(`<span title="Übungs-XP" style="background:#fff8e1;border:1px solid #ffe082;border-radius:4px;padding:1px 5px;font-size:.7rem"><i class="bi bi-star-fill text-warning" style="font-size:.65rem"></i> ${cfg.exercise_xp}</span>`);
+      if (cfg.start_threshold && cfg.start_xp) parts.push(`<span title="Meilenstein ab ${cfg.start_threshold}" style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:4px;padding:1px 5px;font-size:.7rem"><i class="bi bi-trophy-fill text-success" style="font-size:.65rem"></i> ${cfg.start_xp}</span>`);
+      if (cfg.improvement_unit && cfg.improvement_xp) parts.push(`<span title="Steigerung: ${cfg.improvement_xp} XP / ${cfg.improvement_unit} Einheit" style="background:#e3f2fd;border:1px solid #90caf9;border-radius:4px;padding:1px 5px;font-size:.7rem"><i class="bi bi-graph-up-arrow text-primary" style="font-size:.65rem"></i> +${cfg.improvement_xp}/${cfg.improvement_unit}</span>`);
+      if (cfg.decline_xp)     parts.push(`<span title="Abzug nach ${cfg.decline_attempts || 3} schlechten Versuchen" style="background:#fce4ec;border:1px solid #f48fb1;border-radius:4px;padding:1px 5px;font-size:.7rem"><i class="bi bi-graph-down-arrow text-danger" style="font-size:.65rem"></i> -${cfg.decline_xp}</span>`);
+      return parts.length ? parts.join(' ') : '<span class="text-muted small">–</span>';
+    };
     el.innerHTML = `<table class="table table-sm align-middle mb-0">
-      <thead class="table-dark"><tr><th>Name</th><th>Kategorie</th><th>Einheit</th><th>Berechnungsmethode</th><th>System</th><th>Score</th><th>XP</th><th>Inv.</th><th>Video</th><th>Status</th><th></th></tr></thead>
+      <thead class="table-dark"><tr><th>Name</th><th>Kategorie</th><th>Einheit</th><th>Berechnungsmethode</th><th>System</th><th>Score</th><th>XP-Regeln</th><th>Inv.</th><th>Video</th><th>Status</th><th></th></tr></thead>
       <tbody>${typen.map(t => {
         const cm = calcMap[t.calc_method_id];
         const calcText = cm ? `<span class="fw-bold">${cm.name}</span><br><span class="text-muted" style="font-size:.7rem">${calcLabel[cm.aggregation]||cm.aggregation}, ${cm.weight??50}%</span>`
@@ -10318,7 +10327,7 @@ window.renderMessungstypenView = async function() {
         <td style="min-width:160px">${calcText}</td>
         <td title="System-Modus">${modeIcon(t.system_mode)}</td>
         <td title="Fließt in Skill-Score ein">${tick(t.use_for_score !== false)}</td>
-        <td title="XP vergeben">${tick(t.use_for_xp !== false)}</td>
+        <td style="min-width:180px">${t.use_for_xp !== false ? xpSummary(t.xp_config) : '<span class="text-muted small">inaktiv</span>'}</td>
         <td title="Invertiert (niedriger=besser)">${tick(t.calc_config?.invert)}</td>
         <td title="Video-Analyse (SSA)">${tick(t.video_analyse)}</td>
         <td><span class="badge ${t.active ? 'bg-success' : 'bg-secondary'}">${t.active ? 'Aktiv' : 'Inaktiv'}</span></td>
