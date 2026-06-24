@@ -9640,9 +9640,12 @@ function _calcSkill(vals, config) {
   const sorted = [...vals].sort((a, b) => invert ? a - b : b - a);
 
   // PERFORMANCE (60%): Durchschnitt der besten N Werte, normalisiert
-  const topVals       = sorted.slice(0, topN);
+  // Bei invert (Zeit/Sekunden): niedriger Wert = besser → (1 - wert/max) × 100
+  const topVals        = sorted.slice(0, topN);
   const performanceRaw = _avg(topVals);
-  const performance   = _clamp((performanceRaw / config.max_value) * 100, 0, 100);
+  const performance    = invert
+    ? _clamp((1 - performanceRaw / config.max_value) * 100, 0, 100)
+    : _clamp((performanceRaw / config.max_value) * 100, 0, 100);
 
   // CONSISTENCY (25%): Variationskoeffizient — niedriger std = konstanter
   const mean        = _avg(vals);
