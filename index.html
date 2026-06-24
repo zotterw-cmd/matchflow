@@ -7817,7 +7817,7 @@ window.mannschaftSpeichern = async function() {
     if (m) { m.name = name; m.verwalter = verwalter; m.color = color; }
     await fsSaveMannschaft(mannschaftenListe.find(x => x.id === editingMannschaftId));
   } else {
-    const newM = { id: 'mann_' + Date.now(), name, verwalter, color, groups, aktiv: true };
+    const newM = { id: 'mann_' + Date.now(), name, verwalter, color, aktiv: true };
     mannschaftenListe.push(newM);
     await fsSaveMannschaft(newM);
   }
