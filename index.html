@@ -3253,7 +3253,10 @@ body.sa-mode .sa-var{display:inline}
       <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
     </div>
     <div class="modal-body">
-      <div class="mb-3"><label class="form-label fw-bold">Bezeichnung</label><input type="text" id="mfName" class="form-control"></div>
+      <div class="row g-2 mb-3">
+        <div class="col"><label class="form-label fw-bold">Bezeichnung</label><input type="text" id="mfName" class="form-control"></div>
+        <div class="col-auto"><label class="form-label fw-bold">Farbe</label><div><input type="color" id="mfColor" value="#212529" style="width:48px;height:38px;border:1px solid #ced4da;border-radius:.375rem;padding:2px;cursor:pointer"></div></div>
+      </div>
       <div class="mb-3"><label class="form-label fw-bold">Verwalter</label><div id="mfVerwalterList" class="border rounded p-2" style="max-height:160px;overflow-y:auto"></div></div>
       <div id="mfError" class="alert alert-danger d-none"></div>
     </div>
@@ -5607,7 +5610,7 @@ function _buildSpielerRow(s) {
     <td><span class="badge bg-secondary">${s.pos}</span></td>
     <td><strong>${s.nachname}</strong></td><td>${s.vorname}</td>
     <td data-order="${s.geb || ''}">${s.geb ? new Date(s.geb+'T12:00').toLocaleDateString('de-AT') : '—'}</td>
-    <td>${(s.teams||[s.team]).filter(Boolean).map(t=>`<span class="badge bg-dark me-1">${t}</span>`).join('') || '–'}</td>
+    <td>${(s.teams||[s.team]).filter(Boolean).map(t=>{const c=(mannschaftenListe.find(m=>m.name===t)||{}).color||'#212529';return`<span class="badge me-1" style="background:${c}">${t}</span>`;}).join('') || '–'}</td>
     <td><strong>${slv}</strong></td>
     ${skillCell('speed')}${skillCell('attack')}${skillCell('bonus')}${skillCell('shoot')}${skillCell('skill')}${skillCell('pass')}${skillCell('def')}
     <td>${(() => { const xp = s.xp || 0; const max = 1000; const pct = Math.min(100, Math.round(xp/max*100)); return `<div style="min-width:80px"><div class="d-flex justify-content-between" style="font-size:.7rem"><span class="fw-bold">${xp}</span><span class="text-muted">${max}</span></div><div class="progress" style="height:6px"><div class="progress-bar bg-warning" style="width:${pct}%"></div></div><div class="text-muted text-center" style="font-size:.65rem">${pct}%</div>`; })()}</td>
@@ -5700,7 +5703,9 @@ window.openSpielerModalSimple = function(id) {
   document.getElementById('spTeamCheckboxes').innerHTML = (mannschaftenListe || []).map(m =>
     `<div class="form-check me-1 mb-1">
       <input class="form-check-input" type="checkbox" id="spTeamCb_${m.id}" value="${m.name}" ${playerTeams.includes(m.name) ? 'checked' : ''}>
-      <label class="form-check-label small" for="spTeamCb_${m.id}">${m.name}</label>
+      <label class="form-check-label small" for="spTeamCb_${m.id}">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${m.color||'#212529'};vertical-align:middle;margin-right:3px"></span>${m.name}
+      </label>
     </div>`
   ).join('') || '<span class="text-muted small">Keine Mannschaften angelegt</span>';
   document.getElementById('spError').classList.add('d-none');
@@ -7562,7 +7567,7 @@ window.renderMannschaften = function() {
   if (!body) return;
   body.innerHTML = mannschaftenListe.map(m => `
     <tr id="mrow-${m.id}">
-      <td><strong id="mname-${m.id}">${m.name}</strong></td>
+      <td><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${m.color||'#212529'};vertical-align:middle;margin-right:6px"></span><strong id="mname-${m.id}">${m.name}</strong></td>
       <td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" ${m.aktiv!==false?'checked':''} onchange="toggleMannschaft('${m.id}',this)"></div></td>
       <td><span class="badge ${m.aktiv!==false?'bg-success':'bg-secondary'}" id="mstatus-${m.id}">${m.aktiv!==false?'Aktiv':'Inaktiv'}</span></td>
       <td id="mverwalter-${m.id}">${(m.verwalter||[]).map(v=>`<span class="me-2"><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>${v}</span>`).join('')||'—'}</td>
@@ -7591,7 +7596,8 @@ window.openMannschaftModal = function(id) {
   const m = id ? mannschaftenListe.find(x => x.id === id) : null;
   document.getElementById('modalMannschaftTitle').innerHTML = `<i class="bi bi-diagram-3-fill me-2"></i>${id?'Bearbeiten':'Neue Mannschaft'}`;
   document.getElementById('mfError').classList.add('d-none');
-  document.getElementById('mfName').value = m?.name || '';
+  document.getElementById('mfName').value  = m?.name  || '';
+  document.getElementById('mfColor').value = m?.color || '#212529';
   const current = m?.verwalter || [];
   // Trainer aus Benutzer-Liste ermitteln
   const trainerNamen = (window._allUsers||[]).filter(u=>u.modus==='trainer').map(u=>u.name).sort();
@@ -7607,12 +7613,13 @@ window.mannschaftSpeichern = async function() {
   if (!name) { err.classList.remove('d-none'); err.textContent='Bezeichnung erforderlich.'; return; }
   err.classList.add('d-none');
   const verwalter = [...document.querySelectorAll('#mfVerwalterList input:checked')].map(cb=>cb.value);
+  const color = document.getElementById('mfColor').value || '#212529';
   if (editingMannschaftId) {
     const m = mannschaftenListe.find(x => x.id === editingMannschaftId);
-    if (m) { m.name = name; m.verwalter = verwalter; }
+    if (m) { m.name = name; m.verwalter = verwalter; m.color = color; }
     await fsSaveMannschaft(mannschaftenListe.find(x => x.id === editingMannschaftId));
   } else {
-    const newM = { id: 'mann_' + Date.now(), name, verwalter, aktiv: true };
+    const newM = { id: 'mann_' + Date.now(), name, verwalter, color, aktiv: true };
     mannschaftenListe.push(newM);
     await fsSaveMannschaft(newM);
   }
@@ -9265,7 +9272,7 @@ window.openSpielerZuordnung = function(sitzungId) {
       : allePlayers;
     const html = filtered.map(sp => {
       const badges = (sp.teams || [sp.team]).filter(Boolean)
-        .map(t => `<span class="badge bg-secondary ms-1" style="font-size:.68rem">${t}</span>`).join('');
+        .map(t => { const c = (mannschaftenListe.find(m=>m.name===t)||{}).color||'#6c757d'; return `<span class="badge ms-1" style="font-size:.68rem;background:${c}">${t}</span>`; }).join('');
       return `<div class="form-check d-flex align-items-center">
         <input class="form-check-input me-2" type="checkbox" id="zuordSp_${sp.id}" value="${sp.id}" ${assigned.size === 0 || assigned.has(sp.id) ? 'checked' : ''}>
         <label class="form-check-label flex-grow-1" for="zuordSp_${sp.id}">${sp.nachname || ''} ${sp.vorname || ''}${badges}</label>
