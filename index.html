@@ -1926,6 +1926,66 @@ body.sa-mode .sa-var{display:inline}
     <button class="btn btn-dark" onclick="openMannschaftModal(null)"><i class="bi bi-plus-circle-fill"></i> Neue Mannschaft</button>
   </div>
   <p class="text-muted mb-4">Mannschaften verwalten und Verwalter zuweisen</p>
+
+  <!-- Vereinsprofil -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-dark text-white d-flex align-items-center justify-content-between">
+      <span><i class="bi bi-shield-fill me-2"></i><strong>Vereinsprofil</strong></span>
+      <button class="btn btn-sm btn-outline-light" onclick="vereinProfilSpeichern()"><i class="bi bi-save me-1"></i>Speichern</button>
+    </div>
+    <div class="card-body">
+      <div class="row g-3 align-items-start">
+        <!-- Logo -->
+        <div class="col-auto">
+          <div style="width:80px;height:80px;border:2px dashed #ced4da;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;background:#f8f9fa" onclick="document.getElementById('vereinLogoInput').click()" title="Logo hochladen">
+            <img id="vereinLogoPreview" src="" alt="" style="width:76px;height:76px;object-fit:contain;display:none">
+            <i id="vereinLogoPlaceholder" class="bi bi-shield text-muted" style="font-size:2rem"></i>
+          </div>
+          <input type="file" id="vereinLogoInput" accept="image/*" style="display:none" onchange="vereinLogoUpload(event)">
+          <div class="text-center mt-1" style="font-size:.7rem;color:#6c757d">Logo</div>
+        </div>
+        <!-- Felder -->
+        <div class="col">
+          <div class="row g-2">
+            <div class="col-md-4">
+              <label class="form-label fw-bold mb-1" style="font-size:.82rem">Vereinsname</label>
+              <input type="text" id="vpName" class="form-control form-control-sm" placeholder="z.B. ATUS Bärnbach">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold mb-1" style="font-size:.82rem">Vereinsfarbe</label>
+              <div class="input-group input-group-sm" style="width:130px">
+                <input type="color" id="vpColor" value="#212529" oninput="document.getElementById('vpColorHex').value=this.value">
+                <input type="text" id="vpColorHex" class="form-control" maxlength="7" placeholder="#212529" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value))document.getElementById('vpColor').value=this.value">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold mb-1" style="font-size:.82rem">Vereinsadmin</label>
+              <select id="vpAdmin" class="form-select form-select-sm">
+                <option value="">— Bitte wählen —</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold mb-1" style="font-size:.82rem">Ort</label>
+              <input type="text" id="vpOrt" class="form-control form-control-sm" placeholder="z.B. Bärnbach">
+            </div>
+            <div class="col-md-8">
+              <label class="form-label fw-bold mb-1" style="font-size:.82rem">Adresse</label>
+              <input type="text" id="vpAdresse" class="form-control form-control-sm" placeholder="z.B. Sportplatzweg 1, 8572 Bärnbach">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold mb-1" style="font-size:.82rem">Website</label>
+              <input type="url" id="vpWebsite" class="form-control form-control-sm" placeholder="https://...">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold mb-1" style="font-size:.82rem">Kontakt-E-Mail</label>
+              <input type="email" id="vpEmail" class="form-control form-control-sm" placeholder="office@verein.at">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="vpStatus" class="mt-2" style="min-height:24px"></div>
+    </div>
+  </div>
   <div class="row mb-4">
     <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Gesamt</h6><h3 id="statTeams">2</h3></div></div>
     <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Aktiv</h6><h3 id="statTeamsAktiv">2</h3></div></div>
@@ -3858,7 +3918,7 @@ window.showView = function(view) {
   if (view === 'training') { initTrainingPage(); }
   if (view === 'uebungen') renderUebungen();
   if (view === 'users')    renderUsersView();
-  if (view === 'mannschaften') renderMannschaften();
+  if (view === 'mannschaften') { renderMannschaften(); vereinProfilLoad(); }
   if (view === 'skillcalc') scRenderAll();
   if (view === 'media')    mediaTabInit();
   if (view === 'leistung') renderLeistungView();
@@ -13483,6 +13543,99 @@ window.loadMediaConfig = async function loadMediaConfig() {
     if (snap.exists()) _mediaCfgCache = snap.data();
   } catch(e) { console.warn('loadMediaConfig:', e.message); }
 }
+
+// ── Vereinsprofil ────────────────────────────────────────────────────────────
+window.vereinProfilLoad = async function() {
+  const db = window._firestoreDB;
+  if (!db) return;
+  try {
+    const { doc, getDoc, collection, query, where, getDocs } = window._firestoreAPI;
+    const tid = window._currentTenantId;
+
+    // Tenant-Daten laden
+    const snap = await getDoc(doc(db, 'tenants', tid));
+    const d = snap.exists() ? snap.data() : {};
+    const vp = d.profil || {};
+
+    const setV = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+    setV('vpName',    d.name || '');
+    setV('vpOrt',     vp.ort || '');
+    setV('vpAdresse', vp.adresse || '');
+    setV('vpWebsite', vp.website || '');
+    setV('vpEmail',   vp.email || '');
+    const color = vp.farbe || '#212529';
+    const colEl = document.getElementById('vpColor'); if (colEl) colEl.value = color;
+    const hexEl = document.getElementById('vpColorHex'); if (hexEl) hexEl.value = color;
+    // Logo
+    const img = document.getElementById('vereinLogoPreview');
+    const ph  = document.getElementById('vereinLogoPlaceholder');
+    if (img && vp.logo) { img.src = vp.logo; img.style.display = ''; ph.style.display = 'none'; }
+    else if (img)       { img.style.display = 'none'; if (ph) ph.style.display = ''; }
+
+    // Admin-Dropdown: alle User außer Eltern + Spieler
+    const excludeRoles = ['role_eltern','role_spieler'];
+    const usersSnap = await getDocs(query(collection(db,'users'), where('tenantId','==',tid)));
+    const admins = usersSnap.docs
+      .map(u => ({ id: u.id, ...u.data() }))
+      .filter(u => u.status === 'active' && !(u.roleIds||[]).every(r => excludeRoles.includes(r)))
+      .sort((a,b) => (a.displayName||'').localeCompare(b.displayName||''));
+    const sel = document.getElementById('vpAdmin');
+    if (sel) {
+      sel.innerHTML = '<option value="">— Bitte wählen —</option>' +
+        admins.map(u => `<option value="${u.id}" ${vp.adminUid === u.id ? 'selected' : ''}>${u.displayName || u.email || u.id}</option>`).join('');
+    }
+  } catch(e) { console.warn('vereinProfilLoad:', e.message); }
+};
+
+window.vereinProfilSpeichern = async function() {
+  const db = window._firestoreDB;
+  if (!db) return;
+  const st = document.getElementById('vpStatus');
+  try {
+    const { doc, updateDoc, serverTimestamp } = window._firestoreAPI;
+    const tid = window._currentTenantId;
+    const name = document.getElementById('vpName')?.value.trim() || '';
+    await updateDoc(doc(db,'tenants',tid), {
+      name,
+      profil: {
+        ort:      document.getElementById('vpOrt')?.value.trim()     || '',
+        adresse:  document.getElementById('vpAdresse')?.value.trim() || '',
+        website:  document.getElementById('vpWebsite')?.value.trim() || '',
+        email:    document.getElementById('vpEmail')?.value.trim()   || '',
+        farbe:    document.getElementById('vpColor')?.value          || '#212529',
+        adminUid: document.getElementById('vpAdmin')?.value          || '',
+        logo:     document.getElementById('vereinLogoPreview')?.src && document.getElementById('vereinLogoPreview')?.style.display !== 'none'
+                    ? document.getElementById('vereinLogoPreview').src : '',
+      },
+      updated_at: serverTimestamp(),
+    });
+    if (st) { st.innerHTML = '<span class="text-success small"><i class="bi bi-check-circle-fill me-1"></i>Gespeichert</span>'; setTimeout(()=>{ if(st) st.innerHTML=''; }, 3000); }
+  } catch(e) {
+    if (st) st.innerHTML = `<span class="text-danger small"><i class="bi bi-x-circle-fill me-1"></i>${e.message}</span>`;
+  }
+};
+
+window.vereinLogoUpload = async function(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try {
+    const url = await uploadToMediaServer(file, 'verein', window._currentTenantId);
+    const img = document.getElementById('vereinLogoPreview');
+    const ph  = document.getElementById('vereinLogoPlaceholder');
+    if (img) { img.src = url; img.style.display = ''; }
+    if (ph)  { ph.style.display = 'none'; }
+  } catch(e) {
+    // Fallback: Base64-Vorschau
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = document.getElementById('vereinLogoPreview');
+      const ph  = document.getElementById('vereinLogoPlaceholder');
+      if (img) { img.src = ev.target.result; img.style.display = ''; }
+      if (ph)  { ph.style.display = 'none'; }
+    };
+    reader.readAsDataURL(file);
+  }
+};
 
 window.mediaTabInit = async function() {
   await loadMediaConfig();
