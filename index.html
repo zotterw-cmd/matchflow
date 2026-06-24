@@ -7655,6 +7655,7 @@ window.renderPlayerGroups = function(filterTeamId) {
         <span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${g.color||'#6c757d'}"></span>
         <strong class="small">${g.name}</strong>
         <button class="btn btn-outline-secondary btn-sm py-0 px-1" onclick="openPlayerGroupModal('${g.id}',null)" title="Bearbeiten"><i class="bi bi-pencil" style="font-size:.7rem"></i></button>
+        <button class="btn btn-outline-primary btn-sm py-0 px-1" onclick="copyPlayerGroup('${g.id}')" title="Kopieren"><i class="bi bi-copy" style="font-size:.7rem"></i></button>
         <button class="btn btn-outline-danger btn-sm py-0 px-1" onclick="deletePlayerGroup('${g.id}')" title="Löschen"><i class="bi bi-trash-fill" style="font-size:.7rem"></i></button>
       </div>
     </div>`).join('');
@@ -7701,6 +7702,25 @@ window.savePlayerGroup = async function() {
     const s   = sid ? spielerData.find(x => x.id === sid) : null;
     if (s) _renderSpGroups(s);
   }
+};
+
+window.copyPlayerGroup = function(id) {
+  const g = window._playerGroups.find(x => x.id === id);
+  if (!g) return;
+  // Modal öffnen mit denselben Werten, aber ohne ID → wird als neue Gruppe gespeichert
+  document.getElementById('pgEditId').value     = '';
+  document.getElementById('pgEditTeamId').value = g.team_id || '';
+  document.getElementById('pgName').value        = g.name + ' (Kopie)';
+  document.getElementById('pgColor').value       = g.color || '#1e56bd';
+  document.getElementById('pgColorHex').value    = g.color || '#1e56bd';
+  document.getElementById('pgError').classList.add('d-none');
+  const sel = document.getElementById('pgTeamId');
+  sel.innerHTML = '<option value="">Global (alle Teams)</option>' +
+    mannschaftenListe.filter(m => m.aktiv !== false).map(m =>
+      `<option value="${m.id}" ${g.team_id === m.id ? 'selected' : ''}>${m.name}</option>`
+    ).join('');
+  document.getElementById('modalPlayerGroupTitle').innerHTML = '<i class="bi bi-tag-fill me-2"></i>Gruppe kopieren';
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPlayerGroup')).show();
 };
 
 window.deletePlayerGroup = async function(id) {
