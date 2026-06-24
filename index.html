@@ -6026,7 +6026,7 @@ window.openSpielerCsvImport = function() {
   if (sel) {
     sel.innerHTML = '<option value="">— Bitte wählen —</option>' +
       mannschaftenListe.filter(m => !m.softDeleted && m.aktiv !== false)
-        .map(m => `<option value="${m.name}">${m.name}</option>`).join('');
+        .map(m => `<option value="${m.name}" ${m.name.toLowerCase().includes('camp') ? 'selected' : ''}>${m.name}</option>`).join('');
   }
   document.getElementById('spCsvFile').value = '';
   document.getElementById('spCsvVorschauBereich').style.display = 'none';
@@ -6140,21 +6140,28 @@ window.spCsvImportStarten = async function() {
       const existing = spielerData.find(s => s.vorname.toLowerCase() === p.vorname.toLowerCase() && s.nachname.toLowerCase() === p.nachname.toLowerCase());
       if (existing && dupModus === 'skip') { skipped++; continue; }
 
-      // Gruppe → group_id
+      // Gruppe → group_id (neue Gruppe mergen, bestehende behalten)
       const grpMatch  = (window._playerGroups||[]).find(g => g.name.toLowerCase() === p.gruppe.toLowerCase());
-      const group_ids = grpMatch ? [grpMatch.id] : [];
+      const newGrpIds = grpMatch ? [grpMatch.id] : [];
+      const group_ids = existing
+        ? [...new Set([...(existing.group_ids||[]), ...newGrpIds])]
+        : newGrpIds;
+
+      // Teams: bestehende Teams behalten + neue Mannschaft dazufügen
+      const existingTeams = existing ? (existing.teams || (existing.team ? [existing.team] : [])) : [];
+      const teams = [...new Set([...existingTeams, mannschaft])];
 
       const spId = existing ? existing.id : ('p' + (++spielerCounter));
       const obj  = {
         id: spId,
         vorname:  p.vorname,
         nachname: p.nachname,
-        geb:      p.geb,
+        geb:      p.geb || existing?.geb || '',
         geschl:   p.geschl,
-        teams:    [mannschaft],
+        teams,
         group_ids,
-        lieblingsverein: p.lieblingsverein,
-        hauptverein:     p.hauptverein,
+        lieblingsverein: p.lieblingsverein.length ? p.lieblingsverein : (existing?.lieblingsverein || []),
+        hauptverein:     p.hauptverein || existing?.hauptverein || '',
         foto: existing?.foto || '',
         rnr:  existing?.rnr  || 0,
         pos:  existing?.pos  || 'MF',
