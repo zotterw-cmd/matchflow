@@ -10430,7 +10430,7 @@ window.messungstypSpeichern = async function() {
     improvement_unit:  parseFloat(document.getElementById('messungstypXpImprovUnit').value)     || 1,
     improvement_xp:    parseInt(document.getElementById('messungstypXpImprovXp').value)         || 1,
     decline_attempts:  parseInt(document.getElementById('messungstypXpDeclineAttempts').value)  || 3,
-    decline_xp:        parseInt(document.getElementById('messungstypXpDeclineXp').value)        || 5,
+    decline_xp:        parseInt(document.getElementById('messungstypXpDeclineXp').value)        ?? 0,
   };
   const systemMode   = document.querySelector('input[name="messungstypSystemMode"]:checked')?.value || 'performance';
   const useForScore  = document.getElementById('messungstypUseForScore').checked;
