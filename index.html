@@ -9258,12 +9258,17 @@ window.openSitzungBearbeiten = async function(id) {
     if (teamSel) teamSel.innerHTML  = '<option value="">Alle Teams</option>'  + allTeams.map(t  => `<option value="${t}">${t}</option>`).join('');
     if (grpSel)  grpSel.innerHTML   = '<option value="">Alle Gruppen</option>' + allGroups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
 
-    spielerEl.innerHTML = spielerRich.map(sp => `<div class="form-check sitz-sp-row"
+    spielerEl.innerHTML = spielerRich.map(sp => {
+      const grpDots = (sp.group_ids||[]).map(gid => {
+        const g = (window._playerGroups||[]).find(x => x.id === gid);
+        return g ? `<span title="${g.name}" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${g.color||'#6c757d'};vertical-align:middle;margin-right:2px"></span>` : '';
+      }).join('');
+      return `<div class="form-check sitz-sp-row"
         data-teams="${(sp.teams||[sp.team]).filter(Boolean).join(',')}"
         data-groups="${(sp.group_ids||[]).join(',')}">
         <input class="form-check-input" type="checkbox" id="sitzSp_${sp.id}" value="${sp.id}" ${checkedSpieler.includes(sp.id) ? 'checked' : ''}>
-        <label class="form-check-label" for="sitzSp_${sp.id}">${sp.nachname || ''} ${sp.vorname || ''}</label></div>`
-    ).join('') || '<p class="text-muted small mb-0">Keine Spieler.</p>';
+        <label class="form-check-label" for="sitzSp_${sp.id}">${grpDots}${sp.nachname || ''} ${sp.vorname || ''}</label></div>`;
+    }).join('') || '<p class="text-muted small mb-0">Keine Spieler.</p>';
 
     window._filterSitzSpieler = function() {
       const tf = document.getElementById('sitzSpFilterTeam')?.value  || '';
