@@ -459,7 +459,7 @@ body.sa-mode .sa-var{display:inline}
   <!-- Implementierungsstand -->
   <div class="card shadow-sm p-3 mb-3" id="dashRoadmapCard">
     <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-      <h6 class="fw-bold mb-0"><i class="bi bi-kanban text-primary me-2"></i>Implementierungsstand MatchFlow <span class="badge bg-dark">v1.7.8</span></h6>
+      <h6 class="fw-bold mb-0"><i class="bi bi-kanban text-primary me-2"></i>Implementierungsstand MatchFlow <span class="badge bg-dark">v1.7.8</span> <span class="badge bg-warning text-dark ms-1">→ ab nächster Session v1.7.8.x</span></h6>
       <div class="d-flex gap-2">
         <button class="btn btn-outline-secondary btn-sm" onclick="document.querySelectorAll('.rm-collapse').forEach(el=>bootstrap.Collapse.getOrCreateInstance(el).show())">Alle ausklappen</button>
         <button class="btn btn-outline-secondary btn-sm" onclick="document.querySelectorAll('.rm-collapse').forEach(el=>bootstrap.Collapse.getOrCreateInstance(el).hide())">Alle einklappen</button>
@@ -592,14 +592,13 @@ body.sa-mode .sa-var{display:inline}
     </div>
 
     <!-- v1.7.7 – XP-System & Gamification -->
-    <div class="border rounded border-success mb-2">
+    <div class="border rounded mb-2">
       <button class="btn btn-link text-start w-100 fw-bold text-decoration-none d-flex justify-content-between align-items-center px-3 py-2"
         onclick="bootstrap.Collapse.getOrCreateInstance(document.getElementById('rm177')).toggle()">
-        <span><i class="bi bi-stars text-warning me-2"></i>v1.7.7 &nbsp;<span class="fw-normal text-muted small">XP-System, Gamification, Regain</span></span>
-        <span class="badge bg-success ms-2">24.06.2026</span>
+        <span><i class="bi bi-check-circle-fill text-success me-2"></i>v1.7.7 &nbsp;<span class="fw-normal text-muted small">XP-System, Gamification, Regain</span></span>
         <i class="bi bi-chevron-down text-muted small"></i>
       </button>
-      <div class="collapse show rm-collapse" id="rm177">
+      <div class="collapse rm-collapse" id="rm177">
         <ul class="list-unstyled small mb-0 px-3 pb-2">
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.7</span> XP-System v2: Übungs-XP + Startschwellen-XP + Steigerungs-XP + Abzug bei Leistungsabfall</li>
           <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.7</span> Teilnahme-XP (Anwesenheitsbonus) pro Messsitzung – einmalig vergeben</li>
@@ -612,28 +611,46 @@ body.sa-mode .sa-var{display:inline}
       </div>
     </div>
 
-    <!-- Geplant -->
+    <!-- v1.7.8 – Vereinsprofil, Camp-Migration, CSV-Import -->
+    <div class="border rounded border-primary mb-2">
+      <button class="btn btn-link text-start w-100 fw-bold text-decoration-none d-flex justify-content-between align-items-center px-3 py-2"
+        onclick="bootstrap.Collapse.getOrCreateInstance(document.getElementById('rm178')).toggle()">
+        <span><i class="bi bi-check-circle-fill text-success me-2"></i>v1.7.8 &nbsp;<span class="fw-normal text-muted small">Vereinsprofil, Camp-Firestore, CSV-Import, Lieblingsverein</span></span>
+        <span class="badge bg-primary ms-2">25.06.2026</span>
+        <i class="bi bi-chevron-down text-muted small"></i>
+      </button>
+      <div class="collapse show rm-collapse" id="rm178">
+        <ul class="list-unstyled small mb-0 px-3 pb-2">
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.8</span> Mannschaften: Drag &amp; Drop Reihenfolge (sort_order in Firestore)</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.8</span> Mannschaften: Soft-Delete / Hard-Delete / Restore (SuperAdmin), Toggle Aktiv/Inaktiv</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.8</span> Vereinsprofil: neuer Menüpunkt "Verein" – Name, Farben (dynamisch), Logo, Adresse, Google Maps, Website, E-Mail</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.8</span> Vereinsprofil: mehrere Vereinsadmins aus Benutzerliste, in <code>tenants/{tid}.profil</code> gespeichert</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.8</span> Lieblingsverein-Modul: App-Setting toggle, SA sieht Logos, andere nur Text-Badges</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.8</span> CSV-Import für Spieler (camp2026.csv): Mannschaft + Gruppe zuweisen, Duplikat-Handling, Teams mergen</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.8</span> Camp-Tab: <code>_campSpielerView()</code> liest aus Firestore <code>spielerData</code> (Team "Camp"), kein JS-Array mehr</li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.8</span> Camp: Messwerte speichern in <code>player_seasons.campScore</code> via <code>fsSaveSpieler</code></li>
+          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.8</span> Camp: Migrations-Banner – einmalig <code>camp.spieler</code> → <code>spielerData</code> übertragen</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Geplant v1.7.9 -->
     <div class="border rounded mb-2">
       <button class="btn btn-link text-start w-100 fw-bold text-decoration-none d-flex justify-content-between align-items-center px-3 py-2"
         onclick="bootstrap.Collapse.getOrCreateInstance(document.getElementById('rmPlanned')).toggle()">
-        <span><i class="bi bi-calendar3 text-secondary me-2"></i>Geplant &amp; Offen &nbsp;<span class="fw-normal text-muted small">v1.7.8+</span></span>
+        <span><i class="bi bi-calendar3 text-secondary me-2"></i>Geplant &amp; Offen &nbsp;<span class="fw-normal text-muted small">v1.7.9+</span></span>
         <i class="bi bi-chevron-down text-muted small"></i>
       </button>
       <div class="collapse rm-collapse" id="rmPlanned">
         <ul class="list-unstyled small mb-0 px-3 pb-2">
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.8</span> Skill-Kategorien: <code>skill_key</code> + <code>max_value</code> in der App setzbar → aktiviert calcSkill Score-Berechnung</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.8</span> Registrierung: Rollen-Dropdown lädt direkt aus Firestore (ohne Login)</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.8</span> Benutzerverwaltung: Reaktivieren-Button für inaktive Benutzer</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.8</span> Permissions: beim Login live aus Firestore-Rollen berechnet (kein Cache-Problem mehr)</li>
-          <li class="mb-1">✅ <span class="text-muted" style="font-size:.7rem">v1.7.8</span> Leistungsmessungen: Admin-Tabs über <code>measurements.admin</code> Permission steuerbar</li>
-          <li class="mb-1">⏳ <span class="text-muted" style="font-size:.7rem">v1.7.9 – nächster Schritt</span> Spieler-Uploads / Trainer-Review (Spieler reicht Heimwert ein, Trainer genehmigt)</li>
-          <li class="mb-1">⏳ <span class="text-muted" style="font-size:.7rem">v1.7.x</span> Camp-Tab bereinigen + Berechtigungen finalisieren</li>
+          <li class="mb-1">⏳ <span class="text-muted" style="font-size:.7rem">v1.7.9</span> Trainings-TODOs: Wochenansicht, Spieltage, Anwesenheitsliste</li>
+          <li class="mb-1">⏳ <span class="text-muted" style="font-size:.7rem">v1.7.9</span> Eltern-Portal: eigenes Kind sehen (Profil, Stats, XP), Anwesenheit erfassen</li>
+          <li class="mb-1">⏳ <span class="text-muted" style="font-size:.7rem">v1.7.9</span> Spieler-Bereich: eigene Stats, XP-Stand, Regain-Nachrichten, News</li>
+          <li class="mb-1">⏳ <span class="text-muted" style="font-size:.7rem">v1.7.9</span> Spieler-Uploads / Trainer-Review (<code>submissions</code> Collection)</li>
           <li class="mb-1">📅 PPTX-Vorlage finalisieren &amp; testen</li>
           <li class="mb-1">📅 Spielerprofil-Export (Word/PDF)</li>
           <li class="mb-1">📅 Offline-Fähigkeit (IndexedDB Cache)</li>
           <li class="mb-1">📅 Audit Log + Undo</li>
-          <li class="mb-1">📅 Eltern-Portal (Anwesenheit erfassen, eigenes Kind sehen)</li>
-          <li class="mb-1">📅 Spieler-App (eigene Stats, Noten, News)</li>
           <li class="mb-1">📅 Push-Benachrichtigungen (Training, Camp)</li>
         </ul>
       </div>
