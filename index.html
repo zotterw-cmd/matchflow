@@ -1931,7 +1931,7 @@ body.sa-mode .sa-var{display:inline}
   <div class="card shadow-sm p-3 mb-4">
     <div class="table-responsive">
       <table class="table table-align-middle">
-        <thead class="table-dark"><tr><th>Bezeichnung</th><th>Aktiv</th><th>Status</th><th>Verwalter</th><th>Aktionen</th></tr></thead>
+        <thead class="table-dark"><tr><th style="width:28px"></th><th>Bezeichnung</th><th>Aktiv</th><th>Status</th><th>Verwalter</th><th>Aktionen</th></tr></thead>
         <tbody id="mannschaftenBody">
           <tr id="mrow-u10"><td><strong id="mname-mrow-u10">U10</strong></td><td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked onchange="toggleMannschaft('mrow-u10',this)"></div></td><td><span class="badge bg-success" id="mstatus-mrow-u10">Aktiv</span></td><td id="mverwalter-mrow-u10"><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>Muster Maria</td><td id="mactions-mrow-u10"><button class="btn btn-outline-secondary btn-sm" onclick="openMannschaftModal('mrow-u10')"><i class="bi bi-pencil"></i></button><button class="btn btn-warning btn-sm ms-1" onclick="softDelete('mrow-u10')"><i class="bi bi-trash" style="color:#fff"></i></button><button class="btn btn-danger btn-sm ms-1" onclick="hardDelete('mrow-u10')"><i class="bi bi-trash-fill"></i></button></td></tr>
           <tr id="mrow-u12"><td><strong id="mname-mrow-u12">U12</strong></td><td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" checked onchange="toggleMannschaft('mrow-u12',this)"></div></td><td><span class="badge bg-success" id="mstatus-mrow-u12">Aktiv</span></td><td id="mverwalter-mrow-u12"><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>Huber Karl</td><td id="mactions-mrow-u12"><button class="btn btn-outline-secondary btn-sm" onclick="openMannschaftModal('mrow-u12')"><i class="bi bi-pencil"></i></button><button class="btn btn-warning btn-sm ms-1" onclick="softDelete('mrow-u12')"><i class="bi bi-trash" style="color:#fff"></i></button><button class="btn btn-danger btn-sm ms-1" onclick="hardDelete('mrow-u12')"><i class="bi bi-trash-fill"></i></button></td></tr>
@@ -7759,11 +7759,51 @@ window._renderSpGroups = function(s) {
   el.innerHTML = html || '<span class="text-muted small">Keine Gruppen angelegt.</span>';
 };
 
+// ── Drag & Drop Reihenfolge Mannschaften ─────────────────────────────────────
+let _mannDragId = null;
+window._mannDragStart = function(e, id) {
+  _mannDragId = id;
+  e.currentTarget.style.opacity = '0.4';
+  e.dataTransfer.effectAllowed = 'move';
+};
+window._mannDragOver = function(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.style.borderTop = '2px solid #0d6efd';
+};
+window._mannDragEnd = function(e) {
+  e.currentTarget.style.opacity = '';
+  document.querySelectorAll('#mannschaftenBody tr').forEach(r => r.style.borderTop = '');
+};
+window._mannDrop = async function(e, targetId) {
+  e.preventDefault();
+  e.currentTarget.style.borderTop = '';
+  if (!_mannDragId || _mannDragId === targetId) return;
+  const fromIdx = mannschaftenListe.findIndex(m => m.id === _mannDragId);
+  const toIdx   = mannschaftenListe.findIndex(m => m.id === targetId);
+  if (fromIdx < 0 || toIdx < 0) return;
+  // Umsortieren
+  const [moved] = mannschaftenListe.splice(fromIdx, 1);
+  mannschaftenListe.splice(toIdx, 0, moved);
+  // sort_order aktualisieren und speichern
+  mannschaftenListe.forEach((m, i) => { m.sort_order = i; });
+  renderMannschaften();
+  // Alle betroffenen in Firestore speichern
+  await Promise.all(mannschaftenListe.map(m => fsSaveMannschaft(m)));
+};
+
 window.renderMannschaften = function() {
   const body = document.getElementById('mannschaftenBody');
   if (!body) return;
+  // Nach sort_order sortieren
+  mannschaftenListe.sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999));
   body.innerHTML = mannschaftenListe.map(m => `
-    <tr id="mrow-${m.id}">
+    <tr id="mrow-${m.id}" draggable="true" data-mid="${m.id}" style="cursor:grab"
+        ondragstart="window._mannDragStart(event,'${m.id}')"
+        ondragover="window._mannDragOver(event)"
+        ondrop="window._mannDrop(event,'${m.id}')"
+        ondragend="window._mannDragEnd(event)">
+      <td style="width:28px;padding-right:0"><i class="bi bi-grip-vertical text-muted"></i></td>
       <td><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${m.color||'#212529'};vertical-align:middle;margin-right:6px"></span><strong id="mname-${m.id}">${m.name}</strong></td>
       <td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" ${m.aktiv!==false?'checked':''} onchange="toggleMannschaft('${m.id}',this)"></div></td>
       <td><span class="badge ${m.aktiv!==false?'bg-success':'bg-secondary'}" id="mstatus-${m.id}">${m.aktiv!==false?'Aktiv':'Inaktiv'}</span></td>
@@ -7772,7 +7812,7 @@ window.renderMannschaften = function() {
         <button class="btn btn-outline-secondary btn-sm" onclick="openMannschaftModal('${m.id}')"><i class="bi bi-pencil"></i></button>
         <button class="btn btn-danger btn-sm ms-1" onclick="deleteMannschaft('${m.id}')"><i class="bi bi-trash-fill"></i></button>
       </td>
-    </tr>`).join('') || '<tr><td colspan="5" class="text-muted text-center py-3">Keine Mannschaften – bitte anlegen.</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="6" class="text-muted text-center py-3">Keine Mannschaften – bitte anlegen.</td></tr>';
   updateMannschaftStats();
   // Dropdowns synchronisieren
   ['spTeam','spFilterTeam','kartenFilterTeam','buMannschaft'].forEach(selId => {
