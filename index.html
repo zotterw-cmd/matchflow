@@ -7741,15 +7741,15 @@ window._renderSpGroups = function(s) {
     const m = mannschaftenListe.find(x => x.name === tn); return m && m.id === g.team_id;
   }));
 
-  const mkChk = g => `<div class="form-check form-check-inline mb-1">
+  const mkChk = (g, teamLabel) => `<div class="form-check form-check-inline mb-1">
     <input class="form-check-input" type="checkbox" id="spGrpCb_${g.id}" value="${g.id}" ${selIds.includes(g.id) ? 'checked' : ''}>
     <label class="form-check-label small" for="spGrpCb_${g.id}">
-      <span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${g.color||'#6c757d'};vertical-align:middle;margin-right:2px"></span>${g.name}
+      <span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${g.color||'#6c757d'};vertical-align:middle;margin-right:2px"></span>${g.name}${teamLabel ? ` <span class="text-muted">(${teamLabel})</span>` : ''}
     </label></div>`;
 
   let html = '';
-  if (globalGrps.length) html += `<div class="small text-muted mb-1">Global</div><div class="mb-2">${globalGrps.map(mkChk).join('')}</div>`;
-  if (teamGrps.length)   html += `<div class="small text-muted mb-1">Team-spezifisch</div><div>${teamGrps.map(mkChk).join('')}</div>`;
+  if (globalGrps.length) html += `<div class="small text-muted mb-1">Global</div><div class="mb-2">${globalGrps.map(g => mkChk(g, null)).join('')}</div>`;
+  if (teamGrps.length)   html += `<div class="small text-muted mb-1">Team-spezifisch</div><div>${teamGrps.map(g => { const tn = (mannschaftenListe.find(m => m.id === g.team_id)||{}).name||''; return mkChk(g, tn); }).join('')}</div>`;
   el.innerHTML = html || '<span class="text-muted small">Keine Gruppen angelegt.</span>';
 };
 
