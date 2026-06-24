@@ -1928,7 +1928,7 @@ body.sa-mode .sa-var{display:inline}
     <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Aktiv</h6><h3 id="statTeamsAktiv">2</h3></div></div>
     <div class="col-md-3 mb-3"><div class="card p-3 shadow-sm"><h6>Inaktiv</h6><h3 id="statTeamsInaktiv">0</h3></div></div>
   </div>
-  <div class="card shadow-sm p-3">
+  <div class="card shadow-sm p-3 mb-4">
     <div class="table-responsive">
       <table class="table table-align-middle">
         <thead class="table-dark"><tr><th>Bezeichnung</th><th>Aktiv</th><th>Status</th><th>Verwalter</th><th>Aktionen</th></tr></thead>
@@ -1938,6 +1938,19 @@ body.sa-mode .sa-var{display:inline}
         </tbody>
       </table>
     </div>
+  </div>
+
+  <!-- Gruppen-Verwaltung -->
+  <div class="card shadow-sm p-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h6 class="fw-bold mb-0"><i class="bi bi-tags-fill text-primary me-2"></i>Gruppen <span class="text-muted fw-normal small">Globale und team-spezifische Trainingsgruppen</span></h6>
+      <button class="btn btn-dark btn-sm" onclick="openPlayerGroupModal(null, null)"><i class="bi bi-plus-circle-fill"></i> Neue Gruppe</button>
+    </div>
+    <!-- Tab-Filter -->
+    <div class="mb-3 d-flex flex-wrap gap-1" id="pgTabBar">
+      <button class="btn btn-sm btn-dark" onclick="renderPlayerGroups(null)" id="pgTab_global">Global</button>
+    </div>
+    <div id="pgGroupCards" class="row g-2"></div>
   </div>
 </div>
 
@@ -2984,6 +2997,9 @@ body.sa-mode .sa-var{display:inline}
                 <div class="col-12"><label class="form-label">Mannschaften <span class="text-muted fw-normal small">(Mehrfachauswahl möglich)</span></label>
                   <div id="spTeamCheckboxes" class="d-flex flex-wrap gap-2 p-2 border rounded" style="min-height:38px;background:#f8f9fa"></div>
                 </div>
+                <div class="col-12"><label class="form-label">Gruppen <span class="text-muted fw-normal small">(Global + team-spezifisch)</span></label>
+                  <div id="spGroupCheckboxes" class="p-2 border rounded" style="min-height:38px;background:#f8f9fa"></div>
+                </div>
                 <div class="col-6"><label class="form-label">Nachname</label><input type="text" id="spNachname" class="form-control"></div>
                 <div class="col-6"><label class="form-label">Vorname</label><input type="text" id="spVorname" class="form-control"></div>
                 <div class="col-6"><label class="form-label">Geb. Datum</label><input type="date" id="spGebDatum" class="form-control"></div>
@@ -3246,6 +3262,35 @@ body.sa-mode .sa-var{display:inline}
 </div>
 
 <!-- MODAL: Mannschaft -->
+<!-- Modal: Gruppe anlegen/bearbeiten -->
+<div class="modal fade" id="modalPlayerGroup" tabindex="-1">
+  <div class="modal-dialog modal-sm"><div class="modal-content">
+    <div class="modal-header bg-dark text-white">
+      <h5 class="modal-title" id="modalPlayerGroupTitle"><i class="bi bi-tag-fill me-2"></i>Gruppe</h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="pgEditId">
+      <input type="hidden" id="pgEditTeamId">
+      <div class="mb-3 row g-2 align-items-end">
+        <div class="col"><label class="form-label fw-bold">Name</label><input type="text" id="pgName" class="form-control" placeholder="z.B. Blau"></div>
+        <div class="col-auto"><label class="form-label fw-bold">Farbe</label><div><input type="color" id="pgColor" value="#1e56bd" style="width:48px;height:38px;border:1px solid #ced4da;border-radius:.375rem;padding:2px;cursor:pointer"></div></div>
+      </div>
+      <div class="mb-2">
+        <label class="form-label fw-bold">Gültig für</label>
+        <select id="pgTeamId" class="form-select form-select-sm">
+          <option value="">Global (alle Teams)</option>
+        </select>
+      </div>
+      <div id="pgError" class="alert alert-danger d-none small"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Abbrechen</button>
+      <button type="button" class="btn btn-dark btn-sm" onclick="savePlayerGroup()"><i class="bi bi-save me-1"></i>Speichern</button>
+    </div>
+  </div></div>
+</div>
+
 <div class="modal fade" id="modalMannschaft" tabindex="-1">
   <div class="modal-dialog"><div class="modal-content">
     <div class="modal-header bg-dark text-white">
@@ -3257,14 +3302,7 @@ body.sa-mode .sa-var{display:inline}
         <div class="col"><label class="form-label fw-bold">Bezeichnung</label><input type="text" id="mfName" class="form-control"></div>
         <div class="col-auto"><label class="form-label fw-bold">Farbe</label><div><input type="color" id="mfColor" value="#212529" style="width:48px;height:38px;border:1px solid #ced4da;border-radius:.375rem;padding:2px;cursor:pointer"></div></div>
       </div>
-      <div class="mb-3">
-        <div class="d-flex justify-content-between align-items-center mb-1">
-          <label class="form-label fw-bold mb-0">Untergruppen <span class="text-muted fw-normal small">(z.B. Blau, Gelb)</span></label>
-          <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window._mfAddGroup()"><i class="bi bi-plus"></i> Gruppe</button>
-        </div>
-        <div id="mfGroupList" class="d-flex flex-column gap-1"></div>
-      </div>
-      <div class="mb-3"><label class="form-label fw-bold">Verwalter</label><div id="mfVerwalterList" class="border rounded p-2" style="max-height:120px;overflow-y:auto"></div></div>
+      <div class="mb-3"><label class="form-label fw-bold">Verwalter</label><div id="mfVerwalterList" class="border rounded p-2" style="max-height:160px;overflow-y:auto"></div></div>
       <div id="mfError" class="alert alert-danger d-none"></div>
     </div>
     <div class="modal-footer">
@@ -5617,13 +5655,10 @@ function _buildSpielerRow(s) {
     <td><span class="badge bg-secondary">${s.pos}</span></td>
     <td><strong>${s.nachname}</strong></td><td>${s.vorname}</td>
     <td data-order="${s.geb || ''}">${s.geb ? new Date(s.geb+'T12:00').toLocaleDateString('de-AT') : '—'}</td>
-    <td>${(s.teams||[s.team]).filter(Boolean).map(t=>{
-      const mann = mannschaftenListe.find(m=>m.name===t)||{};
-      const c = mann.color||'#212529';
-      const grpIds = (s.team_groups||{})[t]||[];
-      const grpBadges = grpIds.map(gid=>{const g=(mann.groups||[]).find(x=>x.id===gid);return g?`<span class="badge ms-1" style="background:${g.color||'#6c757d'};font-size:.65rem">${g.name}</span>`:''}).join('');
-      return`<span class="badge me-1" style="background:${c}">${t}</span>${grpBadges}`;
-    }).join('') || '–'}</td>
+    <td>
+      ${(s.teams||[s.team]).filter(Boolean).map(t=>{const c=(mannschaftenListe.find(m=>m.name===t)||{}).color||'#212529';return`<span class="badge me-1" style="background:${c}">${t}</span>`;}).join('')||'–'}
+      ${(s.group_ids||[]).map(gid=>{const g=window._playerGroups?.find(x=>x.id===gid);return g?`<span class="badge me-1" style="background:${g.color||'#6c757d'};font-size:.68rem">${g.name}</span>`:''}).join('')}
+    </td>
     <td><strong>${slv}</strong></td>
     ${skillCell('speed')}${skillCell('attack')}${skillCell('bonus')}${skillCell('shoot')}${skillCell('skill')}${skillCell('pass')}${skillCell('def')}
     <td>${(() => { const xp = s.xp || 0; const max = 1000; const pct = Math.min(100, Math.round(xp/max*100)); return `<div style="min-width:80px"><div class="d-flex justify-content-between" style="font-size:.7rem"><span class="fw-bold">${xp}</span><span class="text-muted">${max}</span></div><div class="progress" style="height:6px"><div class="progress-bar bg-warning" style="width:${pct}%"></div></div><div class="text-muted text-center" style="font-size:.65rem">${pct}%</div>`; })()}</td>
@@ -5714,26 +5749,16 @@ window.openSpielerModalSimple = function(id) {
   document.getElementById('spPosition').value = s?.pos || 'MF';
   const playerTeams = s?.teams || (s?.team ? [s.team] : []);
   const playerGroups = s?.team_groups || {};
-  document.getElementById('spTeamCheckboxes').innerHTML = (mannschaftenListe || []).map(m => {
-    const checked = playerTeams.includes(m.name);
-    const selGroups = playerGroups[m.name] || [];
-    const groupHtml = (m.groups || []).length ? `
-      <div class="ms-4 mt-1 d-flex flex-wrap gap-1" id="spGrp_${m.id}" style="${checked ? '' : 'display:none!important'}">
-        ${(m.groups||[]).map(g => `<div class="form-check form-check-inline mb-0">
-          <input class="form-check-input" type="checkbox" id="spGrpCb_${m.id}_${g.id}" data-team="${m.name}" data-grp="${g.id}" ${selGroups.includes(g.id) ? 'checked' : ''}>
-          <label class="form-check-label small" for="spGrpCb_${m.id}_${g.id}">
-            <span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${g.color||'#6c757d'};vertical-align:middle;margin-right:2px"></span>${g.name}
-          </label></div>`).join('')}
-      </div>` : '';
-    return `<div class="mb-1">
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="spTeamCb_${m.id}" value="${m.name}" ${checked ? 'checked' : ''}
-          onchange="const g=document.getElementById('spGrp_${m.id}');if(g){g.style.display=this.checked?'':'none'}">
-        <label class="form-check-label small" for="spTeamCb_${m.id}">
-          <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${m.color||'#212529'};vertical-align:middle;margin-right:3px"></span><strong>${m.name}</strong>
-        </label>
-      </div>${groupHtml}</div>`;
-  }).join('') || '<span class="text-muted small">Keine Mannschaften angelegt</span>';
+  document.getElementById('spTeamCheckboxes').innerHTML = (mannschaftenListe || []).map(m =>
+    `<div class="form-check me-1 mb-1">
+      <input class="form-check-input" type="checkbox" id="spTeamCb_${m.id}" value="${m.name}" ${playerTeams.includes(m.name) ? 'checked' : ''}
+        onchange="window._renderSpGroups(spielerData.find(x=>x.id===window.editingSpielerID)||{teams:[...document.querySelectorAll('#spTeamCheckboxes input:checked')].map(c=>c.value),group_ids:[...document.querySelectorAll('#spGroupCheckboxes input:checked')].map(c=>c.value)})">
+      <label class="form-check-label small" for="spTeamCb_${m.id}">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${m.color||'#212529'};vertical-align:middle;margin-right:3px"></span><strong>${m.name}</strong>
+      </label>
+    </div>`
+  ).join('') || '<span class="text-muted small">Keine Mannschaften angelegt</span>';
+  window._renderSpGroups(s || {});
   document.getElementById('spError').classList.add('d-none');
   editingNotizSpielerID = id || null;
   renderNotizKatSelect();
@@ -5819,15 +5844,8 @@ window.spielerSimpleSpeichern = async function() {
     pos:      document.getElementById('spPosition').value,
     nachname, vorname,
     geb:      document.getElementById('spGebDatum').value,
-    teams:      [...document.querySelectorAll('#spTeamCheckboxes input[id^="spTeamCb"]:checked')].map(cb => cb.value),
-    team_groups: (() => {
-      const tg = {};
-      document.querySelectorAll('#spTeamCheckboxes input[data-grp]:checked').forEach(cb => {
-        const t = cb.dataset.team; if (!tg[t]) tg[t] = [];
-        tg[t].push(cb.dataset.grp);
-      });
-      return tg;
-    })(),
+    teams:     [...document.querySelectorAll('#spTeamCheckboxes input[id^="spTeamCb"]:checked')].map(cb => cb.value),
+    group_ids: [...document.querySelectorAll('#spGroupCheckboxes input:checked')].map(cb => cb.value),
     foto:     fotoUrl,
     skills:{}, slv:60,
   };
@@ -7596,21 +7614,111 @@ document.addEventListener('keydown', e => {
 // ══════════════════════════════════════════════════════════════
 // MANNSCHAFTEN – Firestore
 // ══════════════════════════════════════════════════════════════
-window._mfGroups = [];
-window._mfRenderGroups = function() {
-  const el = document.getElementById('mfGroupList');
-  if (!el) return;
-  if (!window._mfGroups.length) { el.innerHTML = '<p class="text-muted small mb-0">Keine Untergruppen</p>'; return; }
-  el.innerHTML = window._mfGroups.map((g, i) => `
-    <div class="d-flex align-items-center gap-2">
-      <input type="color" value="${g.color||'#6c757d'}" style="width:34px;height:32px;border:1px solid #ced4da;border-radius:.375rem;padding:1px;cursor:pointer" onchange="window._mfGroups[${i}].color=this.value">
-      <input type="text" class="form-control form-control-sm" value="${g.name||''}" placeholder="Gruppenname" style="max-width:150px" oninput="window._mfGroups[${i}].name=this.value">
-      <button type="button" class="btn btn-outline-danger btn-sm" onclick="window._mfGroups.splice(${i},1);window._mfRenderGroups()"><i class="bi bi-x"></i></button>
+// ── Player Groups ────────────────────────────────────────────────────────────
+window._playerGroups = [];
+
+window.renderPlayerGroups = function(filterTeamId) {
+  const tabBar   = document.getElementById('pgTabBar');
+  const cards    = document.getElementById('pgGroupCards');
+  if (!tabBar || !cards) return;
+
+  // Tab-Leiste aufbauen
+  tabBar.innerHTML =
+    `<button class="btn btn-sm ${filterTeamId === null ? 'btn-dark' : 'btn-outline-secondary'}" onclick="renderPlayerGroups(null)">Global</button>` +
+    mannschaftenListe.filter(m => m.aktiv !== false).map(m =>
+      `<button class="btn btn-sm ${filterTeamId === m.id ? 'btn-dark' : 'btn-outline-secondary'}" onclick="renderPlayerGroups('${m.id}')">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${m.color||'#212529'};margin-right:4px;vertical-align:middle"></span>${m.name}
+      </button>`
+    ).join('');
+
+  const groups = window._playerGroups.filter(g =>
+    filterTeamId === null ? !g.team_id : g.team_id === filterTeamId
+  );
+
+  if (!groups.length) {
+    cards.innerHTML = `<div class="col-12"><p class="text-muted small mb-0">Keine Gruppen – <a href="#" onclick="event.preventDefault();openPlayerGroupModal(null,'${filterTeamId||''}')">jetzt anlegen</a></p></div>`;
+    return;
+  }
+  cards.innerHTML = groups.map(g => `
+    <div class="col-auto">
+      <div class="d-flex align-items-center gap-2 border rounded px-3 py-2" style="border-color:${g.color||'#dee2e6'}!important;background:${g.color||'#dee2e6'}18">
+        <span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${g.color||'#6c757d'}"></span>
+        <strong class="small">${g.name}</strong>
+        <button class="btn btn-outline-secondary btn-sm py-0 px-1" onclick="openPlayerGroupModal('${g.id}',null)" title="Bearbeiten"><i class="bi bi-pencil" style="font-size:.7rem"></i></button>
+        <button class="btn btn-outline-danger btn-sm py-0 px-1" onclick="deletePlayerGroup('${g.id}')" title="Löschen"><i class="bi bi-trash-fill" style="font-size:.7rem"></i></button>
+      </div>
     </div>`).join('');
 };
-window._mfAddGroup = function() {
-  window._mfGroups.push({ id: 'grp_' + Date.now(), name: '', color: '#6c757d' });
-  window._mfRenderGroups();
+
+window.openPlayerGroupModal = function(id, teamId) {
+  const g = id ? window._playerGroups.find(x => x.id === id) : null;
+  document.getElementById('pgEditId').value     = id || '';
+  document.getElementById('pgEditTeamId').value = teamId !== null && teamId !== undefined ? teamId : (g?.team_id || '');
+  document.getElementById('pgName').value        = g?.name  || '';
+  document.getElementById('pgColor').value       = g?.color || '#1e56bd';
+  document.getElementById('pgError').classList.add('d-none');
+  // Team-Dropdown befüllen
+  const sel = document.getElementById('pgTeamId');
+  sel.innerHTML = '<option value="">Global (alle Teams)</option>' +
+    mannschaftenListe.filter(m => m.aktiv !== false).map(m =>
+      `<option value="${m.id}" ${(g?.team_id||teamId||'')=== m.id ? 'selected':''}>${m.name}</option>`
+    ).join('');
+  document.getElementById('modalPlayerGroupTitle').innerHTML =
+    `<i class="bi bi-tag-fill me-2"></i>${g ? 'Gruppe bearbeiten' : 'Neue Gruppe'}`;
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPlayerGroup')).show();
+};
+
+window.savePlayerGroup = async function() {
+  const name    = document.getElementById('pgName').value.trim();
+  const color   = document.getElementById('pgColor').value;
+  const team_id = document.getElementById('pgTeamId').value || null;
+  const editId  = document.getElementById('pgEditId').value;
+  const err     = document.getElementById('pgError');
+  if (!name) { err.classList.remove('d-none'); err.textContent = 'Name erforderlich.'; return; }
+  err.classList.add('d-none');
+  const id = editId || ('pg_' + Date.now());
+  const obj = { id, name, color, team_id, tenant_id: window._currentTenantId, sort_order: Date.now() };
+  const idx = window._playerGroups.findIndex(x => x.id === id);
+  if (idx >= 0) window._playerGroups[idx] = obj; else window._playerGroups.push(obj);
+  await fsSavePlayerGroup(obj);
+  bootstrap.Modal.getInstance(document.getElementById('modalPlayerGroup')).hide();
+  renderPlayerGroups(team_id);
+  // Spieler-Modal aktualisieren falls offen
+  if (document.getElementById('modalSpieler')?.classList.contains('show')) {
+    const sid = window.editingSpielerID;
+    const s   = sid ? spielerData.find(x => x.id === sid) : null;
+    if (s) _renderSpGroups(s);
+  }
+};
+
+window.deletePlayerGroup = async function(id) {
+  if (!confirm('Gruppe löschen?')) return;
+  window._playerGroups = window._playerGroups.filter(x => x.id !== id);
+  await fsDeletePlayerGroup(id);
+  renderPlayerGroups(null);
+};
+
+// Hilfsfunktion: Gruppen-Checkboxen im Spieler-Modal rendern
+window._renderSpGroups = function(s) {
+  const el = document.getElementById('spGroupCheckboxes');
+  if (!el) return;
+  const selIds     = s?.group_ids || [];
+  const selTeams   = s?.teams     || [];
+  const globalGrps = window._playerGroups.filter(g => !g.team_id);
+  const teamGrps   = window._playerGroups.filter(g => g.team_id && selTeams.some(tn => {
+    const m = mannschaftenListe.find(x => x.name === tn); return m && m.id === g.team_id;
+  }));
+
+  const mkChk = g => `<div class="form-check form-check-inline mb-1">
+    <input class="form-check-input" type="checkbox" id="spGrpCb_${g.id}" value="${g.id}" ${selIds.includes(g.id) ? 'checked' : ''}>
+    <label class="form-check-label small" for="spGrpCb_${g.id}">
+      <span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${g.color||'#6c757d'};vertical-align:middle;margin-right:2px"></span>${g.name}
+    </label></div>`;
+
+  let html = '';
+  if (globalGrps.length) html += `<div class="small text-muted mb-1">Global</div><div class="mb-2">${globalGrps.map(mkChk).join('')}</div>`;
+  if (teamGrps.length)   html += `<div class="small text-muted mb-1">Team-spezifisch</div><div>${teamGrps.map(mkChk).join('')}</div>`;
+  el.innerHTML = html || '<span class="text-muted small">Keine Gruppen angelegt.</span>';
 };
 
 window.renderMannschaften = function() {
@@ -9319,18 +9427,21 @@ window.openSpielerZuordnung = function(sitzungId) {
     .sort((a, b) => (a.nachname || '').localeCompare(b.nachname || '', 'de'));
   const assigned = new Set(sitzung.player_ids || []);
 
-  const allTeams = [...new Set(allePlayers.flatMap(sp => sp.teams || (sp.team ? [sp.team] : [])).filter(Boolean))].sort();
+  const allTeams  = [...new Set(allePlayers.flatMap(sp => sp.teams || (sp.team ? [sp.team] : [])).filter(Boolean))].sort();
+  const allGroups = window._playerGroups || [];
 
-  window._renderZuordnungList = function(teamFilter) {
-    const filtered = teamFilter
-      ? allePlayers.filter(sp => (sp.teams || [sp.team]).includes(teamFilter))
-      : allePlayers;
+  window._renderZuordnungList = function(teamFilter, groupFilter) {
+    let filtered = allePlayers;
+    if (teamFilter)  filtered = filtered.filter(sp => (sp.teams || [sp.team]).includes(teamFilter));
+    if (groupFilter) filtered = filtered.filter(sp => (sp.group_ids || []).includes(groupFilter));
     const html = filtered.map(sp => {
-      const badges = (sp.teams || [sp.team]).filter(Boolean)
-        .map(t => { const c = (mannschaftenListe.find(m=>m.name===t)||{}).color||'#6c757d'; return `<span class="badge ms-1" style="font-size:.68rem;background:${c}">${t}</span>`; }).join('');
+      const teamBadges  = (sp.teams || [sp.team]).filter(Boolean)
+        .map(t => { const c=(mannschaftenListe.find(m=>m.name===t)||{}).color||'#6c757d'; return `<span class="badge ms-1" style="font-size:.65rem;background:${c}">${t}</span>`; }).join('');
+      const groupBadges = (sp.group_ids||[])
+        .map(gid => { const g=allGroups.find(x=>x.id===gid); return g?`<span class="badge ms-1" style="font-size:.65rem;background:${g.color||'#6c757d'}">${g.name}</span>`:''; }).join('');
       return `<div class="form-check d-flex align-items-center">
         <input class="form-check-input me-2" type="checkbox" id="zuordSp_${sp.id}" value="${sp.id}" ${assigned.size === 0 || assigned.has(sp.id) ? 'checked' : ''}>
-        <label class="form-check-label flex-grow-1" for="zuordSp_${sp.id}">${sp.nachname || ''} ${sp.vorname || ''}${badges}</label>
+        <label class="form-check-label flex-grow-1" for="zuordSp_${sp.id}">${sp.nachname || ''} ${sp.vorname || ''}${teamBadges}${groupBadges}</label>
       </div>`;
     }).join('');
     document.getElementById('_zuordList').innerHTML = html || '<p class="text-muted small mb-0">Keine Spieler.</p>';
@@ -9338,14 +9449,21 @@ window.openSpielerZuordnung = function(sitzungId) {
   };
 
   window._filterZuordnung = function() {
-    window._renderZuordnungList(document.getElementById('_zuordTeamFilter').value);
+    window._renderZuordnungList(
+      document.getElementById('_zuordTeamFilter').value,
+      document.getElementById('_zuordGroupFilter').value
+    );
   };
 
   document.getElementById('spielerZuordnungContent').innerHTML = `
-    <div class="d-flex gap-2 align-items-center mb-2">
+    <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
       <select id="_zuordTeamFilter" class="form-select form-select-sm" style="width:auto" onchange="window._filterZuordnung()">
         <option value="">Alle Mannschaften</option>
         ${allTeams.map(t => `<option value="${t}">${t}</option>`).join('')}
+      </select>
+      <select id="_zuordGroupFilter" class="form-select form-select-sm" style="width:auto" onchange="window._filterZuordnung()">
+        <option value="">Alle Gruppen</option>
+        ${allGroups.map(g => `<option value="${g.id}">${g.name}</option>`).join('')}
       </select>
       <span class="text-muted small" id="_zuordCount"></span>
     </div>
@@ -12657,9 +12775,9 @@ window.fsSaveSpieler = async function fsSaveSpieler(obj) {
       tenant_id:    tid || '',
       rnr:          obj.rnr || 0,
       pos:          obj.pos || '',
-      team:         (obj.teams || [])[0] || '',
-      teams:        obj.teams || [],
-      team_groups:  obj.team_groups || {},
+      team:      (obj.teams || [])[0] || '',
+      teams:     obj.teams || [],
+      group_ids: obj.group_ids || [],
       skillBase:    obj.skillBase || {},
       campScore:    obj.campScore || {},
       lieblingsverein: obj.lieblingsverein || [],
@@ -12714,9 +12832,9 @@ async function fsLoadSpieler() {
         foto:            pd.foto_url   || '',
         rnr:             sd.rnr        || 0,
         pos:             sd.pos        || '',
-        teams:           sd.teams || (sd.team ? [sd.team] : []),
-        team:            (sd.teams || [])[0] || sd.team || '',
-        team_groups:     sd.team_groups || {},
+        teams:     sd.teams || (sd.team ? [sd.team] : []),
+        team:      (sd.teams || [])[0] || sd.team || '',
+        group_ids: sd.group_ids || [],
         skillBase:       sd.skillBase  || {},
         campScore:       sd.campScore  || {},
         xp:              sd.xp         || 0,
@@ -12868,6 +12986,34 @@ async function fsLoadMannschaften() {
     if (snap.empty) return null;
     return snap.docs.map(d => ({ ...d.data(), id: d.id })).sort((a,b) => (a.name||'').localeCompare(b.name||''));
   } catch(e) { console.warn('fsLoadMannschaften:', e.message); return null; }
+}
+
+async function fsLoadPlayerGroups() {
+  const db = window._firestoreDB;
+  if (!db) return [];
+  try {
+    const { collection, query, where, getDocs, orderBy } = window._firestoreAPI;
+    const snap = await getDocs(query(collection(db, 'player_groups'), where('tenant_id', '==', window._currentTenantId || ''), orderBy('sort_order', 'asc')));
+    return snap.docs.map(d => ({ ...d.data(), id: d.id }));
+  } catch(e) { console.warn('fsLoadPlayerGroups:', e.message); return []; }
+}
+
+async function fsSavePlayerGroup(g) {
+  const db = window._firestoreDB;
+  if (!db) return;
+  try {
+    const { doc, setDoc } = window._firestoreAPI;
+    await setDoc(doc(db, 'player_groups', g.id), g, { merge: true });
+  } catch(e) { console.warn('fsSavePlayerGroup:', e.message); }
+}
+
+async function fsDeletePlayerGroup(id) {
+  const db = window._firestoreDB;
+  if (!db) return;
+  try {
+    const { doc, deleteDoc } = window._firestoreAPI;
+    await deleteDoc(doc(db, 'player_groups', id));
+  } catch(e) { console.warn('fsDeletePlayerGroup:', e.message); }
 }
 
 async function fsDeleteMannschaft(id) {
@@ -13037,13 +13183,14 @@ async function _loadAllFromFirestore() {
     // Seed U12 falls Firestore noch leer
     await seedU12IfEmpty();
 
-    const [fsPlayers, fsTrainings, fsUebungen, fsCamps, fsMannschaften] = await Promise.all([
+    const [fsPlayers, fsTrainings, fsUebungen, fsCamps, fsMannschaften, , fsPlayerGroups] = await Promise.all([
       fsLoadSpieler(),
       fsLoadTrainings(),
       fsLoadUebungen(),
       fsLoadCamps(),
       fsLoadMannschaften(),
       fsLoadVereinLogos(),
+      fsLoadPlayerGroups(),
     ]);
 
     if (fsPlayers?.length) {
@@ -13079,6 +13226,10 @@ async function _loadAllFromFirestore() {
     if (fsMannschaften?.length) {
       mannschaftenListe = fsMannschaften;
       renderMannschaften?.();
+    }
+    if (fsPlayerGroups?.length) {
+      window._playerGroups = fsPlayerGroups;
+      renderPlayerGroups?.(null);
     }
     console.log('[MatchFlow] Firestore-Daten geladen:', {
       spieler: fsPlayers?.length || 0,
