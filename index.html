@@ -12984,7 +12984,7 @@ async function fsLoadMannschaften() {
   } catch(e) { console.warn('fsLoadMannschaften:', e.message); return null; }
 }
 
-async function fsLoadPlayerGroups() {
+window.fsLoadPlayerGroups = async function fsLoadPlayerGroups() {
   const db = window._firestoreDB;
   if (!db) return [];
   try {
@@ -12994,7 +12994,7 @@ async function fsLoadPlayerGroups() {
   } catch(e) { console.warn('fsLoadPlayerGroups:', e.message); return []; }
 }
 
-async function fsSavePlayerGroup(g) {
+window.fsSavePlayerGroup = async function fsSavePlayerGroup(g) {
   const db = window._firestoreDB;
   if (!db) return;
   try {
@@ -13003,7 +13003,7 @@ async function fsSavePlayerGroup(g) {
   } catch(e) { console.warn('fsSavePlayerGroup:', e.message); }
 }
 
-async function fsDeletePlayerGroup(id) {
+window.fsDeletePlayerGroup = async function fsDeletePlayerGroup(id) {
   const db = window._firestoreDB;
   if (!db) return;
   try {
