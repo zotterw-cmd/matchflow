@@ -2348,56 +2348,61 @@ body.sa-mode .sa-var{display:inline}
         </div>
         <div id="xpConfigRow">
           <!-- Übungs-XP -->
-          <div class="mb-2 row g-2 align-items-end">
-            <div class="col-4">
-              <label class="form-label small fw-bold">Übungs-XP</label>
-              <input type="number" id="messungstypXpExercise" class="form-control form-control-sm" value="5" min="0">
-              <div class="form-text" style="font-size:.7rem">Einmalig für diese Übung in der Sitzung</div>
+          <div class="mb-2 p-2 rounded" style="background:#fff8e1;border:1px solid #ffe082">
+            <div class="small fw-bold mb-2"><i class="bi bi-star-fill text-warning me-1"></i>Übungs-XP <span class="fw-normal text-muted">(Teilnahme an dieser Übung)</span></div>
+            <div class="row g-2 align-items-end">
+              <div class="col-4">
+                <label class="form-label small">XP Betrag</label>
+                <input type="number" id="messungstypXpExercise" class="form-control form-control-sm" value="5" min="0">
+                <div class="form-text" style="font-size:.7rem">Einmalig pro Sitzung</div>
+              </div>
             </div>
           </div>
           <!-- Startschwelle -->
-          <div class="mb-2 p-2 bg-light rounded">
-            <div class="small fw-bold mb-1 text-muted">Startwert-Meilenstein</div>
+          <div class="mb-2 p-2 rounded" style="background:#e8f5e9;border:1px solid #a5d6a7">
+            <div class="small fw-bold mb-2"><i class="bi bi-trophy-fill text-success me-1"></i>Meilenstein-XP <span class="fw-normal text-muted">(einmalig wenn Schwelle erstmals erreicht)</span></div>
             <div class="row g-2">
               <div class="col-6">
-                <label class="form-label small">Ab Wert</label>
+                <label class="form-label small"><i class="bi bi-flag-fill text-success me-1"></i>Ab Wert</label>
                 <input type="number" id="messungstypXpStartThreshold" class="form-control form-control-sm" placeholder="z.B. 50" min="0">
                 <div class="form-text" style="font-size:.7rem">Einheit wie beim Messungstyp</div>
               </div>
               <div class="col-6">
-                <label class="form-label small">Einmalig XP</label>
+                <label class="form-label small"><i class="bi bi-star-fill text-warning me-1"></i>Einmalig XP</label>
                 <input type="number" id="messungstypXpStartXp" class="form-control form-control-sm" placeholder="z.B. 50" min="0">
-                <div class="form-text" style="font-size:.7rem">Wenn Schwelle erstmals erreicht</div>
+                <div class="form-text" style="font-size:.7rem">Leer = kein Meilenstein</div>
               </div>
             </div>
           </div>
           <!-- Steigerungs-XP -->
-          <div class="mb-2 p-2 bg-light rounded">
-            <div class="small fw-bold mb-1 text-muted">Steigerungs-XP</div>
+          <div class="mb-2 p-2 rounded" style="background:#e3f2fd;border:1px solid #90caf9">
+            <div class="small fw-bold mb-2"><i class="bi bi-graph-up-arrow text-primary me-1"></i>Steigerungs-XP <span class="fw-normal text-muted">(für Verbesserung gegenüber Bestwert)</span></div>
             <div class="row g-2">
               <div class="col-6">
-                <label class="form-label small">Pro X Einheiten Verbesserung</label>
+                <label class="form-label small"><i class="bi bi-arrows-expand-vertical text-primary me-1"></i>Pro X Einheiten Verbesserung</label>
                 <input type="number" id="messungstypXpImprovUnit" class="form-control form-control-sm" value="1" min="0.01" step="0.01">
+                <div class="form-text" style="font-size:.7rem">z.B. 1 = pro km/h, 0.1 = pro 0.1 Sek</div>
               </div>
               <div class="col-6">
-                <label class="form-label small">XP vergeben</label>
+                <label class="form-label small"><i class="bi bi-star-fill text-warning me-1"></i>XP vergeben</label>
                 <input type="number" id="messungstypXpImprovXp" class="form-control form-control-sm" value="1" min="0">
-                <div class="form-text" style="font-size:.7rem">z.B. 1 Einheit = 1 XP</div>
+                <div class="form-text" style="font-size:.7rem">XP pro erreichte Einheit</div>
               </div>
             </div>
           </div>
           <!-- Abzug bei Leistungsabfall -->
-          <div class="mb-2 p-2 bg-light rounded">
-            <div class="small fw-bold mb-1 text-muted">Abzug bei Leistungsabfall</div>
+          <div class="mb-2 p-2 rounded" style="background:#fce4ec;border:1px solid #f48fb1">
+            <div class="small fw-bold mb-2"><i class="bi bi-graph-down-arrow text-danger me-1"></i>Abzug bei Leistungsabfall <span class="fw-normal text-muted">(Trainer kann via Regain zurückgeben)</span></div>
             <div class="row g-2">
               <div class="col-6">
-                <label class="form-label small">Nach X schlechten Versuchen</label>
+                <label class="form-label small"><i class="bi bi-arrow-repeat text-danger me-1"></i>Nach X schlechten Versuchen</label>
                 <input type="number" id="messungstypXpDeclineAttempts" class="form-control form-control-sm" value="3" min="1">
+                <div class="form-text" style="font-size:.7rem">In Folge schlechter als Bestwert</div>
               </div>
               <div class="col-6">
-                <label class="form-label small">XP abziehen</label>
+                <label class="form-label small"><i class="bi bi-dash-circle-fill text-danger me-1"></i>XP abziehen</label>
                 <input type="number" id="messungstypXpDeclineXp" class="form-control form-control-sm" value="5" min="0">
-                <div class="form-text" style="font-size:.7rem">Trainer kann via Regain zurückgeben</div>
+                <div class="form-text" style="font-size:.7rem">0 = kein Abzug</div>
               </div>
             </div>
           </div>
