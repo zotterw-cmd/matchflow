@@ -2256,7 +2256,13 @@ body.sa-mode .sa-var{display:inline}
         <div class="mb-3">
           <div class="d-flex align-items-center justify-content-between mb-1">
             <label class="form-label fw-bold mb-0">Spieler zuordnen</label>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+              <select id="sitzSpFilterTeam" class="form-select form-select-sm" style="width:auto;font-size:.8rem" onchange="window._filterSitzSpieler()">
+                <option value="">Alle Teams</option>
+              </select>
+              <select id="sitzSpFilterGroup" class="form-select form-select-sm" style="width:auto;font-size:.8rem" onchange="window._filterSitzSpieler()">
+                <option value="">Alle Gruppen</option>
+              </select>
               <button type="button" class="btn btn-outline-secondary btn-xs" style="font-size:.75rem;padding:2px 8px" onclick="sitzungAlleWaehlen(true)">Alle</button>
               <button type="button" class="btn btn-outline-secondary btn-xs" style="font-size:.75rem;padding:2px 8px" onclick="sitzungAlleWaehlen(false)">Keine</button>
             </div>
@@ -9239,8 +9245,36 @@ window.openSitzungBearbeiten = async function(id) {
     plSnap.forEach(d => spieler.push({ id: d.id, ...d.data() }));
     spieler.sort((a, b) => (a.nachname || '').localeCompare(b.nachname || '', 'de'));
     const checkedSpieler = s.player_ids || [];
-    spielerEl.innerHTML = spieler.map(sp => `<div class="form-check"><input class="form-check-input" type="checkbox" id="sitzSp_${sp.id}" value="${sp.id}" ${checkedSpieler.includes(sp.id) ? 'checked' : ''}>
-        <label class="form-check-label" for="sitzSp_${sp.id}">${sp.nachname || ''} ${sp.vorname || ''}</label></div>`).join('') || '<p class="text-muted small mb-0">Keine Spieler.</p>';
+    // Spieler aus spielerData anreichern (teams, group_ids)
+    const spMap = {};
+    (window.spielerData || []).forEach(sd => { spMap[sd.id] = sd; });
+    const spielerRich = spieler.map(sp => ({ ...sp, ...(spMap[sp.id] || {}) }));
+
+    // Filter-Dropdowns befüllen
+    const allTeams  = [...new Set(spielerRich.flatMap(sp => sp.teams || (sp.team ? [sp.team] : [])).filter(Boolean))].sort();
+    const allGroups = window._playerGroups || [];
+    const teamSel   = document.getElementById('sitzSpFilterTeam');
+    const grpSel    = document.getElementById('sitzSpFilterGroup');
+    if (teamSel) teamSel.innerHTML  = '<option value="">Alle Teams</option>'  + allTeams.map(t  => `<option value="${t}">${t}</option>`).join('');
+    if (grpSel)  grpSel.innerHTML   = '<option value="">Alle Gruppen</option>' + allGroups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+
+    spielerEl.innerHTML = spielerRich.map(sp => `<div class="form-check sitz-sp-row"
+        data-teams="${(sp.teams||[sp.team]).filter(Boolean).join(',')}"
+        data-groups="${(sp.group_ids||[]).join(',')}">
+        <input class="form-check-input" type="checkbox" id="sitzSp_${sp.id}" value="${sp.id}" ${checkedSpieler.includes(sp.id) ? 'checked' : ''}>
+        <label class="form-check-label" for="sitzSp_${sp.id}">${sp.nachname || ''} ${sp.vorname || ''}</label></div>`
+    ).join('') || '<p class="text-muted small mb-0">Keine Spieler.</p>';
+
+    window._filterSitzSpieler = function() {
+      const tf = document.getElementById('sitzSpFilterTeam')?.value  || '';
+      const gf = document.getElementById('sitzSpFilterGroup')?.value || '';
+      document.querySelectorAll('#messungSitzungSpieler .sitz-sp-row').forEach(row => {
+        const teams  = row.dataset.teams  ? row.dataset.teams.split(',')  : [];
+        const groups = row.dataset.groups ? row.dataset.groups.split(',') : [];
+        const show   = (!tf || teams.includes(tf)) && (!gf || groups.includes(gf));
+        row.style.display = show ? '' : 'none';
+      });
+    };
   } catch(e) { typenEl.innerHTML = `<div class="text-danger small">Fehler: ${e.message}</div>`; }
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalMessungSitzung')).show();
 };
