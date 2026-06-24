@@ -1999,19 +1999,20 @@ body.sa-mode .sa-var{display:inline}
         </div>
       </div>
 
-      <!-- Google Maps -->
-      <div class="card shadow-sm flex-grow-1">
-        <div class="card-header bg-dark text-white d-flex align-items-center justify-content-between">
-          <span><i class="bi bi-geo-alt-fill me-2"></i><strong>Standort</strong></span>
-          <a id="vpMapLink" href="#" target="_blank" class="btn btn-outline-light btn-sm" style="display:none"><i class="bi bi-box-arrow-up-right me-1"></i>Teilen</a>
-        </div>
-        <div class="card-body p-0" style="min-height:200px">
-          <div id="vpMapPlaceholder" class="d-flex align-items-center justify-content-center h-100 text-muted" style="min-height:200px;font-size:.85rem">
-            <span><i class="bi bi-geo-alt me-2"></i>PLZ, Ort und Adresse eingeben</span>
-          </div>
-          <iframe id="vpMapFrame" src="" style="width:100%;height:220px;border:0;display:none" allowfullscreen loading="lazy"></iframe>
-        </div>
+    </div>
+  </div>
+
+  <!-- Google Maps – volle Breite -->
+  <div class="card shadow-sm mt-4">
+    <div class="card-header bg-dark text-white d-flex align-items-center justify-content-between">
+      <span><i class="bi bi-geo-alt-fill me-2"></i><strong>Standort</strong></span>
+      <a id="vpMapLink" href="#" target="_blank" class="btn btn-outline-light btn-sm" style="display:none"><i class="bi bi-box-arrow-up-right me-1"></i>Teilen</a>
+    </div>
+    <div class="card-body p-0">
+      <div id="vpMapPlaceholder" class="d-flex align-items-center justify-content-center text-muted" style="height:660px;font-size:.85rem">
+        <span><i class="bi bi-geo-alt me-2"></i>PLZ, Ort und Adresse eingeben</span>
       </div>
+      <iframe id="vpMapFrame" src="" style="width:100%;height:660px;border:0;display:none" allowfullscreen loading="lazy"></iframe>
     </div>
   </div>
 
