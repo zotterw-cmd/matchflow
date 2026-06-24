@@ -225,6 +225,9 @@ body{background:#f5f6fa;margin:0}
 .camp-versuch-label{font-size:.7rem;color:#6c757d;min-width:20px;text-align:center}
 /* FOTO */
 .foto-vorschau{width:60px;height:60px;object-fit:cover;border-radius:50%;border:2px solid #c0392b}
+/* Drag & Drop Mannschaften */
+tr._mann-dragging{opacity:.35}
+tr._mann-over td{border-top:2px solid #0d6efd!important;background:#f0f4ff}
 .foto-placeholder-sm{width:60px;height:60px;border-radius:50%;border:2px dashed #ced4da;display:flex;align-items:center;justify-content:center;color:#adb5bd;font-size:1.4rem}
 /* SUPERADMIN: Variablen-Badges (nur sichtbar wenn body.sa-mode) */
 .sa-var{display:none;font-size:.65rem;font-family:monospace;background:#fff3cd;color:#856404;border:1px solid #ffc107;border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:middle;cursor:default;user-select:all}
@@ -7760,24 +7763,28 @@ window._renderSpGroups = function(s) {
 };
 
 // ── Drag & Drop Reihenfolge Mannschaften ─────────────────────────────────────
-let _mannDragId = null;
+let _mannDragId = null, _mannDragOver_last = null;
 window._mannDragStart = function(e, id) {
   _mannDragId = id;
-  e.currentTarget.style.opacity = '0.4';
+  e.currentTarget.classList.add('_mann-dragging');
   e.dataTransfer.effectAllowed = 'move';
 };
 window._mannDragOver = function(e) {
   e.preventDefault();
   e.dataTransfer.dropEffect = 'move';
-  e.currentTarget.style.borderTop = '2px solid #0d6efd';
+  const row = e.currentTarget;
+  if (_mannDragOver_last && _mannDragOver_last !== row) _mannDragOver_last.classList.remove('_mann-over');
+  row.classList.add('_mann-over');
+  _mannDragOver_last = row;
 };
 window._mannDragEnd = function(e) {
-  e.currentTarget.style.opacity = '';
-  document.querySelectorAll('#mannschaftenBody tr').forEach(r => r.style.borderTop = '');
+  e.currentTarget.classList.remove('_mann-dragging');
+  document.querySelectorAll('#mannschaftenBody tr').forEach(r => r.classList.remove('_mann-over','_mann-dragging'));
+  _mannDragOver_last = null;
 };
 window._mannDrop = async function(e, targetId) {
   e.preventDefault();
-  e.currentTarget.style.borderTop = '';
+  document.querySelectorAll('#mannschaftenBody tr').forEach(r => r.classList.remove('_mann-over','_mann-dragging'));
   if (!_mannDragId || _mannDragId === targetId) return;
   const fromIdx = mannschaftenListe.findIndex(m => m.id === _mannDragId);
   const toIdx   = mannschaftenListe.findIndex(m => m.id === targetId);
