@@ -1311,7 +1311,7 @@ body.sa-mode .sa-var{display:inline}
         <button class="btn btn-outline-info btn-sm" onclick="campSpielerAusVorigemCamp()"><i class="bi bi-arrow-down-circle me-1"></i>Aus Camp übernehmen</button>
         <button class="btn btn-outline-primary btn-sm" onclick="openCampMesswerteModal()"><i class="bi bi-speedometer2 me-1"></i>Messwerte eintragen</button>
         <button class="btn btn-success btn-sm" id="btnCampSpeichern" onclick="campManuellSpeichern()"><i class="bi bi-cloud-upload me-1"></i>Speichern</button>
-        <button class="btn btn-warning fw-bold" onclick="openCampSpielerModal(null)"><i class="bi bi-person-plus-fill me-1"></i>Neuer Spieler</button>
+        <button class="btn btn-warning fw-bold" onclick="openSpielerModalSimple(null)"><i class="bi bi-person-plus-fill me-1"></i>Neuer Spieler</button>
       </div>
     </div>
 
@@ -6636,8 +6636,50 @@ function _aktCamp() {
 
 // Synchronisiert campSpielerData (Arbeitskopie) → aktives Camp
 function _syncCampSpieler() {
-  _aktCamp().spieler = campSpielerData;
+  if (_aktCamp()) _aktCamp().spieler = campSpielerData;
 }
+
+// ── Firestore-basierte Camp-Spieler-View ─────────────────────────────────────
+// Liest aus spielerData (Firestore), filtert auf "Campkind"-Team, mappt auf Camp-Format
+window._campSpielerView = function() {
+  const grpName = s => {
+    for (const gid of (s.group_ids||[])) {
+      const g = (window._playerGroups||[]).find(x => x.id === gid);
+      if (g) return g.name;
+    }
+    return '';
+  };
+  return (spielerData||[])
+    .filter(s => (s.teams||[]).includes('Campkind'))
+    .map(s => ({
+      ...s,
+      gruppe: grpName(s),
+      speed:  (s.campScore||{}).speed  || s.speed  || [],
+      attack: (s.campScore||{}).attack || s.attack || [],
+      bonus:  (s.campScore||{}).bonus  || s.bonus  || [],
+      shoot:  (s.campScore||{}).shoot  || s.shoot  || [],
+      skill:  (s.campScore||{}).skill  || s.skill  || [],
+      pass:   (s.campScore||{}).pass   || s.pass   || [],
+      jump:   (s.campScore||{}).jump   || s.jump   || [],
+    }))
+    .sort((a,b) => (a.nachname||'').localeCompare(b.nachname||''));
+};
+
+function _campGruppeStyle(name) {
+  if (GRUPPE_STYLE[name]) return GRUPPE_STYLE[name];
+  const g = (window._playerGroups||[]).find(x => x.name === name);
+  const c = g?.color || '#6c757d';
+  return { cls:'', footer: c, badge:'bg-secondary', textColor:'#fff', nameColor:'#ddd' };
+}
+
+window._campUpdateGruppenFilter = function() {
+  const groups = [...new Set(window._campSpielerView().map(s => s.gruppe).filter(Boolean))].sort();
+  const opts = '<option value="">Alle Gruppen</option>' + groups.map(g => `<option value="${g}">${g}</option>`).join('');
+  ['campFilterGruppe','campKartenFilterGruppe'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { const v = el.value; el.innerHTML = opts; el.value = v; }
+  });
+};
 
 window.renderCampListe = function() {
   const grid = document.getElementById('campListeGrid');
@@ -6764,21 +6806,23 @@ window.campMessTypWechseln = function(typ, btn) {
 };
 
 function _campMessBisher(sp, typ) {
-  const arr = (sp[typ] || []).filter(v => v !== null && v !== undefined);
+  const arr = ((sp.campScore||{})[typ] || sp[typ] || []).filter(v => v !== null && v !== undefined);
   if (!arr.length) return '—';
-  const best = typ === 'speed' || typ === 'skill' ? Math.min(...arr) : Math.max(...arr);
-  return best;
+  return typ === 'speed' || typ === 'skill' ? Math.min(...arr) : Math.max(...arr);
 }
 
 function _renderCampMesswerteTbody() {
   const tbody = document.getElementById('campMesswerteTbody');
   if (!tbody) return;
-  tbody.innerHTML = campSpielerData.map((sp, i) => {
+  const view = window._campSpielerView().filter(s => !s.softDeleted);
+  tbody.innerHTML = view.map((sp, i) => {
     const bisher = _campMessBisher(sp, _campMessTyp);
     const v1 = (sp[_campMessTyp]||[])[0] ?? '';
     const v2 = (sp[_campMessTyp]||[])[1] ?? '';
-    return `<tr>
-      <td class="fw-bold small">${sp.nachname} ${sp.vorname}</td>
+    const grpG = _campGruppeStyle(sp.gruppe);
+    const dot = sp.gruppe ? `<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${grpG.footer};margin-right:5px;vertical-align:middle"></span>` : '';
+    return `<tr data-spid="${sp.id}">
+      <td class="fw-bold small">${dot}${sp.nachname} ${sp.vorname}</td>
       <td><input type="number" step="0.01" class="form-control form-control-sm" id="cmv1_${i}" value="${v1}" placeholder="V1"></td>
       <td><input type="number" step="0.01" class="form-control form-control-sm" id="cmv2_${i}" value="${v2}" placeholder="V2"></td>
       <td class="text-end text-muted small">${bisher}</td>
@@ -6790,29 +6834,28 @@ window.campMesswerteSpeichern = async function() {
   const btn = document.getElementById('btnCampMessSpeichern');
   if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Speichert…'; }
 
-  campSpielerData.forEach((sp, i) => {
-    const v1el = document.getElementById(`cmv1_${i}`);
-    const v2el = document.getElementById(`cmv2_${i}`);
-    const toV = el => { const v = el?.value; return (v !== '' && v !== undefined && !isNaN(v)) ? Number(v) : null; };
-    const v1 = toV(v1el), v2 = toV(v2el);
-    if (_campMessTyp === 'bonus') {
-      sp.bonus = [v1, v2, null, null, null];
-    } else if (_campMessTyp === 'pass') {
-      sp.pass = [v1, v2, null];
-    } else {
-      sp[_campMessTyp] = [v1, v2];
-    }
+  const view = window._campSpielerView().filter(s => !s.softDeleted);
+  const toV = el => { const v = el?.value; return (v !== '' && v !== undefined && !isNaN(v)) ? Number(v) : null; };
+  const saves = [];
+
+  view.forEach((sp, i) => {
+    const v1 = toV(document.getElementById(`cmv1_${i}`));
+    const v2 = toV(document.getElementById(`cmv2_${i}`));
+    const real = spielerData.find(x => x.id === sp.id);
+    if (!real) return;
+    real.campScore = real.campScore || {};
+    if (_campMessTyp === 'bonus') real.campScore.bonus = [v1, v2, null, null, null];
+    else if (_campMessTyp === 'pass') real.campScore.pass = [v1, v2, null];
+    else real.campScore[_campMessTyp] = [v1, v2];
+    saves.push(fsSaveSpieler(real));
   });
 
-  _syncCampSpieler();
   try {
-    await fsSaveCamp(_aktCamp());
+    await Promise.all(saves);
     _afterSave('camp');
     renderCampSpieler();
     bootstrap.Modal.getInstance(document.getElementById('modalCampMesswerte')).hide();
-  } catch(e) {
-    alert('Fehler beim Speichern:\n' + e.message);
-  }
+  } catch(e) { alert('Fehler beim Speichern:\n' + e.message); }
   if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-save me-1"></i>Alle speichern'; }
 };
 
@@ -6997,7 +7040,7 @@ function campSLV(s) {
 // CAMP – KARTE BAUEN
 // ══════════════════════════════════════════════════════════════
 function buildCampKarte(s) {
-  const gs    = GRUPPE_STYLE[s.gruppe] || GRUPPE_STYLE['Rot'];
+  const gs    = _campGruppeStyle(s.gruppe);
   const slv   = campSLV(s);
   const foto  = s.foto
     ? `<img src="${s.foto}" style="width:100%;height:120px;object-fit:cover;object-position:top">`
@@ -7073,8 +7116,10 @@ window.showCampTab = function(tab) {
 };
 
 window.renderCampSpieler = function() {
+  _campUpdateGruppenFilter();
   const f = document.getElementById('campFilterGruppe')?.value || '';
-  const data = f ? campSpielerData.filter(s => s.gruppe === f) : campSpielerData;
+  const all = window._campSpielerView();
+  const data = f ? all.filter(s => s.gruppe === f) : all;
 
   function best(arr, lower) {
     const vals = (arr||[]).filter(v => v != null && !isNaN(Number(v))).map(Number);
@@ -7084,7 +7129,7 @@ window.renderCampSpieler = function() {
   }
 
   document.getElementById('campSpielerBody').innerHTML = data.map(s => {
-    const gs = GRUPPE_STYLE[s.gruppe] || GRUPPE_STYLE['Rot'];
+    const gs = _campGruppeStyle(s.gruppe);
     const foto = s.foto
       ? `<img src="${s.foto}" style="width:32px;height:32px;object-fit:cover;border-radius:50%;border:2px solid #ccc">`
       : `<div style="width:32px;height:32px;border-radius:50%;border:2px dashed #ced4da;display:flex;align-items:center;justify-content:center;color:#adb5bd"><i class="bi bi-person" style="font-size:.8rem"></i></div>`;
@@ -7127,13 +7172,18 @@ window.renderCampSpieler = function() {
 };
 
 window.renderCampKarten = function() {
+  _campUpdateGruppenFilter();
   const f = document.getElementById('campKartenFilterGruppe')?.value || '';
-  const data = f ? campSpielerData.filter(s => s.gruppe === f) : campSpielerData;
+  const all = window._campSpielerView();
+  const data = f ? all.filter(s => s.gruppe === f) : all;
   document.getElementById('campKartenGrid').innerHTML = data.map(buildCampKarte).join('') || '<p class="text-muted">Keine Spieler.</p>';
 };
 
 // ── Modal öffnen / speichern ─────────────────────────────────
 window.openCampSpielerModal = function(id) {
+  // Spieler werden jetzt über das globale Spieler-Modal bearbeitet
+  openSpielerModalSimple(id);
+  return;
   editingCampID   = id;
   campPendingFoto = null;
   const s = id ? campSpielerData.find(x => x.id === id) : null;
@@ -7334,18 +7384,28 @@ window.updateHauptvereinPreview = function() {
     : `<span class="badge bg-secondary">${val}</span>`;
 };
 
-window.campSoftDelete = function(id) {
-  const s = campSpielerData.find(x => x.id === id);
-  if (s) { s.softDeleted = true; _syncCampSpieler(); renderCampSpieler(); }
+window.campSoftDelete = async function(id) {
+  const s = spielerData.find(x => x.id === id);
+  if (!s) return;
+  s.softDeleted = true;
+  await fsSaveSpieler(s);
+  renderCampSpieler();
 };
-window.campRestore = function(id) {
-  const s = campSpielerData.find(x => x.id === id);
-  if (s) { s.softDeleted = false; _syncCampSpieler(); renderCampSpieler(); }
+window.campRestore = async function(id) {
+  const s = spielerData.find(x => x.id === id);
+  if (!s) return;
+  s.softDeleted = false;
+  await fsSaveSpieler(s);
+  renderCampSpieler();
 };
-window.campHardDelete = function(id) {
+window.campHardDelete = async function(id) {
   if (!confirm('Endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) return;
-  campSpielerData = campSpielerData.filter(x => x.id !== id);
-  _syncCampSpieler();
+  const s = spielerData.find(x => x.id === id);
+  if (!s) return;
+  // Nur Campkind-Team entfernen statt hard delete
+  s.teams = (s.teams||[]).filter(t => t !== 'Campkind');
+  if (s.teams.length === 0) s.softDeleted = true;
+  await fsSaveSpieler(s);
   renderCampSpieler();
 };
 
@@ -9099,9 +9159,10 @@ window.renderGameEvents = function() {
 // CAMP – ANZEIGEN (View-only)
 // ══════════════════════════════════════════════════════════════
 window.openCampAnzeigen = function(id) {
-  const s = campSpielerData.find(x => x.id === id);
-  if (!s) return;
-  const gs = GRUPPE_STYLE[s.gruppe] || GRUPPE_STYLE['Rot'];
+  const raw = spielerData.find(x => x.id === id);
+  if (!raw) return;
+  const s = window._campSpielerView().find(x => x.id === id) || raw;
+  const gs = _campGruppeStyle(s.gruppe);
   const datumStr = s.geb ? new Date(s.geb + 'T12:00').toLocaleDateString('de-AT') : '—';
   const logos = (s.lieblingsverein || []).map(v => vereinLogo(v, 28)).join('');
   const foto = s.foto
