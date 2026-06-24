@@ -1315,6 +1315,19 @@ body.sa-mode .sa-var{display:inline}
       </div>
     </div>
 
+    <!-- Migrations-Banner (einmalig: camp.spieler → spielerData) -->
+    <div id="campMigrationsBanner" class="alert alert-warning d-flex align-items-center gap-3 py-2 px-3 mt-2 mb-0" style="display:none!important">
+      <i class="bi bi-arrow-repeat fs-5"></i>
+      <div class="flex-fill">
+        <strong>Alte Camp-Daten gefunden.</strong>
+        <span id="campMigrationsBannerInfo" class="ms-1 small"></span>
+        Einmalig in Spieler-Stammdaten übernehmen?
+      </div>
+      <button class="btn btn-warning btn-sm fw-bold" id="btnCampMigrieren" onclick="campMigriereSpieler()">
+        <i class="bi bi-arrow-repeat me-1"></i>Jetzt migrieren
+      </button>
+    </div>
+
     <!-- Tabs -->
     <ul class="nav nav-tabs mt-3 mb-3">
       <li class="nav-item"><button class="nav-link active" id="campTabSpielerBtn" onclick="showCampTab('spieler')"><i class="bi bi-people-fill me-1"></i>Spieler</button></li>
@@ -6754,7 +6767,104 @@ window.openCamp = function(id) {
   document.getElementById('campDetailTitel').innerHTML = `<i class="bi bi-trophy-fill text-warning me-2"></i>${camp.name}`;
   showCampTab('spieler');
   renderCampSpieler();
+  _campCheckMigrationBanner();
   campFarbenLaden();
+};
+
+window._campCheckMigrationBanner = function() {
+  const banner = document.getElementById('campMigrationsBanner');
+  if (!banner) return;
+  const campSpieler = _aktCamp()?.spieler || [];
+  // Banner zeigen wenn camp.spieler vorhanden aber spielerData keine Campkind-Spieler hat
+  const fsCount = window._campSpielerView().length;
+  if (campSpieler.length > 0 && fsCount < campSpieler.length) {
+    banner.style.display = '';
+    const info = document.getElementById('campMigrationsBannerInfo');
+    if (info) info.textContent = `(${campSpieler.length} Spieler im Camp-Dokument, ${fsCount} in Stammdaten)`;
+  } else {
+    banner.style.display = 'none';
+  }
+};
+
+window.campMigriereSpieler = async function() {
+  const btn = document.getElementById('btnCampMigrieren');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Migriert…'; }
+
+  const campSpieler = _aktCamp()?.spieler || [];
+  const saves = [];
+  let neuAngelegt = 0, aktualisiert = 0;
+
+  for (const cs of campSpieler) {
+    // Vorhandenen Spieler in spielerData suchen (vorname+nachname)
+    const existing = spielerData.find(s =>
+      s.vorname?.toLowerCase() === cs.vorname?.toLowerCase() &&
+      s.nachname?.toLowerCase() === cs.nachname?.toLowerCase()
+    );
+
+    if (existing) {
+      // Teams mergen
+      existing.teams = [...new Set([...(existing.teams || []), 'Campkind'])];
+      // campScore aus altem camp-Eintrag übernehmen wenn noch nicht vorhanden
+      if (!existing.campScore || Object.keys(existing.campScore).length === 0) {
+        existing.campScore = {
+          speed:  cs.speed  || [],
+          attack: cs.attack || [],
+          bonus:  cs.bonus  || [],
+          shoot:  cs.shoot  || [],
+          skill:  cs.skill  || [],
+          pass:   cs.pass   || [],
+          jump:   cs.jump   || [],
+        };
+      }
+      // Gruppe → group_id
+      if (cs.gruppe && !existing.group_ids?.length) {
+        const g = (window._playerGroups||[]).find(x => x.name === cs.gruppe);
+        if (g) existing.group_ids = [g.id];
+      }
+      saves.push(fsSaveSpieler(existing));
+      aktualisiert++;
+    } else {
+      // Neuen Spieler anlegen
+      const g = (window._playerGroups||[]).find(x => x.name === cs.gruppe);
+      const obj = {
+        id:       cs.id || ('p' + String(++spielerCounter).padStart(4,'0')),
+        vorname:  cs.vorname || '',
+        nachname: cs.nachname || '',
+        geb:      cs.geb || '',
+        geschl:   cs.geschl || cs.geschlecht || '',
+        teams:    ['Campkind'],
+        group_ids: g ? [g.id] : [],
+        lieblingsverein: cs.lieblingsverein || [],
+        hauptverein:     cs.hauptverein || '',
+        foto: cs.foto || '',
+        rnr:  cs.rnr || 0,
+        campScore: {
+          speed:  cs.speed  || [],
+          attack: cs.attack || [],
+          bonus:  cs.bonus  || [],
+          shoot:  cs.shoot  || [],
+          skill:  cs.skill  || [],
+          pass:   cs.pass   || [],
+          jump:   cs.jump   || [],
+        },
+        softDeleted: false,
+      };
+      spielerData.push(obj);
+      saves.push(fsSaveSpieler(obj));
+      neuAngelegt++;
+    }
+  }
+
+  try {
+    await Promise.all(saves);
+    document.getElementById('campMigrationsBanner').style.display = 'none';
+    renderCampSpieler();
+    renderCampListe?.();
+    alert(`Migration abgeschlossen!\n✓ ${neuAngelegt} neu angelegt\n✓ ${aktualisiert} aktualisiert`);
+  } catch(e) {
+    alert('Fehler bei Migration:\n' + e.message);
+  }
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>Jetzt migrieren'; }
 };
 
 window.campManuellSpeichern = async function() {
