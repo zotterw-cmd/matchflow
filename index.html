@@ -2495,6 +2495,25 @@ body.sa-mode .sa-var{display:inline}
     <div class="col-12">
       <div class="card border-0 shadow-sm">
         <div class="card-header bg-dark text-white d-flex align-items-center gap-2">
+          <i class="bi bi-toggles"></i><span class="fw-bold">Modul-Einstellungen</span>
+        </div>
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+            <div>
+              <div class="fw-bold"><i class="bi bi-heart-fill text-danger me-2"></i>Lieblingsverein-Modul</div>
+              <div class="text-muted small">Ermöglicht das Erfassen von Lieblingsvereinen bei Spielern. Logos sind <strong>nur für SuperAdmin</strong> sichtbar – andere Benutzer sehen nur die Vereinsnamen.</div>
+            </div>
+            <div class="form-check form-switch ms-4">
+              <input class="form-check-input" type="checkbox" id="toggleLieblingsvereinModul" role="switch" style="width:2.5em;height:1.3em"
+                onchange="window.fsSaveAppSetting('lieblingsverein_modul', this.checked).then(() => window._renderLieblingsvereinSection())">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-dark text-white d-flex align-items-center gap-2">
           <i class="bi bi-terminal-fill"></i><span class="fw-bold">Setup &amp; Deployment</span>
         </div>
         <div class="card-body small">
@@ -3008,6 +3027,10 @@ body.sa-mode .sa-var{display:inline}
                 </div>
                 <div class="col-12"><label class="form-label">Gruppen <span class="text-muted fw-normal small">(Global + team-spezifisch)</span></label>
                   <div id="spGroupCheckboxes" class="p-2 border rounded" style="min-height:38px;background:#f8f9fa"></div>
+                </div>
+                <div class="col-12" id="spLieblingsvereinSection" style="display:none">
+                  <label class="form-label"><i class="bi bi-heart-fill text-danger me-1"></i>Lieblingsverein(e)</label>
+                  <div id="spLieblingsvereinContent" class="p-2 border rounded" style="min-height:38px;background:#f8f9fa"></div>
                 </div>
                 <div class="col-6"><label class="form-label">Nachname</label><input type="text" id="spNachname" class="form-control"></div>
                 <div class="col-6"><label class="form-label">Vorname</label><input type="text" id="spVorname" class="form-control"></div>
@@ -5778,6 +5801,8 @@ window.openSpielerModalSimple = function(id) {
     </div>`
   ).join('') || '<span class="text-muted small">Keine Mannschaften angelegt</span>';
   window._renderSpGroups(s || {});
+  window._spSelectedVereine = [...(s?.lieblingsverein || [])];
+  window._renderLieblingsvereinSection();
   document.getElementById('spError').classList.add('d-none');
   editingNotizSpielerID = id || null;
   renderNotizKatSelect();
@@ -5863,8 +5888,9 @@ window.spielerSimpleSpeichern = async function() {
     pos:      document.getElementById('spPosition').value,
     nachname, vorname,
     geb:      document.getElementById('spGebDatum').value,
-    teams:     [...document.querySelectorAll('#spTeamCheckboxes input[id^="spTeamCb"]:checked')].map(cb => cb.value),
-    group_ids: [...document.querySelectorAll('#spGroupCheckboxes input:checked')].map(cb => cb.value),
+    teams:          [...document.querySelectorAll('#spTeamCheckboxes input[id^="spTeamCb"]:checked')].map(cb => cb.value),
+    group_ids:      [...document.querySelectorAll('#spGroupCheckboxes input:checked')].map(cb => cb.value),
+    lieblingsverein: window._spSelectedVereine || [],
     foto:     fotoUrl,
     skills:{}, slv:60,
   };
@@ -7760,6 +7786,56 @@ window._renderSpGroups = function(s) {
   if (globalGrps.length) html += `<div class="small text-muted mb-1">Global</div><div class="mb-2">${globalGrps.map(g => mkChk(g, null)).join('')}</div>`;
   if (teamGrps.length)   html += `<div class="small text-muted mb-1">Team-spezifisch</div><div>${teamGrps.map(g => { const tn = (mannschaftenListe.find(m => m.id === g.team_id)||{}).name||''; return mkChk(g, tn); }).join('')}</div>`;
   el.innerHTML = html || '<span class="text-muted small">Keine Gruppen angelegt.</span>';
+};
+
+// ── Lieblingsverein-Modul ─────────────────────────────────────────────────────
+window._spSelectedVereine = [];
+
+window._renderLieblingsvereinSection = function() {
+  const section = document.getElementById('spLieblingsvereinSection');
+  if (!section) return;
+  const aktiv = !!(window._appSettings?.lieblingsverein_modul);
+  section.style.display = aktiv ? '' : 'none';
+  if (!aktiv) return;
+  window._renderSpLieblingsverein(window._spSelectedVereine);
+};
+
+window._renderSpLieblingsverein = function(selected) {
+  window._spSelectedVereine = [...(selected || [])];
+  const el = document.getElementById('spLieblingsvereinContent');
+  if (!el) return;
+  const isSA = _isSuperAdmin();
+  if (isSA) {
+    // Logo-Picker Grid: alle Vereine als klickbare Kacheln
+    const alle = [...new Set([...ALLE_VEREINE, ...Object.keys(customVereinLogos)])].sort((a,b)=>a.localeCompare(b));
+    el.innerHTML = `<div class="d-flex flex-wrap gap-2" style="max-height:180px;overflow-y:auto">` +
+      alle.map(name => {
+        const url = vereinLogoUrl(name);
+        const sel = window._spSelectedVereine.includes(name);
+        return `<div onclick="window._toggleSpVerein('${name.replace(/'/g,"\\'")}')" style="cursor:pointer;border:2px solid ${sel?'#0d6efd':'#dee2e6'};border-radius:8px;padding:4px 8px;background:${sel?'#e8f0fe':'#fff'};display:flex;align-items:center;gap:6px;font-size:.8rem;transition:border .15s">
+          ${url ? `<img src="${url}" style="height:20px;width:20px;object-fit:contain" onerror="this.style.display='none'">` : ''}
+          <span>${name}</span>
+          ${sel ? '<i class="bi bi-check-circle-fill text-primary" style="font-size:.75rem"></i>' : ''}
+        </div>`;
+      }).join('') + `</div>`;
+  } else {
+    // Nur Text-Badges der ausgewählten Vereine
+    el.innerHTML = window._spSelectedVereine.length
+      ? window._spSelectedVereine.map(n => `<span class="badge bg-secondary me-1">${n}</span>`).join('')
+      : '<span class="text-muted small">Kein Lieblingsverein eingetragen</span>';
+  }
+};
+
+window._toggleSpVerein = function(name) {
+  const idx = window._spSelectedVereine.indexOf(name);
+  if (idx >= 0) window._spSelectedVereine.splice(idx, 1);
+  else window._spSelectedVereine.push(name);
+  window._renderSpLieblingsverein(window._spSelectedVereine);
+};
+
+window._syncLieblingsvereinToggle = function() {
+  const cb = document.getElementById('toggleLieblingsvereinModul');
+  if (cb) cb.checked = !!(window._appSettings?.lieblingsverein_modul);
 };
 
 // ── Drag & Drop Reihenfolge Mannschaften ─────────────────────────────────────
@@ -13131,6 +13207,29 @@ window.fsDeletePlayerGroup = async function fsDeletePlayerGroup(id) {
   } catch(e) { console.warn('fsDeletePlayerGroup:', e.message); }
 }
 
+// ── App-Settings (Modul-Toggles) ─────────────────────────────────────────────
+window._appSettings = {};
+window.fsLoadAppSettings = async function() {
+  const db = window._firestoreDB;
+  if (!db) return;
+  try {
+    const { doc, getDoc } = window._firestoreAPI;
+    const tid = window._currentTenantId;
+    const snap = await getDoc(doc(db, 'app_settings', tid || 'default'));
+    if (snap.exists()) window._appSettings = snap.data() || {};
+  } catch(e) { console.warn('fsLoadAppSettings:', e.message); }
+};
+window.fsSaveAppSetting = async function(key, value) {
+  const db = window._firestoreDB;
+  if (!db) return;
+  try {
+    const { doc, setDoc, serverTimestamp } = window._firestoreAPI;
+    const tid = window._currentTenantId;
+    window._appSettings[key] = value;
+    await setDoc(doc(db, 'app_settings', tid || 'default'), { ...window._appSettings, tenant_id: tid, updated_at: serverTimestamp() }, { merge: true });
+  } catch(e) { console.warn('fsSaveAppSetting:', e.message); }
+};
+
 async function fsDeleteMannschaft(id) {
   const db = window._firestoreDB;
   if (!db) return;
@@ -13306,6 +13405,7 @@ async function _loadAllFromFirestore() {
       fsLoadMannschaften(),
       fsLoadVereinLogos(),
       fsLoadPlayerGroups(),
+      fsLoadAppSettings(),
     ]);
 
     if (fsPlayers?.length) {
@@ -13389,6 +13489,7 @@ window.mediaTabInit = async function() {
   const cfg = getMediaConfig();
   const urlEl = document.getElementById('mediaServerUrl');
   if (urlEl) urlEl.value = cfg.serverUrl || '';
+  window._syncLieblingsvereinToggle?.();
 };
 
 window.mediaServerSave = async function() {
