@@ -6663,7 +6663,7 @@ window._campSpielerView = function() {
     return '';
   };
   return (spielerData||[])
-    .filter(s => (s.teams||[]).includes('Campkind'))
+    .filter(s => (s.teams||[]).some(t => t.toLowerCase().includes('camp')))
     .map(s => ({
       ...s,
       gruppe: grpName(s),
@@ -6803,7 +6803,7 @@ window.campMigriereSpieler = async function() {
 
     if (existing) {
       // Teams mergen
-      existing.teams = [...new Set([...(existing.teams || []), 'Campkind'])];
+      existing.teams = [...new Set([...(existing.teams || []), 'Camp'])];
       // campScore aus altem camp-Eintrag übernehmen wenn noch nicht vorhanden
       if (!existing.campScore || Object.keys(existing.campScore).length === 0) {
         existing.campScore = {
@@ -6832,7 +6832,7 @@ window.campMigriereSpieler = async function() {
         nachname: cs.nachname || '',
         geb:      cs.geb || '',
         geschl:   cs.geschl || cs.geschlecht || '',
-        teams:    ['Campkind'],
+        teams:    ['Camp'],
         group_ids: g ? [g.id] : [],
         lieblingsverein: cs.lieblingsverein || [],
         hauptverein:     cs.hauptverein || '',
