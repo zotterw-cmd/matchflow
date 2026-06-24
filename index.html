@@ -7757,9 +7757,6 @@ window.openMannschaftModal = function(id) {
   document.getElementById('mfError').classList.add('d-none');
   document.getElementById('mfName').value  = m?.name  || '';
   document.getElementById('mfColor').value = m?.color || '#212529';
-  // Gruppen laden
-  window._mfGroups = (m?.groups || []).map(g => ({ ...g }));
-  window._mfRenderGroups();
   const current = m?.verwalter || [];
   // Trainer aus Benutzer-Liste ermitteln
   const trainerNamen = (window._allUsers||[]).filter(u=>u.modus==='trainer').map(u=>u.name).sort();
@@ -7776,10 +7773,9 @@ window.mannschaftSpeichern = async function() {
   err.classList.add('d-none');
   const verwalter = [...document.querySelectorAll('#mfVerwalterList input:checked')].map(cb=>cb.value);
   const color  = document.getElementById('mfColor').value || '#212529';
-  const groups = (window._mfGroups || []).filter(g => g.name.trim());
   if (editingMannschaftId) {
     const m = mannschaftenListe.find(x => x.id === editingMannschaftId);
-    if (m) { m.name = name; m.verwalter = verwalter; m.color = color; m.groups = groups; }
+    if (m) { m.name = name; m.verwalter = verwalter; m.color = color; }
     await fsSaveMannschaft(mannschaftenListe.find(x => x.id === editingMannschaftId));
   } else {
     const newM = { id: 'mann_' + Date.now(), name, verwalter, color, groups, aktiv: true };
@@ -12992,8 +12988,8 @@ async function fsLoadPlayerGroups() {
   const db = window._firestoreDB;
   if (!db) return [];
   try {
-    const { collection, query, where, getDocs, orderBy } = window._firestoreAPI;
-    const snap = await getDocs(query(collection(db, 'player_groups'), where('tenant_id', '==', window._currentTenantId || ''), orderBy('sort_order', 'asc')));
+    const { collection, query, where, getDocs } = window._firestoreAPI;
+    const snap = await getDocs(query(collection(db, 'player_groups'), where('tenant_id', '==', window._currentTenantId || '')));
     return snap.docs.map(d => ({ ...d.data(), id: d.id }));
   } catch(e) { console.warn('fsLoadPlayerGroups:', e.message); return []; }
 }
