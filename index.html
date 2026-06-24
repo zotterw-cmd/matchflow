@@ -7981,22 +7981,37 @@ window.renderMannschaften = function() {
   if (!body) return;
   // Nach sort_order sortieren
   mannschaftenListe.sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999));
-  body.innerHTML = mannschaftenListe.map(m => `
-    <tr id="mrow-${m.id}" draggable="true" data-mid="${m.id}" style="cursor:grab"
-        ondragstart="window._mannDragStart(event,'${m.id}')"
-        ondragover="window._mannDragOver(event)"
-        ondrop="window._mannDrop(event,'${m.id}')"
-        ondragend="window._mannDragEnd(event)">
-      <td style="width:28px;padding-right:0"><i class="bi bi-grip-vertical text-muted"></i></td>
-      <td><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${m.color||'#212529'};vertical-align:middle;margin-right:6px"></span><strong id="mname-${m.id}">${m.name}</strong></td>
-      <td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" ${m.aktiv!==false?'checked':''} onchange="toggleMannschaft('${m.id}',this)"></div></td>
-      <td><span class="badge ${m.aktiv!==false?'bg-success':'bg-secondary'}" id="mstatus-${m.id}">${m.aktiv!==false?'Aktiv':'Inaktiv'}</span></td>
-      <td id="mverwalter-${m.id}">${(m.verwalter||[]).map(v=>`<span class="me-2"><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>${v}</span>`).join('')||'—'}</td>
-      <td>
-        <button class="btn btn-outline-secondary btn-sm" onclick="openMannschaftModal('${m.id}')"><i class="bi bi-pencil"></i></button>
-        <button class="btn btn-danger btn-sm ms-1" onclick="deleteMannschaft('${m.id}')"><i class="bi bi-trash-fill"></i></button>
-      </td>
-    </tr>`).join('') || '<tr><td colspan="6" class="text-muted text-center py-3">Keine Mannschaften – bitte anlegen.</td></tr>';
+  const isSA = _isSuperAdmin();
+  // SuperAdmin sieht auch soft-gelöschte, andere nur aktive + inaktive
+  const visible = isSA ? mannschaftenListe : mannschaftenListe.filter(m => !m.softDeleted);
+  body.innerHTML = visible.map(m => {
+    const deleted = !!m.softDeleted;
+    const rowStyle = `cursor:${deleted?'default':'grab'};${deleted?'opacity:.55':''}`;
+    const drag = deleted ? '' :
+      `draggable="true" ondragstart="window._mannDragStart(event,'${m.id}')" ondragover="window._mannDragOver(event)" ondrop="window._mannDrop(event,'${m.id}')" ondragend="window._mannDragEnd(event)"`;
+    const statusBadge = deleted
+      ? `<span class="badge bg-danger">Gelöscht</span>`
+      : `<span class="badge ${m.aktiv!==false?'bg-success':'bg-secondary'}" id="mstatus-${m.id}">${m.aktiv!==false?'Aktiv':'Inaktiv'}</span>`;
+    const toggleSwitch = deleted ? '—'
+      : `<div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" ${m.aktiv!==false?'checked':''} onchange="toggleMannschaft('${m.id}',this)"></div>`;
+    const actions = deleted
+      ? (isSA ? `
+          <button class="btn btn-success btn-sm" onclick="restoreMannschaft('${m.id}')" title="Wiederherstellen"><i class="bi bi-arrow-repeat"></i></button>
+          <button class="btn btn-danger btn-sm ms-1" onclick="hardDeleteMannschaft('${m.id}')" title="Endgültig löschen"><i class="bi bi-trash-fill"></i></button>`
+        : '')
+      : `<button class="btn btn-outline-secondary btn-sm" onclick="openMannschaftModal('${m.id}')"><i class="bi bi-pencil"></i></button>
+         <button class="btn btn-warning btn-sm ms-1" onclick="softDeleteMannschaft('${m.id}')" title="Löschen (wiederherstellbar)"><i class="bi bi-trash"></i></button>
+         ${isSA ? `<button class="btn btn-danger btn-sm ms-1" onclick="hardDeleteMannschaft('${m.id}')" title="Endgültig löschen"><i class="bi bi-trash-fill"></i></button>` : ''}`;
+    return `<tr id="mrow-${m.id}" ${drag} data-mid="${m.id}" style="${rowStyle}">
+      <td style="width:28px;padding-right:0">${deleted?'':' <i class="bi bi-grip-vertical text-muted"></i>'}</td>
+      <td><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${m.color||'#212529'};vertical-align:middle;margin-right:6px"></span>
+        <strong id="mname-${m.id}" style="${deleted?'text-decoration:line-through':''}">${m.name}</strong></td>
+      <td>${toggleSwitch}</td>
+      <td>${statusBadge}</td>
+      <td id="mverwalter-${m.id}">${deleted?'—':(m.verwalter||[]).map(v=>`<span class="me-2"><i class="bi bi-clipboard2-check-fill text-primary me-1"></i>${v}</span>`).join('')||'—'}</td>
+      <td>${actions}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" class="text-muted text-center py-3">Keine Mannschaften – bitte anlegen.</td></tr>';
   updateMannschaftStats();
   // Dropdowns synchronisieren
   ['spTeam','spFilterTeam','kartenFilterTeam','buMannschaft'].forEach(selId => {
@@ -8004,7 +8019,7 @@ window.renderMannschaften = function() {
     if (!e) return;
     const cur = e.value;
     [...e.options].forEach(o => { if (o.value) o.remove(); });
-    mannschaftenListe.filter(m => m.aktiv !== false).forEach(m => {
+    mannschaftenListe.filter(m => m.aktiv !== false && !m.softDeleted).forEach(m => {
       if (![...e.options].some(o => o.value === m.name))
         e.insertAdjacentHTML('beforeend', `<option value="${m.name}">${m.name}</option>`);
     });
@@ -8059,12 +8074,33 @@ window.toggleMannschaft = async function(id, cb) {
   updateMannschaftStats();
 };
 
-window.deleteMannschaft = async function(id) {
-  if (!confirm('Mannschaft wirklich löschen?')) return;
+window.softDeleteMannschaft = async function(id) {
+  if (!confirm('Mannschaft als gelöscht markieren? Sie kann vom SuperAdmin wiederhergestellt werden.')) return;
+  const m = mannschaftenListe.find(x => x.id === id);
+  if (!m) return;
+  m.softDeleted = true;
+  m.aktiv = false;
+  await fsSaveMannschaft(m);
+  renderMannschaften();
+};
+
+window.hardDeleteMannschaft = async function(id) {
+  if (!confirm('Mannschaft ENDGÜLTIG löschen? Dies kann nicht rückgängig gemacht werden!')) return;
   mannschaftenListe = mannschaftenListe.filter(x => x.id !== id);
   await fsDeleteMannschaft(id);
   renderMannschaften();
 };
+
+window.restoreMannschaft = async function(id) {
+  const m = mannschaftenListe.find(x => x.id === id);
+  if (!m) return;
+  m.softDeleted = false;
+  m.aktiv = true;
+  await fsSaveMannschaft(m);
+  renderMannschaften();
+};
+
+window.deleteMannschaft = window.softDeleteMannschaft;
 
 function updateMannschaftStats() {
   document.getElementById('statTeams').textContent = mannschaftenListe.length;
