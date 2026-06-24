@@ -3257,7 +3257,14 @@ body.sa-mode .sa-var{display:inline}
         <div class="col"><label class="form-label fw-bold">Bezeichnung</label><input type="text" id="mfName" class="form-control"></div>
         <div class="col-auto"><label class="form-label fw-bold">Farbe</label><div><input type="color" id="mfColor" value="#212529" style="width:48px;height:38px;border:1px solid #ced4da;border-radius:.375rem;padding:2px;cursor:pointer"></div></div>
       </div>
-      <div class="mb-3"><label class="form-label fw-bold">Verwalter</label><div id="mfVerwalterList" class="border rounded p-2" style="max-height:160px;overflow-y:auto"></div></div>
+      <div class="mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <label class="form-label fw-bold mb-0">Untergruppen <span class="text-muted fw-normal small">(z.B. Blau, Gelb)</span></label>
+          <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window._mfAddGroup()"><i class="bi bi-plus"></i> Gruppe</button>
+        </div>
+        <div id="mfGroupList" class="d-flex flex-column gap-1"></div>
+      </div>
+      <div class="mb-3"><label class="form-label fw-bold">Verwalter</label><div id="mfVerwalterList" class="border rounded p-2" style="max-height:120px;overflow-y:auto"></div></div>
       <div id="mfError" class="alert alert-danger d-none"></div>
     </div>
     <div class="modal-footer">
@@ -5610,7 +5617,13 @@ function _buildSpielerRow(s) {
     <td><span class="badge bg-secondary">${s.pos}</span></td>
     <td><strong>${s.nachname}</strong></td><td>${s.vorname}</td>
     <td data-order="${s.geb || ''}">${s.geb ? new Date(s.geb+'T12:00').toLocaleDateString('de-AT') : '—'}</td>
-    <td>${(s.teams||[s.team]).filter(Boolean).map(t=>{const c=(mannschaftenListe.find(m=>m.name===t)||{}).color||'#212529';return`<span class="badge me-1" style="background:${c}">${t}</span>`;}).join('') || '–'}</td>
+    <td>${(s.teams||[s.team]).filter(Boolean).map(t=>{
+      const mann = mannschaftenListe.find(m=>m.name===t)||{};
+      const c = mann.color||'#212529';
+      const grpIds = (s.team_groups||{})[t]||[];
+      const grpBadges = grpIds.map(gid=>{const g=(mann.groups||[]).find(x=>x.id===gid);return g?`<span class="badge ms-1" style="background:${g.color||'#6c757d'};font-size:.65rem">${g.name}</span>`:''}).join('');
+      return`<span class="badge me-1" style="background:${c}">${t}</span>${grpBadges}`;
+    }).join('') || '–'}</td>
     <td><strong>${slv}</strong></td>
     ${skillCell('speed')}${skillCell('attack')}${skillCell('bonus')}${skillCell('shoot')}${skillCell('skill')}${skillCell('pass')}${skillCell('def')}
     <td>${(() => { const xp = s.xp || 0; const max = 1000; const pct = Math.min(100, Math.round(xp/max*100)); return `<div style="min-width:80px"><div class="d-flex justify-content-between" style="font-size:.7rem"><span class="fw-bold">${xp}</span><span class="text-muted">${max}</span></div><div class="progress" style="height:6px"><div class="progress-bar bg-warning" style="width:${pct}%"></div></div><div class="text-muted text-center" style="font-size:.65rem">${pct}%</div>`; })()}</td>
@@ -5700,14 +5713,27 @@ window.openSpielerModalSimple = function(id) {
   document.getElementById('spGebDatum').value = s?.geb      || '';
   document.getElementById('spPosition').value = s?.pos || 'MF';
   const playerTeams = s?.teams || (s?.team ? [s.team] : []);
-  document.getElementById('spTeamCheckboxes').innerHTML = (mannschaftenListe || []).map(m =>
-    `<div class="form-check me-1 mb-1">
-      <input class="form-check-input" type="checkbox" id="spTeamCb_${m.id}" value="${m.name}" ${playerTeams.includes(m.name) ? 'checked' : ''}>
-      <label class="form-check-label small" for="spTeamCb_${m.id}">
-        <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${m.color||'#212529'};vertical-align:middle;margin-right:3px"></span>${m.name}
-      </label>
-    </div>`
-  ).join('') || '<span class="text-muted small">Keine Mannschaften angelegt</span>';
+  const playerGroups = s?.team_groups || {};
+  document.getElementById('spTeamCheckboxes').innerHTML = (mannschaftenListe || []).map(m => {
+    const checked = playerTeams.includes(m.name);
+    const selGroups = playerGroups[m.name] || [];
+    const groupHtml = (m.groups || []).length ? `
+      <div class="ms-4 mt-1 d-flex flex-wrap gap-1" id="spGrp_${m.id}" style="${checked ? '' : 'display:none!important'}">
+        ${(m.groups||[]).map(g => `<div class="form-check form-check-inline mb-0">
+          <input class="form-check-input" type="checkbox" id="spGrpCb_${m.id}_${g.id}" data-team="${m.name}" data-grp="${g.id}" ${selGroups.includes(g.id) ? 'checked' : ''}>
+          <label class="form-check-label small" for="spGrpCb_${m.id}_${g.id}">
+            <span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${g.color||'#6c757d'};vertical-align:middle;margin-right:2px"></span>${g.name}
+          </label></div>`).join('')}
+      </div>` : '';
+    return `<div class="mb-1">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="spTeamCb_${m.id}" value="${m.name}" ${checked ? 'checked' : ''}
+          onchange="const g=document.getElementById('spGrp_${m.id}');if(g){g.style.display=this.checked?'':'none'}">
+        <label class="form-check-label small" for="spTeamCb_${m.id}">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${m.color||'#212529'};vertical-align:middle;margin-right:3px"></span><strong>${m.name}</strong>
+        </label>
+      </div>${groupHtml}</div>`;
+  }).join('') || '<span class="text-muted small">Keine Mannschaften angelegt</span>';
   document.getElementById('spError').classList.add('d-none');
   editingNotizSpielerID = id || null;
   renderNotizKatSelect();
@@ -5793,7 +5819,15 @@ window.spielerSimpleSpeichern = async function() {
     pos:      document.getElementById('spPosition').value,
     nachname, vorname,
     geb:      document.getElementById('spGebDatum').value,
-    teams:    [...document.querySelectorAll('#spTeamCheckboxes input:checked')].map(cb => cb.value),
+    teams:      [...document.querySelectorAll('#spTeamCheckboxes input[id^="spTeamCb"]:checked')].map(cb => cb.value),
+    team_groups: (() => {
+      const tg = {};
+      document.querySelectorAll('#spTeamCheckboxes input[data-grp]:checked').forEach(cb => {
+        const t = cb.dataset.team; if (!tg[t]) tg[t] = [];
+        tg[t].push(cb.dataset.grp);
+      });
+      return tg;
+    })(),
     foto:     fotoUrl,
     skills:{}, slv:60,
   };
@@ -7562,6 +7596,23 @@ document.addEventListener('keydown', e => {
 // ══════════════════════════════════════════════════════════════
 // MANNSCHAFTEN – Firestore
 // ══════════════════════════════════════════════════════════════
+window._mfGroups = [];
+window._mfRenderGroups = function() {
+  const el = document.getElementById('mfGroupList');
+  if (!el) return;
+  if (!window._mfGroups.length) { el.innerHTML = '<p class="text-muted small mb-0">Keine Untergruppen</p>'; return; }
+  el.innerHTML = window._mfGroups.map((g, i) => `
+    <div class="d-flex align-items-center gap-2">
+      <input type="color" value="${g.color||'#6c757d'}" style="width:34px;height:32px;border:1px solid #ced4da;border-radius:.375rem;padding:1px;cursor:pointer" onchange="window._mfGroups[${i}].color=this.value">
+      <input type="text" class="form-control form-control-sm" value="${g.name||''}" placeholder="Gruppenname" style="max-width:150px" oninput="window._mfGroups[${i}].name=this.value">
+      <button type="button" class="btn btn-outline-danger btn-sm" onclick="window._mfGroups.splice(${i},1);window._mfRenderGroups()"><i class="bi bi-x"></i></button>
+    </div>`).join('');
+};
+window._mfAddGroup = function() {
+  window._mfGroups.push({ id: 'grp_' + Date.now(), name: '', color: '#6c757d' });
+  window._mfRenderGroups();
+};
+
 window.renderMannschaften = function() {
   const body = document.getElementById('mannschaftenBody');
   if (!body) return;
@@ -7598,6 +7649,9 @@ window.openMannschaftModal = function(id) {
   document.getElementById('mfError').classList.add('d-none');
   document.getElementById('mfName').value  = m?.name  || '';
   document.getElementById('mfColor').value = m?.color || '#212529';
+  // Gruppen laden
+  window._mfGroups = (m?.groups || []).map(g => ({ ...g }));
+  window._mfRenderGroups();
   const current = m?.verwalter || [];
   // Trainer aus Benutzer-Liste ermitteln
   const trainerNamen = (window._allUsers||[]).filter(u=>u.modus==='trainer').map(u=>u.name).sort();
@@ -7613,13 +7667,14 @@ window.mannschaftSpeichern = async function() {
   if (!name) { err.classList.remove('d-none'); err.textContent='Bezeichnung erforderlich.'; return; }
   err.classList.add('d-none');
   const verwalter = [...document.querySelectorAll('#mfVerwalterList input:checked')].map(cb=>cb.value);
-  const color = document.getElementById('mfColor').value || '#212529';
+  const color  = document.getElementById('mfColor').value || '#212529';
+  const groups = (window._mfGroups || []).filter(g => g.name.trim());
   if (editingMannschaftId) {
     const m = mannschaftenListe.find(x => x.id === editingMannschaftId);
-    if (m) { m.name = name; m.verwalter = verwalter; m.color = color; }
+    if (m) { m.name = name; m.verwalter = verwalter; m.color = color; m.groups = groups; }
     await fsSaveMannschaft(mannschaftenListe.find(x => x.id === editingMannschaftId));
   } else {
-    const newM = { id: 'mann_' + Date.now(), name, verwalter, color, aktiv: true };
+    const newM = { id: 'mann_' + Date.now(), name, verwalter, color, groups, aktiv: true };
     mannschaftenListe.push(newM);
     await fsSaveMannschaft(newM);
   }
@@ -12604,6 +12659,7 @@ window.fsSaveSpieler = async function fsSaveSpieler(obj) {
       pos:          obj.pos || '',
       team:         (obj.teams || [])[0] || '',
       teams:        obj.teams || [],
+      team_groups:  obj.team_groups || {},
       skillBase:    obj.skillBase || {},
       campScore:    obj.campScore || {},
       lieblingsverein: obj.lieblingsverein || [],
@@ -12660,6 +12716,7 @@ async function fsLoadSpieler() {
         pos:             sd.pos        || '',
         teams:           sd.teams || (sd.team ? [sd.team] : []),
         team:            (sd.teams || [])[0] || sd.team || '',
+        team_groups:     sd.team_groups || {},
         skillBase:       sd.skillBase  || {},
         campScore:       sd.campScore  || {},
         xp:              sd.xp         || 0,
