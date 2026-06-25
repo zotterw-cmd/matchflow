@@ -1333,7 +1333,7 @@ body.sa-mode .sa-var{display:inline}
     </div>
 
     <!-- Migrations-Banner (einmalig: camp.spieler → spielerData) -->
-    <div id="campMigrationsBanner" class="alert alert-warning d-flex align-items-center gap-3 py-2 px-3 mt-2 mb-0" style="display:none!important">
+    <div id="campMigrationsBanner" class="alert alert-warning align-items-center gap-3 py-2 px-3 mt-2 mb-0" style="display:none">
       <i class="bi bi-arrow-repeat fs-5"></i>
       <div class="flex-fill">
         <strong>Alte Camp-Daten gefunden.</strong>
@@ -6795,7 +6795,7 @@ window._campCheckMigrationBanner = function() {
   // Banner zeigen wenn camp.spieler vorhanden aber spielerData keine Campkind-Spieler hat
   const fsCount = window._campSpielerView().length;
   if (campSpieler.length > 0 && fsCount < campSpieler.length) {
-    banner.style.display = '';
+    banner.style.display = 'flex';
     const info = document.getElementById('campMigrationsBannerInfo');
     if (info) info.textContent = `(${campSpieler.length} Spieler im Camp-Dokument, ${fsCount} in Stammdaten)`;
   } else {
