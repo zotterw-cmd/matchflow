@@ -6980,8 +6980,8 @@ window.campMesswerteSpeichern = async function() {
   try {
     await Promise.all(saves);
     _afterSave('camp');
-    renderCampSpieler();
     bootstrap.Modal.getInstance(document.getElementById('modalCampMesswerte')).hide();
+    setTimeout(() => renderCampSpieler(), 300);
   } catch(e) { alert('Fehler beim Speichern:\n' + e.message); }
   if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-save me-1"></i>Alle speichern'; }
 };
@@ -7290,7 +7290,7 @@ window.renderCampSpieler = function() {
     </tr>`;
   }).join('') || '<tr><td colspan="13" class="text-center text-muted">Keine Spieler.</td></tr>';
 
-  if (dtCampSpieler) { dtCampSpieler.destroy(); dtCampSpieler = null; }
+  if (dtCampSpieler) { try { dtCampSpieler.destroy(); } catch(e) {} dtCampSpieler = null; }
   dtCampSpieler = $('#campSpielerTable').DataTable({
     responsive: true, autoWidth: false,
     language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/de-DE.json' },
